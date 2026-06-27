@@ -30,13 +30,14 @@
   .kpi.red{background:#fee2e2;color:#991b1b}
   .kpi .n{font-size:19px;font-weight:800}
   .kpi .l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-  table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}
+  table{border-collapse:collapse;font-size:12px;table-layout:fixed;width:1820px}
+  th,td{border:1px solid #c7ccd4}
   th{background:var(--dark);color:#fff;padding:8px 9px;text-align:left;position:sticky;top:0;white-space:nowrap;z-index:1}
-  td{padding:6px 9px;border-bottom:1px solid #eee;vertical-align:top}
+  td{padding:6px 9px;vertical-align:top;overflow-wrap:break-word}
   tr:nth-child(even){background:#f9fafb}
   .right{text-align:right}.center{text-align:center}
-  .obs{max-width:240px;color:#6b7280;font-size:11px;white-space:normal;word-break:break-word}
-  .desc{max-width:230px;white-space:normal;word-break:break-word}
+  .obs{color:#6b7280;font-size:11px;white-space:normal;word-break:break-word}
+  .desc{white-space:normal;word-break:break-word}
   .mono{font-family:Consolas,monospace;white-space:nowrap}
   #count{font-size:12px;color:#6b7280;margin-left:auto}
   .d90{color:var(--rojo);font-weight:700}.d30{color:var(--amarillo);font-weight:600}
@@ -75,6 +76,13 @@
   <div class="kpis" id="kpis"></div>
   <div class="tablewrap">
   <table id="tablaMerma">
+    <colgroup>
+      <col style="width:90px"><col style="width:240px"><col style="width:110px"><col style="width:110px">
+      <col style="width:150px"><col style="width:80px">
+      <col style="width:70px"><col style="width:70px"><col style="width:95px">
+      <col style="width:95px"><col style="width:60px"><col style="width:110px">
+      <col style="width:110px"><col style="width:120px"><col style="width:140px"><col style="width:260px">
+    </colgroup>
     <thead><tr>
       <th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th>
       <th>Tipo Doc.</th><th class="right">Folio</th>
@@ -85,7 +93,7 @@
     <tbody id="tbody"></tbody>
   </table>
   </div>
-  <div class="footer-note">Ferretería Oviedo El Manzano · Reporte generado localmente desde SQL Server (solo lectura) — no contiene credenciales</div>
+  <div class="footer-note">Ferretería Oviedo El Manzano · Reporte generado desde sistema interno — no contiene credenciales</div>
 </div>
 </div>
 <script>
