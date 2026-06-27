@@ -292,7 +292,12 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .kpi.red{background:#fee2e2;color:#991b1b}
   .kpi .n{font-size:19px;font-weight:800}
   .kpi .l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-  table{border-collapse:collapse;font-size:12px;table-layout:fixed;width:1820px}
+  table{border-collapse:collapse;font-size:12px;table-layout:fixed;width:1620px}
+  .tablewrap::-webkit-scrollbar{height:16px;width:16px}
+  .tablewrap::-webkit-scrollbar-track{background:#e5e7eb}
+  .tablewrap::-webkit-scrollbar-thumb{background:var(--naranja);border-radius:8px;border:3px solid #e5e7eb}
+  .scroll-hint{font-size:11px;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;
+               padding:5px 10px;margin-bottom:8px;display:inline-block}
   th,td{border:1px solid #c7ccd4}
   th{background:var(--dark);color:#fff;padding:8px 9px;text-align:left;position:sticky;top:0;white-space:nowrap;z-index:1}
   td{padding:6px 9px;vertical-align:top;overflow-wrap:break-word}
@@ -336,14 +341,15 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <span id="count"></span>
   </div>
   <div class="kpis" id="kpis"></div>
+  <div class="scroll-hint">👉 Desliza la tabla horizontalmente (barra naranja abajo) para ver Estación/PC, Fecha registro sistema y Observación</div>
   <div class="tablewrap">
   <table id="tablaMerma">
     <colgroup>
-      <col style="width:90px"><col style="width:240px"><col style="width:110px"><col style="width:110px">
-      <col style="width:150px"><col style="width:80px">
-      <col style="width:70px"><col style="width:70px"><col style="width:95px">
-      <col style="width:95px"><col style="width:60px"><col style="width:110px">
-      <col style="width:110px"><col style="width:120px"><col style="width:140px"><col style="width:260px">
+      <col style="width:80px"><col style="width:220px"><col style="width:90px"><col style="width:95px">
+      <col style="width:130px"><col style="width:70px">
+      <col style="width:55px"><col style="width:55px"><col style="width:80px">
+      <col style="width:80px"><col style="width:50px"><col style="width:90px">
+      <col style="width:90px"><col style="width:100px"><col style="width:120px"><col style="width:220px">
     </colgroup>
     <thead><tr>
       <th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th>
