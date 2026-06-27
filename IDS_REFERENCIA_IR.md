@@ -54,6 +54,25 @@ columnas en texto desde el ERP.)
 Archivo: `E:\ferreteria-oviedo\credenciales_db.ini` (solo lectura, NUNCA copiar el valor del
 password a esta carpeta). Driver: `{SQL Server}`, requiere `TrustServerCertificate=yes`.
 
+## Stock negativo en CAL y GO (verificado, es dato real del ERP — no filtrar)
+Bodegas **CAL** (Calzada) y **GO** (Gestion Isabel Riquelme) operan con venta de productos
+que aún no llegan físicamente del proveedor (ej. "Guía Recepción Compra" pendiente) —
+mientras el pedido está comprometido y la mercadería no se ha recepcionado, el stock
+queda en **negativo** (`Disponible`/`Físico` < 0).
+- Verificado con `COUNT(*) WHERE ST_FISICO<0`: **CAL = 1059 códigos negativos**,
+  **GO = 39 códigos negativos** (al 2026-06-27).
+- El filtro original `ISNULL(ST_FISICO,0) >= 1` ocultaba TODO ese stock negativo —
+  corregido a `ISNULL(ST_FISICO,0) <> 0` en `generar_bodegas_ir.py` para incluirlo.
+- En el HTML, Disp./Físico/Valorizado negativos se resaltan en rojo (clase `.neg`) y hay
+  un KPI "Stock negativo (s/recepción)" que cuenta cuántos códigos están en ese estado
+  dentro del filtro activo.
+- Limitación conocida: como el documento que "explica" un stock negativo suele ser una
+  **venta** (Factura/Boleta/Nota de venta), no una entrada, esos códigos seguirán
+  mostrando Tipo Doc. `s/d` (sin movimiento de entrada) — es esperado, no un error. Si se
+  necesita ver el documento de venta que generó el negativo, habría que ampliar
+  `generar_bodegas_ir.py` para también buscar en documentos de salida (NVC, FCV, BVN),
+  pendiente como mejora futura.
+
 ## Folio vacío en algunos tipos de documento (verificado, no es bug del script)
 Para tipos de documento internos de ajuste/traslado entre bodegas (**GIB, GEI, GII**, y a
 veces GME/GDV/Gdc) la columna `M_DOCUMENTOS_DETALLE.NUMERO` viene **0/vacía directamente

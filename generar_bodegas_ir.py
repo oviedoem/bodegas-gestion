@@ -94,7 +94,11 @@ LEFT JOIN Foviedo.dbo.M_Documentos_Encabezado_Observacion G
 LEFT JOIN Foviedo.dbo.M_DOCUMENTOS_ENCABEZADO ENC
     ON ENC.IDDOCUMENTO = N.IDDOCUMENTO AND ENC.IDNUMERO = N.IDNUMERO AND ENC.IDSUCURSAL = A.IDSUCURSAL
 WHERE A.IDBODEGA = ? AND A.IDSUCURSAL = ?
-  AND ISNULL(A.ST_FISICO,0) >= 1
+  AND ISNULL(A.ST_FISICO,0) <> 0
+  -- Incluye stock NEGATIVO a proposito (ver IDS_REFERENCIA_IR.md): en CAL/GO se vende
+  -- mercaderia que aun no llega de proveedor (Guia Recepcion Compra pendiente), lo que
+  -- deja Disponible/Fisico en negativo hasta que se reciba. Filtrar solo >=1 ocultaba
+  -- ese stock comprometido (caso reportado: 1059 codigos en CAL, 39 en GO).
 ORDER BY N.FECHA_EMISION DESC
 """
 

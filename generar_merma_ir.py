@@ -318,6 +318,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .mono{font-family:Consolas,monospace;white-space:nowrap}
   #count{font-size:12px;color:#6b7280;margin-left:auto}
   .d90{color:var(--rojo);font-weight:700}.d30{color:var(--amarillo);font-weight:600}
+  .neg{color:#fff;background:var(--rojo);font-weight:700;border-radius:4px;padding:2px 6px;display:inline-block}
   .tablewrap{overflow:auto;max-height:72vh;border:1px solid var(--border);border-radius:8px}
   .badge-na{color:#9ca3af;font-style:italic}
   .footer-note{font-size:11px;color:#9ca3af;text-align:center;padding:10px}
@@ -444,6 +445,13 @@ var VISTAS = {
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmt(n){ return Math.round(Number(n||0)).toLocaleString('es-CL'); }
 function clp(n){ return (Number(n||0)>0)?'$'+fmt(n):'—'; }
+// Resalta en rojo cualquier cantidad/valorizado negativo (stock comprometido sin recepcion).
+function numCell(n){ return (Number(n||0)<0) ? '<span class="neg">'+fmt(n)+'</span>' : fmt(n); }
+function clpCell(n){
+  var v=Number(n||0);
+  if(v<0) return '<span class="neg">-$'+fmt(Math.abs(v))+'</span>';
+  return clp(v);
+}
 function id(v,base){ return v+'_'+base; }
 function $(v,base){ return document.getElementById(id(v,base)); }
 
@@ -523,17 +531,19 @@ function render(v){
   var FIL = cfg.FIL;
   $(v,'count').textContent = FIL.length+' / '+cfg.REG.length+' códigos';
 
-  var totalVal=0, sinMov=0, maxDias=0;
+  var totalVal=0, sinMov=0, maxDias=0, stockNeg=0;
   FIL.forEach(function(r){
     var qty=(r.fisico!=null?r.fisico:r.disp)||0;
     totalVal += qty*(r.costo||0);
     if(!r.tipoDoc) sinMov++;
+    if((r.disp||0)<0 || (r.fisico||0)<0) stockNeg++;
     if((r.diasAntiguedad||0) > maxDias) maxDias = r.diasAntiguedad||0;
   });
   $(v,'kpis').innerHTML =
     '<div class="kpi"><div class="l">Códigos</div><div class="n">'+FIL.length+'</div></div>'+
     '<div class="kpi"><div class="l">Valorizado</div><div class="n">'+clp(totalVal)+'</div></div>'+
     '<div class="kpi red"><div class="l">Sin movimiento SQL</div><div class="n">'+sinMov+'</div></div>'+
+    '<div class="kpi red"><div class="l">Stock negativo (s/recepción)</div><div class="n">'+stockNeg+'</div></div>'+
     '<div class="kpi"><div class="l">Máx. días</div><div class="n">'+maxDias+'</div></div>';
 
   $(v,'tbody').innerHTML = FIL.map(function(r){
@@ -550,12 +560,12 @@ function render(v){
       '<td>'+esc(r.familia)+'</td>'+
       '<td>'+(sinDatos?'<span class="badge-na">s/d</span>':esc(r.tipoDocNombre||r.tipoDoc))+'</td>'+
       '<td class="right mono">'+(r.folio&&r.folio!=='0'?esc(r.folio):'<span class="badge-na">s/nº</span>')+'</td>'+
-      '<td class="right">'+fmt(r.disp)+'</td>'+
-      '<td class="right">'+fmt(r.fisico)+'</td>'+
+      '<td class="right">'+numCell(r.disp)+'</td>'+
+      '<td class="right">'+numCell(r.fisico)+'</td>'+
       '<td class="right">'+clp(r.costo)+'</td>'+
       '<td class="center">'+esc(r.fechaRegistro)+'</td>'+
       '<td class="right '+dcls+'">'+dias+'</td>'+
-      '<td class="right">'+clp(val)+'</td>'+
+      '<td class="right">'+clpCell(val)+'</td>'+
       '<td>'+esc(r.usuario)+'</td>'+
       '<td>'+esc(r.estacionPc)+'</td>'+
       '<td class="center">'+esc(r.fechaRegistroSistema)+'</td>'+
