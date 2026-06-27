@@ -27,3 +27,12 @@ Ver `.claude/skills/safe-change/SKILL.md` para el detalle completo. Resumen:
 - Si Windows Defender bloquea la ejecución de un script nuevo aquí, revisar exclusiones
   antes de reintentar (no desactivar Defender globalmente).
 - No subir nada de esta carpeta a git/repos compartidos sin revisión explícita del usuario.
+
+## Acceso al reporte público (Firebase — isabel-riquelme-merma)
+- El HTML público (GitHub Pages) exige login (Firebase Auth) y carga datos desde
+  Firestore — NUNCA volver a embeber datos crudos directamente en el HTML.
+- Proyecto Firebase propio (`isabel-riquelme-merma`), reglas Firestore `auth != null`.
+  Nunca mezclar con el proyecto Firebase de `ferreteria-oviedo`.
+- Usuario de login `riquelme`; la clave vive SOLO en
+  `_CREDENCIAL_LOGIN_NO_SUBIR.txt` (gitignored). Nunca teclear/imprimir esa clave en
+  ningún comando, archivo o respuesta — ver sección 5-6 de `.claude/skills/safe-change/SKILL.md`.

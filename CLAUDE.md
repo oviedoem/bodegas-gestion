@@ -17,21 +17,37 @@ Carpeta única de trabajo: `E:\ISABEL RIQUELME\`.
 - Credenciales SQL: se leen en solo-lectura desde `E:\ferreteria-oviedo\credenciales_db.ini`
   (NUNCA copiar el password a archivos de esta carpeta, NUNCA mostrarlo en HTML/JSON).
 
-## Script principal
-`generar_merma_ir.py` — lee códigos de `MERMA.xlsx`, consulta SQL (solo lectura) y genera:
-- `merma_isabel_riquelme.json` (datos crudos)
-- `MERMA_ISABEL_RIQUELME.html` (reporte visual, igual estructura que "Análisis de Bodegas"
-  del panel admin de El Manzano: bodega, tipo doc, folio, código, descripción, disp, físico,
-  costo, fecha registro, días antigüedad, valorizado, observación, **usuario** (IDRESPONZABLE/
-  AUTORIZADO_FIRMA/IDVENDEDOR de `M_DOCUMENTOS_ENCABEZADO`) y **estación/PC** (`ESTACION`).
+## Scripts principales
+- `generar_merma_ir.py` — lee códigos de `MERMA.xlsx`, consulta SQL (solo lectura, bodega
+  MIR=75) y genera `merma_isabel_riquelme.json` + `MERMA_ISABEL_RIQUELME.html`/`index.html`.
+- `generar_bodegas_ir.py` — igual pero para las otras 9 bodegas IR (CAL, SER, WEB, GO,
+  GAR, IIR, BMC, RST, HEL) en lotes de 2, genera `bodegas_ir_otras.json`.
 
-Para regenerar el reporte tras actualizar `MERMA.xlsx`:
+Para regenerar tras actualizar `MERMA.xlsx`:
 ```
 E:\python-portable\python.exe "E:\ISABEL RIQUELME\generar_merma_ir.py"
+E:\python-portable\python.exe "E:\ISABEL RIQUELME\generar_bodegas_ir.py"
 ```
 
+## Publicación y seguridad de acceso (Firebase — desde 2026-06-27)
+- Repo público: github.com/oviedoem/merma-isabel-riquelme · URL: https://oviedoem.github.io/merma-isabel-riquelme/
+- Proyecto Firebase **propio e independiente**: `isabel-riquelme-merma` (NUNCA reusar el
+  Firestore/Auth de `ferreteria-oviedo`).
+- El HTML publicado **ya no embebe los datos crudos**. Tiene pantalla de login (Firebase
+  Auth) y los datos (`merma`, `bodegas` collections) se cargan desde Firestore SOLO
+  después de iniciar sesión — reglas (`firestore.rules`): `allow read, write: if
+  request.auth != null`.
+- Usuario de login: `riquelme` (mapeado internamente a
+  `riquelme@isabel-riquelme-merma.local` para Firebase Auth). La clave es aleatoria,
+  generada por script — vive SOLO en `E:\ISABEL RIQUELME\_CREDENCIAL_LOGIN_NO_SUBIR.txt`
+  (excluido de git, nunca en texto plano en ningún commit/chat/log).
+- Para subir datos nuevos a Firestore tras regenerar los JSON: recrear un script puntual
+  (estilo `_subir_datos_firestore.py`, ya borrado tras su uso) que haga login como
+  `riquelme` leyendo la clave SOLO de ese `.txt` local, y escriba vía REST de Firestore.
+  Nunca imprimir la clave ni el idToken en ningún log/chat.
+
 ## Seguridad
-- Nunca dejar credenciales, IPs ni tokens visibles en HTML/JSON/commits de esta carpeta.
+- Nunca dejar credenciales SQL, IPs ni tokens visibles en HTML/JSON/commits de esta carpeta.
 - Revisar Windows Defender si bloquea pyodbc/scripts nuevos en esta carpeta.
 - VPN ya activa para acceso a SQL Server [SQL-SERVER-IP].
 
