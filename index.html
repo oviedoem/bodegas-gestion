@@ -277,7 +277,7 @@ function render(v){
       '<td>'+esc(r.marca)+'</td>'+
       '<td>'+esc(r.familia)+'</td>'+
       '<td>'+(sinDatos?'<span class="badge-na">s/d</span>':esc(r.tipoDocNombre||r.tipoDoc))+'</td>'+
-      '<td class="right mono">'+esc(r.folio)+'</td>'+
+      '<td class="right mono">'+(r.folio&&r.folio!=='0'?esc(r.folio):'<span class="badge-na">s/nº</span>')+'</td>'+
       '<td class="right">'+fmt(r.disp)+'</td>'+
       '<td class="right">'+fmt(r.fisico)+'</td>'+
       '<td class="right">'+clp(r.costo)+'</td>'+

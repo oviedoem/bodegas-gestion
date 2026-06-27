@@ -54,6 +54,15 @@ columnas en texto desde el ERP.)
 Archivo: `E:\ferreteria-oviedo\credenciales_db.ini` (solo lectura, NUNCA copiar el valor del
 password a esta carpeta). Driver: `{SQL Server}`, requiere `TrustServerCertificate=yes`.
 
+## Folio vacío en algunos tipos de documento (verificado, no es bug del script)
+Para tipos de documento internos de ajuste/traslado entre bodegas (**GIB, GEI, GII**, y a
+veces GME/GDV/Gdc) la columna `M_DOCUMENTOS_DETALLE.NUMERO` viene **0/vacía directamente
+desde el ERP** — solo `GRT` (Recepción Traslado) y `GRC` (Recepción Compra) traen folio
+real. Confirmado con consulta directa a `M_DOCUMENTOS_DETALLE` filtrando por código y
+bodega: las filas GET/GII/GEI/GIB tienen `NUMERO=0` mientras la fila GRT del mismo
+producto sí trae folio (ej. 99898). En el HTML se muestra `s/nº` en vez de un valor vacío
+o "0" para que quede claro que es un dato esperado, no un error de carga.
+
 ## Notas
 - No existe una tabla de "log de usuario+computador" separada — el dato de usuario/estación
   vive directamente en `M_DOCUMENTOS_ENCABEZADO` por cada documento (no hay trazabilidad a
