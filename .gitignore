@@ -1,0 +1,8 @@
+# Solo se publica el reporte de Merma Isabel Riquelme.
+# Se excluyen archivos de otros analisis/proyectos que no son parte de este entregable.
+ID DOC OVIEDO EM.xlsx
+Copia de Movimiento Stock.xlsx
+Protocolo de traslado de mercadería entre sucursales.docx
+__pycache__/
+*.pyc
+*.bak

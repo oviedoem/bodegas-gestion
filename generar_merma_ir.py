@@ -1,0 +1,511 @@
+"""
+generar_merma_ir.py
+Genera reporte HTML standalone de MERMA — Sucursal Isabel Riquelme (IDSUCURSAL='02',
+bodega MIR/IDBODEGA=75), replicando la logica de "Analisis de Bodegas" del panel admin
+de El Manzano (ver E:\\ferreteria-oviedo\\BODEGAS\\descargar_bod.py, solo lectura/referencia).
+
+SOLO LECTURA de SQL Server. NO escribe nada fuera de esta carpeta (E:\\ISABEL RIQUELME).
+Credenciales: se leen desde E:\\ferreteria-oviedo\\credenciales_db.ini (solo lectura,
+no se copia el valor a ningun archivo de salida).
+
+REGLA ANTI-RETROCESO: si la nueva descarga trae menos del 50% de los registros del
+JSON anterior, se ABORTA el sobrescrito y se conserva el reporte anterior intacto
+(evita que una falla SQL/Excel vacio borre el reporte bueno ya generado).
+"""
+import json
+import datetime
+import configparser
+import sys
+from pathlib import Path
+
+import openpyxl
+import pyodbc
+
+BASE_DIR   = Path(__file__).parent
+CRED_FILE  = Path(r"E:\ferreteria-oviedo\credenciales_db.ini")
+MERMA_XLSX = BASE_DIR / "MERMA.xlsx"
+OUT_JSON   = BASE_DIR / "merma_isabel_riquelme.json"
+OUT_HTML   = BASE_DIR / "MERMA_ISABEL_RIQUELME.html"
+LOGO_B64   = BASE_DIR / "_logo_oviedo_b64.txt"
+
+IDBODEGA   = 75     # MIR — Mermas Isabel Riquelme
+IDSUCURSAL = '02'   # Isabel Riquelme
+
+# Nombres completos de tipo de documento (Foviedo.dbo.M_DOCUMENTOS, verificado SQL 2026-06-27)
+DOC_NOMBRES = {
+    "GRT": "Guía Recepción Traslado",
+    "GIB": "Guía Ingreso Entre Bodegas",
+    "GII": "Guía Ingreso Inventario",
+    "GME": "Guía Elect. Despacho Factura",
+    "Gdc": "Guía Devolución Cliente",
+    "GRC": "Guía Recepción Compra",
+    "GTS": "Guía Traslados Entre Sucursales",
+    "GST": "Solicitud de Traslado",
+    "GEI": "Guía Egreso Inventario / Merma-Gestión",
+    "GDV": "Guía Despacho Venta",
+}
+
+SQL = """
+WITH ENTRADAS AS (
+    SELECT
+        E.IDBODEGA, E.CODIGO_TECNICO, E.IDSUCURSAL, E.IDDOCUMENTO, E.IDNUMERO,
+        E.NUMERO, E.FECHA_EMISION, E.CANTIDAD, MD.DOC
+    FROM Foviedo.dbo.M_DOCUMENTOS_DETALLE E
+    INNER JOIN Foviedo.dbo.M_DOCUMENTOS MD ON MD.IDDOCUMENTO = E.IDDOCUMENTO
+    WHERE E.IDBODEGA = ?
+      AND MD.DOC IN ('GRC','GRT','GME','GIB','Gdc','GBR','GRP','GRI','GRN','GIN','GDC','GDV','GII','GTS','GEI','GST')
+)
+SELECT DISTINCT
+    D.SIMBOLO_BODEGA                                       AS BODEGA,
+    N.DOC                                                  AS TIPO_DOC,
+    N.NUMERO                                               AS FOLIO,
+    A.CODIGO_TECNICO,
+    B.DESCRIPCION,
+    CAST(ISNULL(A.ST_FISICO,0)-ISNULL(A.ST_PEDIDO,0) AS DECIMAL(18,2))  AS STOCK_DISPONIBLE,
+    CAST(ISNULL(A.ST_FISICO,0)     AS DECIMAL(18,2))       AS STOCK_FISICO,
+    CAST(ISNULL(N.CANTIDAD,0)      AS DECIMAL(18,2))       AS CANTIDAD_DOC,
+    N.FECHA_EMISION,
+    ISNULL(G.OBSERVACION_IMPRESA,'')                       AS OBSERVACION_IMPRESA,
+    CAST(ISNULL(B.COSTO_PROMEDIO,0) AS DECIMAL(18,2))      AS COSTO_PROMEDIO,
+    ENC.FECHA_REGISTRO                                     AS FECHA_REGISTRO_SISTEMA,
+    ENC.IDRESPONZABLE                                      AS USUARIO_RESPONSABLE,
+    ENC.AUTORIZADO_FIRMA                                   AS USUARIO_FIRMA,
+    ENC.IDVENDEDOR                                         AS USUARIO_VENDEDOR,
+    ENC.ESTACION                                           AS ESTACION_PC
+FROM Foviedo.dbo.R_STOCK_PRODUCTOS A
+INNER JOIN Foviedo.dbo.M_PRODUCTOS B ON B.CODIGO_TECNICO = A.CODIGO_TECNICO
+INNER JOIN Foviedo.dbo.P_BODEGAS D ON A.IDBODEGA = D.IDBODEGA
+INNER JOIN ENTRADAS N
+    ON N.IDBODEGA = A.IDBODEGA AND N.CODIGO_TECNICO = A.CODIGO_TECNICO AND N.IDSUCURSAL = A.IDSUCURSAL
+LEFT JOIN Foviedo.dbo.M_Documentos_Encabezado_Observacion G
+    ON G.IDDOCUMENTO = N.IDDOCUMENTO AND G.IDNUMERO = N.IDNUMERO AND G.IDSUCURSAL = A.IDSUCURSAL
+LEFT JOIN Foviedo.dbo.M_DOCUMENTOS_ENCABEZADO ENC
+    ON ENC.IDDOCUMENTO = N.IDDOCUMENTO AND ENC.IDNUMERO = N.IDNUMERO AND ENC.IDSUCURSAL = A.IDSUCURSAL
+WHERE A.IDBODEGA = ? AND A.IDSUCURSAL = ?
+  AND A.CODIGO_TECNICO IN ({codigos})
+ORDER BY N.FECHA_EMISION DESC
+"""
+
+
+def log(msg):
+    print(msg, flush=True)
+
+
+def leer_codigos_merma():
+    wb = openpyxl.load_workbook(MERMA_XLSX)
+    ws = wb["Sheet 1"]
+    rows = list(ws.iter_rows(values_only=True))
+    codigos, meta = [], {}
+    for r in rows[1:]:
+        cod = r[4]
+        if not cod:
+            continue
+        cod = str(cod).strip()
+        codigos.append(cod)
+        meta[cod] = {
+            "stockDisponibleXls": r[10],
+            "stockUnidadesXls":   r[11],
+            "stockValorizadoXls": r[12],
+            "hiperfamilia": (r[6] or "").strip() if r[6] else "",
+            "familia":      (r[7] or "").strip() if r[7] else "",
+            "subfamilia":   (r[8] or "").strip() if r[8] else "",
+            "marca":        (r[9] or "").strip() if r[9] else "",
+        }
+    return sorted(set(codigos)), meta
+
+
+def leer_credenciales():
+    cfg = configparser.ConfigParser()
+    cfg.read(str(CRED_FILE), encoding="utf-8")
+    db = cfg["DB"]
+    return db["server"], db["database"], db["user"], db["password"]
+
+
+def conectar():
+    server, database, user, password = leer_credenciales()
+    return pyodbc.connect(
+        f"DRIVER={{SQL Server}};SERVER={server};DATABASE={database};"
+        f"UID={user};PWD={password};TrustServerCertificate=yes;", timeout=30
+    )
+
+
+def fecha_str(v):
+    if v is None:
+        return ""
+    return v.strftime("%d/%m/%Y") if hasattr(v, "strftime") else str(v)
+
+
+def fecha_iso(v):
+    if v is None or not hasattr(v, "date"):
+        return ""
+    return v.date().isoformat()
+
+
+def fecha_hora_str(v):
+    if v is None:
+        return ""
+    return v.strftime("%d/%m/%Y %H:%M:%S") if hasattr(v, "strftime") else str(v)
+
+
+def main():
+    if not CRED_FILE.exists():
+        log(f"[ERROR] No existe {CRED_FILE}")
+        sys.exit(1)
+
+    log("[1/5] Leyendo codigos desde MERMA.xlsx...")
+    codigos, meta_xls = leer_codigos_merma()
+    log(f"      {len(codigos)} codigos unicos encontrados")
+
+    log("[2/5] Conectando a SQL Server (solo lectura)...")
+    conn = conectar()
+    cur = conn.cursor()
+    log("      Conexion OK")
+
+    log("[3/5] Consultando movimientos bodega MIR (IDBODEGA=75, SUC=02)...")
+    placeholders = ",".join("?" for _ in codigos)
+    sql = SQL.format(codigos=placeholders)
+    cur.execute(sql, IDBODEGA, IDBODEGA, IDSUCURSAL, *codigos)
+
+    hoy = datetime.date.today()
+    registros = []
+    for row in cur.fetchall():
+        bodega, tipo_doc, folio, cod_tec, descripcion = (str(row[i] or "").strip() for i in range(5))
+        disp     = float(row[5] or 0)
+        fisico   = float(row[6] or 0)
+        cantidad = float(row[7] or 0)
+        fecha_reg = row[8]
+        obs       = str(row[9] or "").strip().replace("_x000D_", "").strip()
+        costo     = round(float(row[10] or 0))
+        fecha_sis = row[11]
+        usuario   = str(row[12] or row[13] or row[14] or "").strip()
+        estacion  = str(row[15] or "").strip()
+
+        dias = (hoy - fecha_reg.date()).days if fecha_reg and hasattr(fecha_reg, "date") else None
+
+        registros.append({
+            "bodega": bodega, "tipoDoc": tipo_doc,
+            "tipoDocNombre": DOC_NOMBRES.get(tipo_doc, tipo_doc),
+            "folio": folio, "codigoTecnico": cod_tec, "descripcion": descripcion,
+            "disp": disp, "fisico": fisico, "cantidad": cantidad, "costo": costo,
+            "fechaRegistro": fecha_str(fecha_reg), "fechaRegistroIso": fecha_iso(fecha_reg),
+            "diasAntiguedad": dias, "observacion": obs,
+            "usuario": usuario, "estacionPc": estacion,
+            "fechaRegistroSistema": fecha_hora_str(fecha_sis),
+        })
+    cur.close()
+    conn.close()
+    log(f"      {len(registros)} movimientos encontrados")
+
+    mas_reciente = {}
+    for r in registros:
+        cod = r["codigoTecnico"]
+        d = r["diasAntiguedad"] if r["diasAntiguedad"] is not None else 999999
+        prev = mas_reciente.get(cod)
+        if prev is None or d < (prev["diasAntiguedad"] if prev["diasAntiguedad"] is not None else 999999):
+            mas_reciente[cod] = r
+
+    final = []
+    for cod in codigos:
+        m = meta_xls.get(cod, {})
+        r = mas_reciente.get(cod)
+        if r:
+            r = dict(r)
+            r.update({k: v for k, v in m.items()})
+            final.append(r)
+        else:
+            final.append({
+                "bodega": "MIR", "tipoDoc": "", "tipoDocNombre": "", "folio": "",
+                "codigoTecnico": cod, "descripcion": "",
+                "disp": m.get("stockDisponibleXls") or 0, "fisico": m.get("stockUnidadesXls") or 0,
+                "cantidad": 0, "costo": 0, "fechaRegistro": "", "fechaRegistroIso": "",
+                "diasAntiguedad": None, "observacion": "(sin movimiento SQL encontrado)",
+                "usuario": "", "estacionPc": "", "fechaRegistroSistema": "", **m,
+            })
+
+    final.sort(key=lambda r: r.get("diasAntiguedad") if r.get("diasAntiguedad") is not None else -1, reverse=True)
+
+    # ── REGLA ANTI-RETROCESO ────────────────────────────────────────────────
+    if OUT_JSON.exists():
+        try:
+            anterior = json.loads(OUT_JSON.read_text(encoding="utf-8"))
+            total_ant = anterior.get("total", 0)
+            if total_ant > 0 and len(final) < total_ant * 0.5:
+                log(f"[ABORTADO] Nueva descarga trae {len(final)} registros vs {total_ant} anteriores "
+                    f"(caida >50%). Se conserva el reporte anterior por seguridad.")
+                sys.exit(1)
+        except Exception as e:
+            log(f"[AVISO] No se pudo leer JSON anterior para chequeo anti-retroceso: {e}")
+
+    log("[4/5] Generando JSON...")
+    data = {
+        "generado": hoy.isoformat(),
+        "fuente": "SQL Server Foviedo (solo lectura) + MERMA.xlsx",
+        "bodega": "MIR", "idBodega": IDBODEGA, "idSucursal": IDSUCURSAL,
+        "total": len(final), "registros": final,
+    }
+    OUT_JSON.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    log("[5/5] Generando HTML...")
+    generar_html(data)
+    log(f"[OK] {OUT_JSON.name}")
+    log(f"[OK] {OUT_HTML.name}")
+
+
+def generar_html(data):
+    json_inline = json.dumps(data, ensure_ascii=False)
+    logo_b64 = LOGO_B64.read_text(encoding="utf-8").strip() if LOGO_B64.exists() else ""
+    html = (HTML_TEMPLATE
+            .replace("__DATA_JSON__", json_inline)
+            .replace("__LOGO_B64__", logo_b64))
+    OUT_HTML.write_text(html, encoding="utf-8")
+
+
+HTML_TEMPLATE = r"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Merma — Sucursal Isabel Riquelme — Ferretería Oviedo</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+  :root{--naranja:#DA0000;--naranja2:#c93a08;--dark:#111827;--border:#e5e7eb;--gris:#6b7280;
+        --verde:#059669;--rojo:#dc2626;--amarillo:#d97706}
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;margin:0;padding:0;color:#1a1a1a}
+  .topbar{background:var(--dark);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:14px;
+          box-shadow:0 2px 8px rgba(0,0,0,.35)}
+  .topbar img{height:42px;width:auto;flex-shrink:0;border-radius:4px;background:#fff;padding:3px}
+  .topbar h1{font-size:16px;margin:0;font-weight:700}
+  .topbar .sub{font-size:11px;color:#cbd5e1;margin-top:2px}
+  .wrap{padding:18px 22px}
+  .card{background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-bottom:14px}
+  .sub{font-size:12px;color:var(--gris);margin-bottom:12px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .bar input,.bar select{font-size:12px;padding:6px 9px;border:1px solid var(--border);border-radius:6px;font-family:inherit}
+  .bar label{font-size:11px;font-weight:600;color:#374151;display:flex;align-items:center;gap:4px}
+  .btn{font-size:12px;font-weight:700;padding:7px 14px;border-radius:6px;border:none;cursor:pointer;
+       color:#fff;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+  .btn-excel{background:var(--verde)}.btn-excel:hover{background:#047857}
+  .btn-html{background:#2563eb}.btn-html:hover{background:#1d4ed8}
+  .btn-mail{background:var(--naranja)}.btn-mail:hover{background:var(--naranja2)}
+  .kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .kpi{background:#fef3c7;color:#92400e;border-radius:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.08);min-width:110px}
+  .kpi.red{background:#fee2e2;color:#991b1b}
+  .kpi .n{font-size:19px;font-weight:800}
+  .kpi .l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+  table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}
+  th{background:var(--dark);color:#fff;padding:8px 9px;text-align:left;position:sticky;top:0;white-space:nowrap;z-index:1}
+  td{padding:6px 9px;border-bottom:1px solid #eee;vertical-align:top}
+  tr:nth-child(even){background:#f9fafb}
+  .right{text-align:right}.center{text-align:center}
+  .obs{max-width:240px;color:#6b7280;font-size:11px;white-space:normal;word-break:break-word}
+  .desc{max-width:230px;white-space:normal;word-break:break-word}
+  .mono{font-family:Consolas,monospace;white-space:nowrap}
+  #count{font-size:12px;color:#6b7280;margin-left:auto}
+  .d90{color:var(--rojo);font-weight:700}.d30{color:var(--amarillo);font-weight:600}
+  .tablewrap{overflow:auto;max-height:72vh;border:1px solid var(--border);border-radius:8px}
+  .badge-na{color:#9ca3af;font-style:italic}
+  .footer-note{font-size:11px;color:#9ca3af;text-align:center;padding:10px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <img src="data:image/jpeg;base64,__LOGO_B64__" alt="Ferretería Oviedo">
+  <div>
+    <h1>Análisis de Merma — Sucursal Isabel Riquelme (Bodega MIR)</h1>
+    <div class="sub" id="meta"></div>
+  </div>
+</div>
+<div class="wrap">
+<div class="card">
+  <div class="bar">
+    <input type="text" id="qBuscar" placeholder="Código o descripción" oninput="render()" style="width:200px">
+    <select id="qTipoDoc" onchange="render()"><option value="">Todos los tipos de documento</option></select>
+    <select id="qUsuario" onchange="render()"><option value="">Todos los usuarios</option></select>
+    <select id="qFamilia" onchange="render()"><option value="">Todas las familias</option></select>
+    <select id="qMarca" onchange="render()"><option value="">Todas las marcas</option></select>
+    <label>Días ≥ <input type="number" id="qDiasMin" style="width:55px" oninput="render()"></label>
+    <label>Días ≤ <input type="number" id="qDiasMax" style="width:55px" oninput="render()"></label>
+    <label>Desde <input type="date" id="qFechaDesde" oninput="render()"></label>
+    <label>Hasta <input type="date" id="qFechaHasta" oninput="render()"></label>
+  </div>
+  <div class="bar">
+    <button class="btn btn-excel" onclick="exportarExcel()">📊 Descargar Excel</button>
+    <button class="btn btn-html" onclick="exportarHtml()">🌐 Descargar HTML</button>
+    <button class="btn btn-mail" onclick="enviarCorreo()">✉️ Enviar por correo</button>
+    <span id="count"></span>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="tablewrap">
+  <table id="tablaMerma">
+    <thead><tr>
+      <th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th>
+      <th>Tipo Doc.</th><th class="right">Folio</th>
+      <th class="right">Disp.</th><th class="right">Físico</th><th class="right">Costo unit.</th>
+      <th class="center">Fecha Reg.</th><th class="right">Días</th><th class="right">Valorizado</th>
+      <th>Usuario</th><th>Estación / PC</th><th class="center">Fecha registro sistema</th><th>Observación</th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  </div>
+  <div class="footer-note">Ferretería Oviedo El Manzano · Reporte generado localmente desde SQL Server (solo lectura) — no contiene credenciales</div>
+</div>
+</div>
+<script>
+var DATA = __DATA_JSON__;
+var REG = DATA.registros;
+document.getElementById('meta').textContent =
+  'Generado: '+DATA.generado+' · Fuente: '+DATA.fuente+' · Total códigos: '+DATA.total;
+
+function fillSelect(id, valores){
+  var sel=document.getElementById(id);
+  valores.sort().forEach(function(v){
+    var o=document.createElement('option'); o.value=v; o.textContent=v;
+    sel.appendChild(o);
+  });
+}
+fillSelect('qTipoDoc', Array.from(new Set(REG.filter(r=>r.tipoDocNombre).map(r=>r.tipoDocNombre))));
+fillSelect('qUsuario', Array.from(new Set(REG.filter(r=>r.usuario).map(r=>r.usuario))));
+fillSelect('qFamilia', Array.from(new Set(REG.filter(r=>r.familia).map(r=>r.familia))));
+fillSelect('qMarca',   Array.from(new Set(REG.filter(r=>r.marca).map(r=>r.marca))));
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt(n){ return Math.round(Number(n||0)).toLocaleString('es-CL'); }
+function clp(n){ return (Number(n||0)>0)?'$'+fmt(n):'—'; }
+
+function filtrar(){
+  var buscar=(document.getElementById('qBuscar').value||'').toLowerCase();
+  var tipoDoc=document.getElementById('qTipoDoc').value;
+  var usuario=document.getElementById('qUsuario').value;
+  var familia=document.getElementById('qFamilia').value;
+  var marca=document.getElementById('qMarca').value;
+  var dMin=parseInt(document.getElementById('qDiasMin').value); if(isNaN(dMin)) dMin=-Infinity;
+  var dMax=parseInt(document.getElementById('qDiasMax').value); if(isNaN(dMax)) dMax=Infinity;
+  var fDesde=document.getElementById('qFechaDesde').value;
+  var fHasta=document.getElementById('qFechaHasta').value;
+
+  return REG.filter(function(r){
+    if(tipoDoc && r.tipoDocNombre!==tipoDoc) return false;
+    if(usuario && r.usuario!==usuario) return false;
+    if(familia && r.familia!==familia) return false;
+    if(marca && r.marca!==marca) return false;
+    var d = (r.diasAntiguedad!=null)?r.diasAntiguedad:Infinity;
+    if(d<dMin||d>dMax) return false;
+    if(fDesde && (!r.fechaRegistroIso || r.fechaRegistroIso<fDesde)) return false;
+    if(fHasta && (!r.fechaRegistroIso || r.fechaRegistroIso>fHasta)) return false;
+    if(buscar && (r.codigoTecnico||'').toLowerCase().indexOf(buscar)<0 && (r.descripcion||'').toLowerCase().indexOf(buscar)<0) return false;
+    return true;
+  });
+}
+
+var FIL = [];
+
+function render(){
+  FIL = filtrar();
+  document.getElementById('count').textContent = FIL.length+' / '+REG.length+' códigos';
+
+  var totalVal=0, sinMov=0, maxDias=0;
+  FIL.forEach(function(r){
+    var qty=(r.fisico!=null?r.fisico:r.disp)||0;
+    totalVal += qty*(r.costo||0);
+    if(!r.tipoDoc) sinMov++;
+    if((r.diasAntiguedad||0) > maxDias) maxDias = r.diasAntiguedad||0;
+  });
+  document.getElementById('kpis').innerHTML =
+    '<div class="kpi"><div class="l">Códigos</div><div class="n">'+FIL.length+'</div></div>'+
+    '<div class="kpi"><div class="l">Valorizado</div><div class="n">'+clp(totalVal)+'</div></div>'+
+    '<div class="kpi red"><div class="l">Sin movimiento SQL</div><div class="n">'+sinMov+'</div></div>'+
+    '<div class="kpi"><div class="l">Máx. días</div><div class="n">'+maxDias+'</div></div>';
+
+  document.getElementById('tbody').innerHTML = FIL.map(function(r){
+    var dias = r.diasAntiguedad!=null? r.diasAntiguedad : '—';
+    var dcls = (typeof dias==='number')? (dias>=90?'d90':dias>=30?'d30':'') : '';
+    var qty = (r.fisico!=null?r.fisico:r.disp)||0;
+    var val = qty*(r.costo||0);
+    var sinDatos = !r.tipoDoc;
+    return '<tr>'+
+      '<td class="mono">'+esc(r.codigoTecnico)+'</td>'+
+      '<td class="desc">'+esc(r.descripcion)+'</td>'+
+      '<td>'+esc(r.marca)+'</td>'+
+      '<td>'+esc(r.familia)+'</td>'+
+      '<td>'+(sinDatos?'<span class="badge-na">s/d</span>':esc(r.tipoDocNombre||r.tipoDoc))+'</td>'+
+      '<td class="right mono">'+esc(r.folio)+'</td>'+
+      '<td class="right">'+fmt(r.disp)+'</td>'+
+      '<td class="right">'+fmt(r.fisico)+'</td>'+
+      '<td class="right">'+clp(r.costo)+'</td>'+
+      '<td class="center">'+esc(r.fechaRegistro)+'</td>'+
+      '<td class="right '+dcls+'">'+dias+'</td>'+
+      '<td class="right">'+clp(val)+'</td>'+
+      '<td>'+esc(r.usuario)+'</td>'+
+      '<td>'+esc(r.estacionPc)+'</td>'+
+      '<td class="center">'+esc(r.fechaRegistroSistema)+'</td>'+
+      '<td class="obs">'+esc(r.observacion)+'</td>'+
+      '</tr>';
+  }).join('');
+}
+
+var HEADERS = ['Código','Descripción','Marca','Familia','Tipo Doc.','Folio','Disp.','Físico',
+  'Costo unit.','Fecha Reg.','Días','Valorizado','Usuario','Estación / PC','Fecha registro sistema','Observación'];
+
+function filaArray(r){
+  var qty=(r.fisico!=null?r.fisico:r.disp)||0;
+  return [r.codigoTecnico, r.descripcion, r.marca||'', r.familia||'',
+    r.tipoDocNombre||r.tipoDoc||'s/d', r.folio||'', r.disp||0, r.fisico||0,
+    Math.round(r.costo||0), r.fechaRegistro||'', r.diasAntiguedad!=null?r.diasAntiguedad:'',
+    Math.round(qty*(r.costo||0)), r.usuario||'', r.estacionPc||'', r.fechaRegistroSistema||'', r.observacion||''];
+}
+
+// Los botones de descarga/correo SIEMPRE usan FIL (lo que el usuario ve filtrado en pantalla).
+function exportarExcel(){
+  if(!FIL.length){ alert('No hay datos para exportar con el filtro actual.'); return; }
+  var rows=[HEADERS].concat(FIL.map(filaArray));
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Merma IR');
+  XLSX.writeFile(wb,'Merma_Isabel_Riquelme_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function exportarHtml(){
+  if(!FIL.length){ alert('No hay datos para exportar con el filtro actual.'); return; }
+  var thead='<tr>'+HEADERS.map(function(h){return '<th style="background:#111827;color:#fff;padding:6px 8px;text-align:left">'+esc(h)+'</th>';}).join('')+'</tr>';
+  var tbody=FIL.map(function(r){
+    return '<tr>'+filaArray(r).map(function(v){return '<td style="padding:5px 8px;border-bottom:1px solid #eee">'+esc(v)+'</td>';}).join('')+'</tr>';
+  }).join('');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Merma Isabel Riquelme</title></head>'+
+    '<body><h2>Análisis de Merma — Sucursal Isabel Riquelme</h2>'+
+    '<p style="font-size:12px;color:#666">Exportado: '+new Date().toLocaleString('es-CL')+' · '+FIL.length+' registros</p>'+
+    '<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px"><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table></body></html>';
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='Merma_Isabel_Riquelme_'+new Date().toISOString().slice(0,10)+'.html';
+  a.click();
+}
+
+function enviarCorreo(){
+  if(!FIL.length){ alert('No hay datos para enviar con el filtro actual.'); return; }
+  var totalVal=FIL.reduce(function(s,r){var qty=(r.fisico!=null?r.fisico:r.disp)||0; return s+qty*(r.costo||0);},0);
+  var asunto='Merma Sucursal Isabel Riquelme — '+FIL.length+' códigos';
+  var cuerpo='ANÁLISIS DE MERMA — SUCURSAL ISABEL RIQUELME (Bodega MIR)\n'+
+    'Generado: '+DATA.generado+'\n'+
+    'Códigos filtrados: '+FIL.length+' / '+REG.length+'\n'+
+    'Valorizado total: $'+fmt(totalVal)+'\n\n'+
+    'Detalle (primeros 40):\n'+
+    FIL.slice(0,40).map(function(r,i){
+      return (i+1)+'. '+r.codigoTecnico+' — '+(r.descripcion||'').substring(0,50)+' | '+
+        (r.tipoDocNombre||r.tipoDoc||'s/d')+' | '+r.diasAntiguedad+' dias | $'+fmt((r.fisico||r.disp||0)*(r.costo||0))+
+        ' | '+(r.usuario||'-')+' / '+(r.estacionPc||'-');
+    }).join('\n')+
+    (FIL.length>40?'\n... y '+(FIL.length-40)+' más (ver Excel adjunto descargado aparte).':'')+
+    '\n\n--- Generado desde reporte local Ferretería Oviedo ---';
+  var mailto='mailto:?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
+  window.open(mailto,'_self');
+}
+
+render();
+</script>
+</body>
+</html>
+"""
+
+if __name__ == "__main__":
+    main()
