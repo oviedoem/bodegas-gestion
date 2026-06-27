@@ -239,7 +239,7 @@ def main():
     log("[4/5] Generando JSON...")
     data = {
         "generado": hoy.isoformat(),
-        "fuente": "SQL Server Foviedo (solo lectura) + MERMA.xlsx",
+        "fuente": "Sistema interno + MERMA.xlsx",
         "bodega": "MIR", "idBodega": IDBODEGA, "idSucursal": IDSUCURSAL,
         "total": len(final), "registros": final,
     }
