@@ -21,12 +21,13 @@ from pathlib import Path
 import openpyxl
 import pyodbc
 
-BASE_DIR   = Path(__file__).parent
-CRED_FILE  = Path(r"E:\ferreteria-oviedo\credenciales_db.ini")
-MERMA_XLSX = BASE_DIR / "MERMA.xlsx"
-OUT_JSON   = BASE_DIR / "merma_isabel_riquelme.json"
-OUT_HTML   = BASE_DIR / "MERMA_ISABEL_RIQUELME.html"
-LOGO_B64   = BASE_DIR / "_logo_oviedo_b64.txt"
+BASE_DIR     = Path(__file__).parent
+CRED_FILE    = Path(r"E:\ferreteria-oviedo\credenciales_db.ini")
+MERMA_XLSX   = BASE_DIR / "MERMA.xlsx"
+OUT_JSON     = BASE_DIR / "merma_isabel_riquelme.json"
+OUT_HTML     = BASE_DIR / "MERMA_ISABEL_RIQUELME.html"
+LOGO_B64     = BASE_DIR / "_logo_oviedo_b64.txt"
+BODEGAS_JSON = BASE_DIR / "bodegas_ir_otras.json"  # generado por generar_bodegas_ir.py (menu "Otras Bodegas")
 
 IDBODEGA   = 75     # MIR — Mermas Isabel Riquelme
 IDSUCURSAL = '02'   # Isabel Riquelme
@@ -254,8 +255,17 @@ def main():
 def generar_html(data):
     json_inline = json.dumps(data, ensure_ascii=False)
     logo_b64 = LOGO_B64.read_text(encoding="utf-8").strip() if LOGO_B64.exists() else ""
+
+    if BODEGAS_JSON.exists():
+        data2 = json.loads(BODEGAS_JSON.read_text(encoding="utf-8"))
+    else:
+        data2 = {"generado": "", "fuente": "Sistema interno", "total": 0, "registros": [],
+                  "bodegasIncluidas": []}
+    json2_inline = json.dumps(data2, ensure_ascii=False)
+
     html = (HTML_TEMPLATE
             .replace("__DATA_JSON__", json_inline)
+            .replace("__DATA2_JSON__", json2_inline)
             .replace("__LOGO_B64__", logo_b64))
     OUT_HTML.write_text(html, encoding="utf-8")
 
@@ -311,39 +321,54 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .tablewrap{overflow:auto;max-height:72vh;border:1px solid var(--border);border-radius:8px}
   .badge-na{color:#9ca3af;font-style:italic}
   .footer-note{font-size:11px;color:#9ca3af;text-align:center;padding:10px}
+  .tabs{display:flex;gap:6px;padding:0 22px;background:var(--dark)}
+  .tab-btn{font-size:13px;font-weight:700;color:#cbd5e1;background:#1f2937;border:none;border-bottom:3px solid transparent;
+           padding:10px 18px;cursor:pointer;font-family:inherit}
+  .tab-btn.active{color:#fff;background:#2a3142;border-bottom-color:var(--naranja)}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+  .chk-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;background:#f9fafb;border:1px solid var(--border);
+           border-radius:8px;padding:9px 12px}
+  .chk-row label{font-size:12px;font-weight:600;color:#374151;display:flex;align-items:center;gap:5px;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="topbar">
   <img src="data:image/jpeg;base64,__LOGO_B64__" alt="Ferretería Oviedo">
   <div>
-    <h1>Análisis de Merma — Sucursal Isabel Riquelme (Bodega MIR)</h1>
-    <div class="sub" id="meta"></div>
+    <h1>Análisis Sucursal Isabel Riquelme — Ferretería Oviedo</h1>
+    <div class="sub">Reportes generados desde sistema interno (solo lectura) — sin credenciales</div>
   </div>
 </div>
+<div class="tabs">
+  <button class="tab-btn active" id="tabBtn_merma" onclick="cambiarTab('merma')">📦 Merma (Bodega MIR)</button>
+  <button class="tab-btn" id="tabBtn_bodegas" onclick="cambiarTab('bodegas')">🏬 Otras Bodegas</button>
+</div>
 <div class="wrap">
-<div class="card">
+
+<div class="card tab-panel active" id="panel_merma">
+  <div class="sub" id="meta_merma"></div>
   <div class="bar">
-    <input type="text" id="qBuscar" placeholder="Código o descripción" oninput="render()" style="width:200px">
-    <select id="qTipoDoc" onchange="render()"><option value="">Todos los tipos de documento</option></select>
-    <select id="qUsuario" onchange="render()"><option value="">Todos los usuarios</option></select>
-    <select id="qFamilia" onchange="render()"><option value="">Todas las familias</option></select>
-    <select id="qMarca" onchange="render()"><option value="">Todas las marcas</option></select>
-    <label>Días ≥ <input type="number" id="qDiasMin" style="width:55px" oninput="render()"></label>
-    <label>Días ≤ <input type="number" id="qDiasMax" style="width:55px" oninput="render()"></label>
-    <label>Desde <input type="date" id="qFechaDesde" oninput="render()"></label>
-    <label>Hasta <input type="date" id="qFechaHasta" oninput="render()"></label>
+    <input type="text" id="merma_qBuscar" placeholder="Código o descripción" oninput="render('merma')" style="width:200px">
+    <select id="merma_qTipoDoc" onchange="render('merma')"><option value="">Todos los tipos de documento</option></select>
+    <select id="merma_qUsuario" onchange="render('merma')"><option value="">Todos los usuarios</option></select>
+    <select id="merma_qFamilia" onchange="render('merma')"><option value="">Todas las familias</option></select>
+    <select id="merma_qMarca" onchange="render('merma')"><option value="">Todas las marcas</option></select>
+    <label>Días ≥ <input type="number" id="merma_qDiasMin" style="width:55px" oninput="render('merma')"></label>
+    <label>Días ≤ <input type="number" id="merma_qDiasMax" style="width:55px" oninput="render('merma')"></label>
+    <label>Desde <input type="date" id="merma_qFechaDesde" oninput="render('merma')"></label>
+    <label>Hasta <input type="date" id="merma_qFechaHasta" oninput="render('merma')"></label>
   </div>
   <div class="bar">
-    <button class="btn btn-excel" onclick="exportarExcel()">📊 Descargar Excel</button>
-    <button class="btn btn-html" onclick="exportarHtml()">🌐 Descargar HTML</button>
-    <button class="btn btn-mail" onclick="enviarCorreo()">✉️ Enviar por correo</button>
-    <span id="count"></span>
+    <button class="btn btn-excel" onclick="exportarExcel('merma')">📊 Descargar Excel</button>
+    <button class="btn btn-html" onclick="exportarHtml('merma')">🌐 Descargar HTML</button>
+    <button class="btn btn-mail" onclick="enviarCorreo('merma')">✉️ Enviar por correo</button>
+    <span id="merma_count"></span>
   </div>
-  <div class="kpis" id="kpis"></div>
+  <div class="kpis" id="merma_kpis"></div>
   <div class="scroll-hint">👉 Desliza la tabla horizontalmente (barra naranja abajo) para ver Estación/PC, Fecha registro sistema y Observación</div>
   <div class="tablewrap">
-  <table id="tablaMerma">
+  <table>
     <colgroup>
       <col style="width:80px"><col style="width:220px"><col style="width:90px"><col style="width:95px">
       <col style="width:130px"><col style="width:70px">
@@ -358,46 +383,127 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <th class="center">Fecha Reg.</th><th class="right">Días</th><th class="right">Valorizado</th>
       <th>Usuario</th><th>Estación / PC</th><th class="center">Fecha registro sistema</th><th>Observación</th>
     </tr></thead>
-    <tbody id="tbody"></tbody>
+    <tbody id="merma_tbody"></tbody>
   </table>
   </div>
   <div class="footer-note">Ferretería Oviedo El Manzano · Reporte generado desde sistema interno — no contiene credenciales</div>
 </div>
+
+<div class="card tab-panel" id="panel_bodegas">
+  <div class="sub" id="meta_bodegas"></div>
+  <div class="chk-row" id="bodegas_chkBodegas"></div>
+  <div class="bar">
+    <input type="text" id="bodegas_qBuscar" placeholder="Código o descripción" oninput="render('bodegas')" style="width:200px">
+    <select id="bodegas_qTipoDoc" onchange="render('bodegas')"><option value="">Todos los tipos de documento</option></select>
+    <select id="bodegas_qUsuario" onchange="render('bodegas')"><option value="">Todos los usuarios</option></select>
+    <select id="bodegas_qFamilia" onchange="render('bodegas')"><option value="">Todas las familias</option></select>
+    <select id="bodegas_qMarca" onchange="render('bodegas')"><option value="">Todas las marcas</option></select>
+    <label>Días ≥ <input type="number" id="bodegas_qDiasMin" style="width:55px" oninput="render('bodegas')"></label>
+    <label>Días ≤ <input type="number" id="bodegas_qDiasMax" style="width:55px" oninput="render('bodegas')"></label>
+    <label>Desde <input type="date" id="bodegas_qFechaDesde" oninput="render('bodegas')"></label>
+    <label>Hasta <input type="date" id="bodegas_qFechaHasta" oninput="render('bodegas')"></label>
+  </div>
+  <div class="bar">
+    <button class="btn btn-excel" onclick="exportarExcel('bodegas')">📊 Descargar Excel</button>
+    <button class="btn btn-html" onclick="exportarHtml('bodegas')">🌐 Descargar HTML</button>
+    <button class="btn btn-mail" onclick="enviarCorreo('bodegas')">✉️ Enviar por correo</button>
+    <span id="bodegas_count"></span>
+  </div>
+  <div class="kpis" id="bodegas_kpis"></div>
+  <div class="scroll-hint">👉 Desliza la tabla horizontalmente (barra naranja abajo) para ver Estación/PC, Fecha registro sistema y Observación</div>
+  <div class="tablewrap">
+  <table>
+    <colgroup>
+      <col style="width:60px"><col style="width:80px"><col style="width:220px"><col style="width:90px"><col style="width:95px">
+      <col style="width:130px"><col style="width:70px">
+      <col style="width:55px"><col style="width:55px"><col style="width:80px">
+      <col style="width:80px"><col style="width:50px"><col style="width:90px">
+      <col style="width:90px"><col style="width:100px"><col style="width:120px"><col style="width:220px">
+    </colgroup>
+    <thead><tr>
+      <th>Bodega</th><th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th>
+      <th>Tipo Doc.</th><th class="right">Folio</th>
+      <th class="right">Disp.</th><th class="right">Físico</th><th class="right">Costo unit.</th>
+      <th class="center">Fecha Reg.</th><th class="right">Días</th><th class="right">Valorizado</th>
+      <th>Usuario</th><th>Estación / PC</th><th class="center">Fecha registro sistema</th><th>Observación</th>
+    </tr></thead>
+    <tbody id="bodegas_tbody"></tbody>
+  </table>
+  </div>
+  <div class="footer-note">Ferretería Oviedo El Manzano · Reporte generado desde sistema interno — no contiene credenciales</div>
+</div>
+
 </div>
 <script>
-var DATA = __DATA_JSON__;
-var REG = DATA.registros;
-document.getElementById('meta').textContent =
-  'Generado: '+DATA.generado+' · Fuente: '+DATA.fuente+' · Total códigos: '+DATA.total;
-
-function fillSelect(id, valores){
-  var sel=document.getElementById(id);
-  valores.sort().forEach(function(v){
-    var o=document.createElement('option'); o.value=v; o.textContent=v;
-    sel.appendChild(o);
-  });
-}
-fillSelect('qTipoDoc', Array.from(new Set(REG.filter(r=>r.tipoDocNombre).map(r=>r.tipoDocNombre))));
-fillSelect('qUsuario', Array.from(new Set(REG.filter(r=>r.usuario).map(r=>r.usuario))));
-fillSelect('qFamilia', Array.from(new Set(REG.filter(r=>r.familia).map(r=>r.familia))));
-fillSelect('qMarca',   Array.from(new Set(REG.filter(r=>r.marca).map(r=>r.marca))));
+// ── Datasets (uno por pestaña) ──────────────────────────────────────────────
+var VISTAS = {
+  merma:   { DATA: __DATA_JSON__,  conBodega:false, label:'Merma IR' },
+  bodegas: { DATA: __DATA2_JSON__, conBodega:true,  label:'Otras Bodegas IR' }
+};
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmt(n){ return Math.round(Number(n||0)).toLocaleString('es-CL'); }
 function clp(n){ return (Number(n||0)>0)?'$'+fmt(n):'—'; }
+function id(v,base){ return v+'_'+base; }
+function $(v,base){ return document.getElementById(id(v,base)); }
 
-function filtrar(){
-  var buscar=(document.getElementById('qBuscar').value||'').toLowerCase();
-  var tipoDoc=document.getElementById('qTipoDoc').value;
-  var usuario=document.getElementById('qUsuario').value;
-  var familia=document.getElementById('qFamilia').value;
-  var marca=document.getElementById('qMarca').value;
-  var dMin=parseInt(document.getElementById('qDiasMin').value); if(isNaN(dMin)) dMin=-Infinity;
-  var dMax=parseInt(document.getElementById('qDiasMax').value); if(isNaN(dMax)) dMax=Infinity;
-  var fDesde=document.getElementById('qFechaDesde').value;
-  var fHasta=document.getElementById('qFechaHasta').value;
+function fillSelect(v, base, valores){
+  var sel=$(v,base);
+  valores.sort().forEach(function(x){
+    var o=document.createElement('option'); o.value=x; o.textContent=x;
+    sel.appendChild(o);
+  });
+}
 
-  return REG.filter(function(r){
+function cambiarTab(v){
+  Object.keys(VISTAS).forEach(function(k){
+    document.getElementById('panel_'+k).classList.toggle('active', k===v);
+    document.getElementById('tabBtn_'+k).classList.toggle('active', k===v);
+  });
+}
+
+Object.keys(VISTAS).forEach(function(v){
+  var cfg = VISTAS[v];
+  var REG = cfg.DATA.registros || [];
+  cfg.REG = REG; cfg.FIL = [];
+
+  document.getElementById('meta_'+v).textContent =
+    'Generado: '+(cfg.DATA.generado||'—')+' · Fuente: '+(cfg.DATA.fuente||'—')+' · Total códigos: '+cfg.DATA.total;
+
+  fillSelect(v,'qTipoDoc', Array.from(new Set(REG.filter(r=>r.tipoDocNombre).map(r=>r.tipoDocNombre))));
+  fillSelect(v,'qUsuario', Array.from(new Set(REG.filter(r=>r.usuario).map(r=>r.usuario))));
+  fillSelect(v,'qFamilia', Array.from(new Set(REG.filter(r=>r.familia).map(r=>r.familia))));
+  fillSelect(v,'qMarca',   Array.from(new Set(REG.filter(r=>r.marca).map(r=>r.marca))));
+
+  if(cfg.conBodega){
+    var bods = (cfg.DATA.bodegasIncluidas||[]);
+    var cont = document.getElementById('bodegas_chkBodegas');
+    cont.innerHTML = bods.map(function(b){
+      return '<label><input type="checkbox" class="bodegaChk" value="'+esc(b.simbolo)+'" checked onchange="render(&#39;bodegas&#39;)">'+
+        esc(b.simbolo)+' — '+esc(b.nombre)+'</label>';
+    }).join('');
+  }
+});
+
+function bodegasSeleccionadas(){
+  return Array.from(document.querySelectorAll('.bodegaChk:checked')).map(function(c){return c.value;});
+}
+
+function filtrar(v){
+  var cfg=VISTAS[v];
+  var buscar=($(v,'qBuscar').value||'').toLowerCase();
+  var tipoDoc=$(v,'qTipoDoc').value;
+  var usuario=$(v,'qUsuario').value;
+  var familia=$(v,'qFamilia').value;
+  var marca=$(v,'qMarca').value;
+  var dMin=parseInt($(v,'qDiasMin').value); if(isNaN(dMin)) dMin=-Infinity;
+  var dMax=parseInt($(v,'qDiasMax').value); if(isNaN(dMax)) dMax=Infinity;
+  var fDesde=$(v,'qFechaDesde').value;
+  var fHasta=$(v,'qFechaHasta').value;
+  var bodSel = cfg.conBodega ? bodegasSeleccionadas() : null;
+
+  return cfg.REG.filter(function(r){
+    if(bodSel && bodSel.indexOf(r.bodega)<0) return false;
     if(tipoDoc && r.tipoDocNombre!==tipoDoc) return false;
     if(usuario && r.usuario!==usuario) return false;
     if(familia && r.familia!==familia) return false;
@@ -411,11 +517,11 @@ function filtrar(){
   });
 }
 
-var FIL = [];
-
-function render(){
-  FIL = filtrar();
-  document.getElementById('count').textContent = FIL.length+' / '+REG.length+' códigos';
+function render(v){
+  var cfg=VISTAS[v];
+  cfg.FIL = filtrar(v);
+  var FIL = cfg.FIL;
+  $(v,'count').textContent = FIL.length+' / '+cfg.REG.length+' códigos';
 
   var totalVal=0, sinMov=0, maxDias=0;
   FIL.forEach(function(r){
@@ -424,19 +530,20 @@ function render(){
     if(!r.tipoDoc) sinMov++;
     if((r.diasAntiguedad||0) > maxDias) maxDias = r.diasAntiguedad||0;
   });
-  document.getElementById('kpis').innerHTML =
+  $(v,'kpis').innerHTML =
     '<div class="kpi"><div class="l">Códigos</div><div class="n">'+FIL.length+'</div></div>'+
     '<div class="kpi"><div class="l">Valorizado</div><div class="n">'+clp(totalVal)+'</div></div>'+
     '<div class="kpi red"><div class="l">Sin movimiento SQL</div><div class="n">'+sinMov+'</div></div>'+
     '<div class="kpi"><div class="l">Máx. días</div><div class="n">'+maxDias+'</div></div>';
 
-  document.getElementById('tbody').innerHTML = FIL.map(function(r){
+  $(v,'tbody').innerHTML = FIL.map(function(r){
     var dias = r.diasAntiguedad!=null? r.diasAntiguedad : '—';
     var dcls = (typeof dias==='number')? (dias>=90?'d90':dias>=30?'d30':'') : '';
     var qty = (r.fisico!=null?r.fisico:r.disp)||0;
     var val = qty*(r.costo||0);
     var sinDatos = !r.tipoDoc;
-    return '<tr>'+
+    var bodCell = cfg.conBodega ? ('<td class="mono">'+esc(r.bodega)+'</td>') : '';
+    return '<tr>'+bodCell+
       '<td class="mono">'+esc(r.codigoTecnico)+'</td>'+
       '<td class="desc">'+esc(r.descripcion)+'</td>'+
       '<td>'+esc(r.marca)+'</td>'+
@@ -457,55 +564,64 @@ function render(){
   }).join('');
 }
 
-var HEADERS = ['Código','Descripción','Marca','Familia','Tipo Doc.','Folio','Disp.','Físico',
+var HEADERS_BASE = ['Código','Descripción','Marca','Familia','Tipo Doc.','Folio','Disp.','Físico',
   'Costo unit.','Fecha Reg.','Días','Valorizado','Usuario','Estación / PC','Fecha registro sistema','Observación'];
 
-function filaArray(r){
+function headers(v){
+  return VISTAS[v].conBodega ? ['Bodega'].concat(HEADERS_BASE) : HEADERS_BASE;
+}
+
+function filaArray(v, r){
   var qty=(r.fisico!=null?r.fisico:r.disp)||0;
-  return [r.codigoTecnico, r.descripcion, r.marca||'', r.familia||'',
+  var base = [r.codigoTecnico, r.descripcion, r.marca||'', r.familia||'',
     r.tipoDocNombre||r.tipoDoc||'s/d', r.folio||'', r.disp||0, r.fisico||0,
     Math.round(r.costo||0), r.fechaRegistro||'', r.diasAntiguedad!=null?r.diasAntiguedad:'',
     Math.round(qty*(r.costo||0)), r.usuario||'', r.estacionPc||'', r.fechaRegistroSistema||'', r.observacion||''];
+  return VISTAS[v].conBodega ? [r.bodega].concat(base) : base;
 }
 
-// Los botones de descarga/correo SIEMPRE usan FIL (lo que el usuario ve filtrado en pantalla).
-function exportarExcel(){
+// Los botones de descarga/correo SIEMPRE usan FIL de la vista activa (lo que el usuario ve filtrado en pantalla).
+function exportarExcel(v){
+  var FIL=VISTAS[v].FIL;
   if(!FIL.length){ alert('No hay datos para exportar con el filtro actual.'); return; }
-  var rows=[HEADERS].concat(FIL.map(filaArray));
+  var rows=[headers(v)].concat(FIL.map(function(r){return filaArray(v,r);}));
   var ws=XLSX.utils.aoa_to_sheet(rows);
   var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Merma IR');
-  XLSX.writeFile(wb,'Merma_Isabel_Riquelme_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  XLSX.utils.book_append_sheet(wb,ws,VISTAS[v].label);
+  XLSX.writeFile(wb,'Isabel_Riquelme_'+v+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
-function exportarHtml(){
+function exportarHtml(v){
+  var FIL=VISTAS[v].FIL;
   if(!FIL.length){ alert('No hay datos para exportar con el filtro actual.'); return; }
-  var thead='<tr>'+HEADERS.map(function(h){return '<th style="background:#111827;color:#fff;padding:6px 8px;text-align:left">'+esc(h)+'</th>';}).join('')+'</tr>';
+  var H=headers(v);
+  var thead='<tr>'+H.map(function(h){return '<th style="background:#111827;color:#fff;padding:6px 8px;text-align:left">'+esc(h)+'</th>';}).join('')+'</tr>';
   var tbody=FIL.map(function(r){
-    return '<tr>'+filaArray(r).map(function(v){return '<td style="padding:5px 8px;border-bottom:1px solid #eee">'+esc(v)+'</td>';}).join('')+'</tr>';
+    return '<tr>'+filaArray(v,r).map(function(val){return '<td style="padding:5px 8px;border-bottom:1px solid #eee">'+esc(val)+'</td>';}).join('')+'</tr>';
   }).join('');
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Merma Isabel Riquelme</title></head>'+
-    '<body><h2>Análisis de Merma — Sucursal Isabel Riquelme</h2>'+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+esc(VISTAS[v].label)+' Isabel Riquelme</title></head>'+
+    '<body><h2>Análisis '+esc(VISTAS[v].label)+' — Sucursal Isabel Riquelme</h2>'+
     '<p style="font-size:12px;color:#666">Exportado: '+new Date().toLocaleString('es-CL')+' · '+FIL.length+' registros</p>'+
     '<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px"><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table></body></html>';
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download='Merma_Isabel_Riquelme_'+new Date().toISOString().slice(0,10)+'.html';
+  a.download='Isabel_Riquelme_'+v+'_'+new Date().toISOString().slice(0,10)+'.html';
   a.click();
 }
 
-function enviarCorreo(){
+function enviarCorreo(v){
+  var cfg=VISTAS[v], FIL=cfg.FIL;
   if(!FIL.length){ alert('No hay datos para enviar con el filtro actual.'); return; }
   var totalVal=FIL.reduce(function(s,r){var qty=(r.fisico!=null?r.fisico:r.disp)||0; return s+qty*(r.costo||0);},0);
-  var asunto='Merma Sucursal Isabel Riquelme — '+FIL.length+' códigos';
-  var cuerpo='ANÁLISIS DE MERMA — SUCURSAL ISABEL RIQUELME (Bodega MIR)\n'+
-    'Generado: '+DATA.generado+'\n'+
-    'Códigos filtrados: '+FIL.length+' / '+REG.length+'\n'+
+  var asunto=cfg.label+' — Sucursal Isabel Riquelme — '+FIL.length+' códigos';
+  var cuerpo='ANÁLISIS '+cfg.label.toUpperCase()+' — SUCURSAL ISABEL RIQUELME\n'+
+    'Generado: '+cfg.DATA.generado+'\n'+
+    'Códigos filtrados: '+FIL.length+' / '+cfg.REG.length+'\n'+
     'Valorizado total: $'+fmt(totalVal)+'\n\n'+
     'Detalle (primeros 40):\n'+
     FIL.slice(0,40).map(function(r,i){
-      return (i+1)+'. '+r.codigoTecnico+' — '+(r.descripcion||'').substring(0,50)+' | '+
+      return (i+1)+'. '+(cfg.conBodega?r.bodega+' ':'')+r.codigoTecnico+' — '+(r.descripcion||'').substring(0,50)+' | '+
         (r.tipoDocNombre||r.tipoDoc||'s/d')+' | '+r.diasAntiguedad+' dias | $'+fmt((r.fisico||r.disp||0)*(r.costo||0))+
         ' | '+(r.usuario||'-')+' / '+(r.estacionPc||'-');
     }).join('\n')+
@@ -515,7 +631,8 @@ function enviarCorreo(){
   window.open(mailto,'_self');
 }
 
-render();
+render('merma');
+render('bodegas');
 </script>
 </body>
 </html>

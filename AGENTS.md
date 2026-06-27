@@ -6,15 +6,20 @@ Cualquier agente que trabaje aquí debe limitarse a `E:\ISABEL RIQUELME\`. Otros
 SQL/HTML, nunca se editan.
 
 ## Skill: safe-change (ahorro de tokens)
-Antes de cualquier tarea nueva en este proyecto:
+Ver `.claude/skills/safe-change/SKILL.md` para el detalle completo. Resumen:
 1. Leer `IDS_REFERENCIA_IR.md` — ya contiene IDBODEGA/IDSUCURSAL/columnas verificadas.
    No volver a explorar `INFORMATION_SCHEMA.COLUMNS` si el dato ya está documentado ahí.
-2. Reusar `generar_merma_ir.py` como base — modificar parámetros (lista de bodegas, filtros
-   de fecha, tipos de documento) en vez de reescribir el script completo.
-3. Conexión SQL: una sola consulta con `WHERE CODIGO_TECNICO IN (...)` para todos los
-   códigos de una vez (ya implementado) — evitar loops de una consulta por código.
-4. No generar archivos de prueba sueltos en la carpeta; sobrescribir
-   `merma_isabel_riquelme.json` / `MERMA_ISABEL_RIQUELME.html` en cada regeneración.
+2. Reusar `generar_merma_ir.py` / `generar_bodegas_ir.py` como base — modificar parámetros
+   (lista de bodegas, filtros de fecha, tipos de documento) en vez de reescribir el script.
+3. Descargas SQL de varias bodegas: siempre en lotes pequeños (2 a la vez, con pausa),
+   nunca todas en una sola pasada — evita timeouts/conflictos (ver `LOTE_SIZE` en
+   `generar_bodegas_ir.py`).
+4. Toda descarga debe tener regla anti-retroceso (abortar si trae <50% de lo anterior) y
+   verificación de consistencia (comparar total por bodega contra `COUNT(*)` SQL).
+5. UI: el HTML usa un diccionario `VISTAS` en JS para manejar varias pestañas/bodegas con
+   el mismo código — agregar una vista nueva, no duplicar funciones render/filtrar/export.
+6. No generar archivos de prueba sueltos en la carpeta; sobrescribir los JSON/HTML en
+   cada regeneración.
 
 ## Reglas de seguridad
 - Jamás escribir el password SQL en un archivo de esta carpeta (ni en script, ni en HTML).

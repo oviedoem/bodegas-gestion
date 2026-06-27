@@ -9,12 +9,34 @@ Verificado por consulta SQL directa el 2026-06-27. No editar a mano — re-consu
 ## Bodegas relevantes (P_BODEGAS, IDSUCURSAL='02')
 | IDBODEGA | SIMBOLO | Nombre | Uso |
 |:---:|:---:|---|---|
-| **75** | **MIR** | Mermas Isabel Riquelme | ✅ bodega de merma (proyecto activo) |
-| 69 | IIR | Ingreso Isabel Riquelme | Logística |
-| 86 | SIR | Sala Isabel Riquelme | Comercial |
-| 4 | PIR | Patio Isabel Riquelme | Comercial |
-| 85 | EIR | Exhibición Isabel Riquelme | Auxiliar |
-| 92 | RST | Recepción Santiago | Logística |
+| **75** | **MIR** | Mermas Isabel Riquelme | ✅ menú "Merma" — `generar_merma_ir.py` |
+| 5 | CAL | Calzada | ✅ menú "Otras Bodegas" — `generar_bodegas_ir.py` |
+| 6 | SER | Servicio Tecnico | ✅ menú "Otras Bodegas" |
+| 25 | WEB | Retiro Web Santiago | ✅ menú "Otras Bodegas" |
+| 30 | GO | Gestion Isabel Riquelme | ✅ menú "Otras Bodegas" |
+| 53 | GAR | Garantia Santiago | ✅ menú "Otras Bodegas" |
+| 69 | IIR | Ingreso Isabel Riquelme | ✅ menú "Otras Bodegas" |
+| 77 | BMC | Marticorena Stgo | ✅ menú "Otras Bodegas" |
+| 92 | RST | Recepción Santiago | ✅ menú "Otras Bodegas" (0 códigos con stock al 2026-06-27) |
+| 99 | HEL | Herramientas Electricas | ✅ menú "Otras Bodegas" |
+| 86 | SIR | Sala Isabel Riquelme | Comercial (no incluida en reportes) |
+| 4 | PIR | Patio Isabel Riquelme | Comercial (no incluida en reportes) |
+| 85 | EIR | Exhibición Isabel Riquelme | Auxiliar (no incluida en reportes) |
+
+Conteos verificados por `COUNT(*) FROM R_STOCK_PRODUCTOS WHERE IDBODEGA=? AND IDSUCURSAL='02'
+AND ST_FISICO>=1` al 2026-06-27: CAL=699, SER=10, WEB=32, GO=51, GAR=30, IIR=85, BMC=73,
+RST=0, HEL=263 — coinciden exactamente con los códigos generados por `generar_bodegas_ir.py`.
+
+## Catálogos de clasificación (para familia/marca en bodegas sin Excel de referencia)
+`M_PRODUCTOS` solo tiene IDs (`IDHIPERFAMILIA`, `IDFAMILIA`, `IDSUBFAMILIA`, `IDMARCA`) — el
+texto se obtiene con JOIN a:
+- `P_HIPERFAMILIAS` (IDHIPERFAMILIA → HIPERFAMILIA)
+- `P_FAMILIAS` (IDFAMILIA + IDHIPERFAMILIA → FAMILIA)
+- `P_SUBFAMILIAS` (IDSUBFAMILIA + IDFAMILIA + IDHIPERFAMILIA → SUBFAMILIA)
+- `P_MARCAS` (IDMARCA → MARCA)
+
+(En `generar_merma_ir.py` no se necesitó este join porque `MERMA.xlsx` ya traía esas
+columnas en texto desde el ERP.)
 
 ## Tablas SQL usadas
 - `Foviedo.dbo.R_STOCK_PRODUCTOS` — stock actual (ST_FISICO, ST_DISPONIBLE) por bodega/código.
