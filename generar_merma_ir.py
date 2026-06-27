@@ -253,20 +253,14 @@ def main():
 
 
 def generar_html(data):
-    json_inline = json.dumps(data, ensure_ascii=False)
+    # IMPORTANTE: el HTML publicado en GitHub Pages ya NO embebe los datos crudos.
+    # Los datos viven en Firestore (proyecto isabel-riquelme-merma) y se cargan en el
+    # navegador SOLO despues de iniciar sesion (ver firestore.rules: auth != null).
+    # generar_bodegas_ir.py / generar_merma_ir.py siguen escribiendo los JSON locales
+    # (merma_isabel_riquelme.json, bodegas_ir_otras.json) que luego sube
+    # _subir_datos_firestore.py — ese paso es manual/script aparte, no parte del HTML.
     logo_b64 = LOGO_B64.read_text(encoding="utf-8").strip() if LOGO_B64.exists() else ""
-
-    if BODEGAS_JSON.exists():
-        data2 = json.loads(BODEGAS_JSON.read_text(encoding="utf-8"))
-    else:
-        data2 = {"generado": "", "fuente": "Sistema interno", "total": 0, "registros": [],
-                  "bodegasIncluidas": []}
-    json2_inline = json.dumps(data2, ensure_ascii=False)
-
-    html = (HTML_TEMPLATE
-            .replace("__DATA_JSON__", json_inline)
-            .replace("__DATA2_JSON__", json2_inline)
-            .replace("__LOGO_B64__", logo_b64))
+    html = HTML_TEMPLATE.replace("__LOGO_B64__", logo_b64)
     OUT_HTML.write_text(html, encoding="utf-8")
 
 
@@ -276,7 +270,24 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <meta charset="UTF-8">
 <title>Merma — Sucursal Isabel Riquelme — Ferretería Oviedo</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <style>
+  #loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,#111827,#DA0000);
+               display:flex;align-items:center;justify-content:center;z-index:9999}
+  .login-box{background:#fff;border-radius:16px;padding:32px 30px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
+  .login-box img{height:50px;margin-bottom:14px}
+  .login-box h2{font-size:16px;margin:0 0 18px;color:#111827}
+  .login-box input{width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;
+                    margin-bottom:10px;font-family:inherit;box-sizing:border-box}
+  .login-box button{width:100%;padding:11px;background:#DA0000;color:#fff;border:none;border-radius:8px;
+                     font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  .login-box button:hover{background:#c93a08}
+  .login-err{color:#dc2626;font-size:12px;margin-top:8px;min-height:16px}
+  #appRoot{display:none}
+  .btn-logout{background:#374151;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;
+              font-weight:700;cursor:pointer;font-family:inherit;margin-left:auto}
   :root{--naranja:#DA0000;--naranja2:#c93a08;--dark:#111827;--border:#e5e7eb;--gris:#6b7280;
         --verde:#059669;--rojo:#dc2626;--amarillo:#d97706}
   *{box-sizing:border-box}
@@ -334,12 +345,26 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 </style>
 </head>
 <body>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <img src="data:image/jpeg;base64,__LOGO_B64__" alt="Ferretería Oviedo">
+    <h2>Análisis Isabel Riquelme — Acceso restringido</h2>
+    <input type="text" id="loginUser" placeholder="Usuario" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="Contraseña" autocomplete="current-password">
+    <button onclick="doLogin()">Ingresar</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<div id="appRoot">
 <div class="topbar">
   <img src="data:image/jpeg;base64,__LOGO_B64__" alt="Ferretería Oviedo">
   <div>
     <h1>Análisis Sucursal Isabel Riquelme — Ferretería Oviedo</h1>
-    <div class="sub">Reportes generados desde sistema interno (solo lectura) — sin credenciales</div>
+    <div class="sub">Datos protegidos — requieren inicio de sesión (Firebase Auth + Firestore rules)</div>
   </div>
+  <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
 </div>
 <div class="tabs">
   <button class="tab-btn active" id="tabBtn_merma" onclick="cambiarTab('merma')">📦 Merma (Bodega MIR)</button>
@@ -435,11 +460,89 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 </div>
 
 </div>
+</div><!-- /appRoot -->
 <script>
-// ── Datasets (uno por pestaña) ──────────────────────────────────────────────
+// ── Config Firebase (proyecto isabel-riquelme-merma — independiente de ferreteria-oviedo) ──
+// La apiKey es publica por diseño (ver https://firebase.google.com/docs/projects/api-keys);
+// la proteccion real de los datos la dan las Firestore rules (auth != null), no esta key.
+var firebaseConfig = {
+  apiKey: "AIzaSyCCZQahfSz8JtuN-YKHVLzd90ky7wITV2E",
+  authDomain: "isabel-riquelme-merma.firebaseapp.com",
+  projectId: "isabel-riquelme-merma",
+  storageBucket: "isabel-riquelme-merma.firebasestorage.app",
+  messagingSenderId: "778981011672",
+  appId: "1:778981011672:web:dba69b04169a0ba6cfa7ad"
+};
+firebase.initializeApp(firebaseConfig);
+var auth = firebase.auth();
+var db = firebase.firestore();
+var LOGIN_DOMAIN = "isabel-riquelme-merma.local"; // usuario "riquelme" -> riquelme@<dominio interno>
+
+function doLogin(){
+  var user = (document.getElementById('loginUser').value || '').trim().toLowerCase();
+  var pass = document.getElementById('loginPass').value || '';
+  var err = document.getElementById('loginErr');
+  err.textContent = '';
+  if(!user || !pass){ err.textContent = 'Ingresa usuario y contraseña'; return; }
+  auth.signInWithEmailAndPassword(user + '@' + LOGIN_DOMAIN, pass)
+    .then(function(){ /* onAuthStateChanged hace el resto */ })
+    .catch(function(e){
+      err.textContent = (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' ||
+        e.code === 'auth/invalid-credential') ? 'Usuario o contraseña incorrectos' : ('Error: ' + e.code);
+    });
+}
+
+function doLogout(){
+  auth.signOut();
+}
+
+auth.onAuthStateChanged(function(user){
+  if(user){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appRoot').style.display = 'block';
+    cargarDatosFirestore();
+  } else {
+    document.getElementById('appRoot').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+});
+
+function snapshotToRegistros(snap){
+  var out = [];
+  snap.forEach(function(doc){ out.push(doc.data()); });
+  return out;
+}
+
+function cargarDatosFirestore(){
+  Promise.all([
+    db.collection('merma_meta').doc('info').get(),
+    db.collection('merma').get(),
+    db.collection('bodegas_meta').doc('info').get(),
+    db.collection('bodegas').get(),
+  ]).then(function(res){
+    var metaMerma = res[0].exists ? res[0].data() : {};
+    var regMerma = snapshotToRegistros(res[1]);
+    var metaBod = res[2].exists ? res[2].data() : {};
+    var regBod = snapshotToRegistros(res[3]);
+
+    VISTAS.merma.DATA = Object.assign({registros: regMerma}, metaMerma);
+    VISTAS.bodegas.DATA = Object.assign({registros: regBod}, metaBod);
+    if(metaBod.bodegasIncluidas) VISTAS.bodegas.DATA.bodegasIncluidas = JSON.parse(metaBod.bodegasIncluidas);
+
+    initVista('merma');
+    initVista('bodegas');
+    render('merma');
+    render('bodegas');
+  }).catch(function(e){
+    document.getElementById('appRoot').innerHTML =
+      '<div style="padding:40px;text-align:center;color:#dc2626">Error cargando datos desde Firestore: '+e.message+'</div>';
+  });
+}
+
+// ── Datasets (uno por pestaña) — se llenan via Firestore tras login ─────────
 var VISTAS = {
-  merma:   { DATA: __DATA_JSON__,  conBodega:false, label:'Merma IR' },
-  bodegas: { DATA: __DATA2_JSON__, conBodega:true,  label:'Otras Bodegas IR' }
+  merma:   { DATA: {registros:[]}, conBodega:false, label:'Merma IR' },
+  bodegas: { DATA: {registros:[]}, conBodega:true,  label:'Otras Bodegas IR' }
 };
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -470,14 +573,19 @@ function cambiarTab(v){
   });
 }
 
-Object.keys(VISTAS).forEach(function(v){
+// Se llama una vez por vista, despues de que cargarDatosFirestore() llena VISTAS[v].DATA.
+function initVista(v){
   var cfg = VISTAS[v];
   var REG = cfg.DATA.registros || [];
   cfg.REG = REG; cfg.FIL = [];
 
   document.getElementById('meta_'+v).textContent =
-    'Generado: '+(cfg.DATA.generado||'—')+' · Fuente: '+(cfg.DATA.fuente||'—')+' · Total códigos: '+cfg.DATA.total;
+    'Generado: '+(cfg.DATA.generado||'—')+' · Fuente: '+(cfg.DATA.fuente||'—')+' · Total códigos: '+(cfg.DATA.total!=null?cfg.DATA.total:REG.length);
 
+  // limpiar selects por si initVista se llama mas de una vez (recarga de sesion)
+  ['qTipoDoc','qUsuario','qFamilia','qMarca'].forEach(function(base){
+    var sel=$(v,base); while(sel.options.length>1) sel.remove(1);
+  });
   fillSelect(v,'qTipoDoc', Array.from(new Set(REG.filter(r=>r.tipoDocNombre).map(r=>r.tipoDocNombre))));
   fillSelect(v,'qUsuario', Array.from(new Set(REG.filter(r=>r.usuario).map(r=>r.usuario))));
   fillSelect(v,'qFamilia', Array.from(new Set(REG.filter(r=>r.familia).map(r=>r.familia))));
@@ -491,7 +599,7 @@ Object.keys(VISTAS).forEach(function(v){
         esc(b.simbolo)+' — '+esc(b.nombre)+'</label>';
     }).join('');
   }
-});
+}
 
 function bodegasSeleccionadas(){
   return Array.from(document.querySelectorAll('.bodegaChk:checked')).map(function(c){return c.value;});
@@ -640,9 +748,8 @@ function enviarCorreo(v){
   var mailto='mailto:?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
   window.open(mailto,'_self');
 }
-
-render('merma');
-render('bodegas');
+// render('merma')/render('bodegas') ya no se llaman aqui — los dispara
+// cargarDatosFirestore() (via onAuthStateChanged) una vez el usuario inicia sesion.
 </script>
 </body>
 </html>

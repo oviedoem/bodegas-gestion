@@ -1,6 +1,25 @@
 # IDS_REFERENCIA_IR.md — Sucursal Isabel Riquelme
 Verificado por consulta SQL directa el 2026-06-27. No editar a mano — re-consultar si cambia.
 
+## Firebase / seguridad de acceso al reporte público (2026-06-27)
+Proyecto Firebase **independiente** de `ferreteria-oviedo`, creado para no mezclar:
+- Project ID: `isabel-riquelme-merma`
+- Login: usuario `riquelme` (internamente mapeado a email tecnico
+  `riquelme@isabel-riquelme-merma.local` para Firebase Auth — el usuario solo ve "riquelme").
+- Clave: generada aleatoriamente por `_setup_firebase_auth.py`, guardada SOLO en
+  `_CREDENCIAL_LOGIN_NO_SUBIR.txt` (excluido de git). Nunca se escribe en texto plano en
+  ningun archivo que se publique o se suba a git/GitHub.
+- Firestore (`(default)`, region `southamerica-east1`) con reglas (`firestore.rules`):
+  `allow read, write: if request.auth != null` — sin sesion, acceso totalmente denegado.
+- El HTML publicado en GitHub Pages **ya NO embebe los datos crudos**. Solo contiene la
+  pantalla de login + el `firebaseConfig` (la `apiKey` es publica por diseño, no es secreta
+  — ver https://firebase.google.com/docs/projects/api-keys). Los datos reales
+  (`merma`, `bodegas` collections en Firestore) solo se cargan en el navegador despues de
+  autenticarse — si alguien mira el codigo fuente de la pagina sin loguearse, no ve datos.
+- Flujo de actualizacion: `generar_merma_ir.py`/`generar_bodegas_ir.py` siguen generando
+  los JSON locales (para referencia/backup), y `_subir_datos_firestore.py` los sube a
+  Firestore haciendo login como `riquelme` (clave leida del archivo local, nunca impresa).
+
 ## Sucursal
 | IDSUCURSAL | Nombre |
 |:---:|---|

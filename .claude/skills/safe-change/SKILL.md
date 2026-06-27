@@ -43,8 +43,22 @@ Reglas obligatorias para cualquier cambio en este proyecto (`E:\ISABEL RIQUELME\
 - Las credenciales SQL nunca se escriben en archivos de esta carpeta ni en el repo
   público. Se leen en tiempo de ejecución desde `E:\ferreteria-oviedo\credenciales_db.ini`
   (ruta, no valor).
+- La clave de login del HTML (usuario `riquelme`) NUNCA se teclea literal en ningún
+  comando/archivo que el asistente genere — se crea con clave aleatoria via script
+  (`_setup_firebase_auth.py`) y se guarda solo en `_CREDENCIAL_LOGIN_NO_SUBIR.txt`
+  (excluido en `.gitignore`, nunca se imprime en logs/chat).
 - Antes de cualquier `git push`, revisar que no se haya agregado por error ningún archivo
   con password/token (`.ini`, `.env`, claves) — `git status --short` antes de `git add`.
+
+## 6. Firebase — proyecto propio, datos solo tras login
+- Proyecto Firebase de este reporte (`isabel-riquelme-merma`) es independiente del de
+  `ferreteria-oviedo` — nunca reusar el mismo proyecto/Firestore.
+- El HTML público en GitHub Pages NO debe volver a embeber datos crudos en el código
+  fuente. Los datos viven en Firestore con reglas `auth != null`; el HTML solo carga
+  datos después de que el usuario inicia sesión.
+- Para actualizar datos: regenerar JSON con `generar_merma_ir.py`/`generar_bodegas_ir.py`,
+  luego subir con `_subir_datos_firestore.py` (hace login con `riquelme`, clave leída
+  del archivo local, nunca impresa).
 
 ## 6. Publicación pública
 - El usuario decidió explícitamente publicar el reporte completo (incluye usuarios,

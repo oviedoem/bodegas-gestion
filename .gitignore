@@ -10,3 +10,4 @@ __pycache__/
 # NUNCA subir credenciales de login generadas localmente
 _CREDENCIAL_LOGIN_NO_SUBIR.txt
 _setup_firebase_auth.py
+_subir_datos_firestore.py
