@@ -88,8 +88,17 @@ SUCURSALES = [
 
 # Bodegas compartidas/globales (viven bajo un IDSUCURSAL administrativo distinto —
 # 08/01/09 — no repetidas por sucursal, se agrupan en un solo tab "Compartidas").
+# Centro de Distribucion (SUC=08) tiene su propio set Gestion/Merma/Recepcion/
+# Ingreso/Transito/Crossdock — verificado SQL 2026-07-21. Se excluye Ferrocenter
+# (FCM=12, marca/tienda distinta, no es bodega de gestion interna).
 COMPARTIDAS = [
     (23, "CD",  "Centro de Distribucion"),
+    (7,  "XCD", "CrossDock Centro Distribucion"),
+    (27, "GCD", "Gestion CD"),
+    (73, "ICD", "Ingreso Centro Distribucion"),
+    (26, "MCD", "Mermas CD"),
+    (54, "RCD", "Recepcion Centro Distribucion"),
+    (67, "TCD", "Transito Centro Distribucion"),
     (98, "BDP", "Despacho Proveedor"),
     (84, "REM", "Remate"),
     (36, "MKT", "Marketing"),
