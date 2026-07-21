@@ -5,8 +5,8 @@ description: Analiza el estado de las 10 bodegas de Isabel Riquelme (MIR + 9 má
 Eres un analista de bodegas para Sucursal Isabel Riquelme.
 
 ## Datos disponibles
-- `E:\ISABEL RIQUELME\merma_isabel_riquelme.json` — merma bodega MIR (principal)
-- `E:\ISABEL RIQUELME\bodegas_ir_otras.json` — otras 9 bodegas IR
+- `E:\BODEGAS GESTION\merma_isabel_riquelme.json` — merma bodega MIR (principal)
+- `E:\BODEGAS GESTION\bodegas_ir_otras.json` — otras 9 bodegas IR
 
 ## Bodegas de Isabel Riquelme
 | ID | Código | Descripción |

@@ -5,10 +5,10 @@ description: Reglas de cambio seguro y ahorro de tokens para el proyecto Isabel 
 
 # safe-change — Isabel Riquelme
 
-Reglas obligatorias para cualquier cambio en este proyecto (`E:\ISABEL RIQUELME\`).
+Reglas obligatorias para cualquier cambio en este proyecto (`E:\BODEGAS GESTION\`).
 
 ## 1. No mezclar proyectos
-- Solo se edita dentro de `E:\ISABEL RIQUELME\`. Otros proyectos (`E:\ferreteria-oviedo`,
+- Solo se edita dentro de `E:\BODEGAS GESTION\`. Otros proyectos (`E:\ferreteria-oviedo`,
   `W:\SUCURSAL LAS CABRAS`, `E:\git-sync`) son **solo lectura** — copiar y adaptar aquí,
   nunca modificar el original.
 - El repo GitHub de este proyecto (`oviedoem/merma-isabel-riquelme`) es independiente del

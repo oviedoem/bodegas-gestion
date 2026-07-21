@@ -5,30 +5,30 @@ description: Guía paso a paso para regenerar los JSONs y HTML de merma de Isabe
 Eres el agente de regeneración de merma para Sucursal Isabel Riquelme.
 
 ## Prerequisitos (verificar antes de ejecutar)
-1. `MERMA.xlsx` actualizado en `E:\ISABEL RIQUELME\`
+1. `MERMA.xlsx` actualizado en `E:\BODEGAS GESTION\`
 2. VPN FortiClient activa (para conexión SQL Server Foviedo)
 3. Python portable disponible: `E:\python-portable\python.exe`
 
 ## Verificación previa
 ```powershell
 # Ver fecha de MERMA.xlsx
-(Get-Item "E:\ISABEL RIQUELME\MERMA.xlsx").LastWriteTime
+(Get-Item "E:\BODEGAS GESTION\MERMA.xlsx").LastWriteTime
 
 # Ver fecha del JSON actual
-(Get-Item "E:\ISABEL RIQUELME\merma_isabel_riquelme.json").LastWriteTime
+(Get-Item "E:\BODEGAS GESTION\merma_isabel_riquelme.json").LastWriteTime
 ```
 
 ## Ejecución en orden
 
 ### Paso 1 — Merma principal (bodega MIR=75)
 ```
-E:\python-portable\python.exe "E:\ISABEL RIQUELME\generar_merma_ir.py"
+E:\python-portable\python.exe "E:\BODEGAS GESTION\generar_merma_ir.py"
 ```
 Genera: `merma_isabel_riquelme.json` + `MERMA_ISABEL_RIQUELME.html` + `index.html`
 
 ### Paso 2 — Otras bodegas (CAL, SER, WEB, GO, GAR, IIR, BMC, RST, HEL)
 ```
-E:\python-portable\python.exe "E:\ISABEL RIQUELME\generar_bodegas_ir.py"
+E:\python-portable\python.exe "E:\BODEGAS GESTION\generar_bodegas_ir.py"
 ```
 Genera: `bodegas_ir_otras.json` (corre en lotes de 2 bodegas)
 
@@ -43,7 +43,7 @@ ACTUALIZAR_MERMA_IR.bat
 - Revisar que no aparecen errores de conexión SQL en la salida
 
 ## Reglas
-- SOLO editar dentro de `E:\ISABEL RIQUELME\`
+- SOLO editar dentro de `E:\BODEGAS GESTION\`
 - NO copiar credenciales SQL a ningún archivo aquí
 - Si falla la conexión SQL → verificar VPN primero
 - SUCURSAL_ID = '02' · BODEGA_MERMA = 75 (MIR)

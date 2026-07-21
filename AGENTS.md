@@ -1,7 +1,7 @@
-# AGENTS.md — Isabel Riquelme
+# AGENTS.md — BODEGAS GESTION (ex Isabel Riquelme)
 
 ## Alcance
-Cualquier agente que trabaje aquí debe limitarse a `E:\ISABEL RIQUELME\`. Otros proyectos
+Cualquier agente que trabaje aquí debe limitarse a `E:\BODEGAS GESTION\`. Otros proyectos
 (`E:\ferreteria-oviedo`, `W:\...`) son **solo lectura** — sirven de referencia de patrones
 SQL/HTML, nunca se editan.
 
@@ -9,8 +9,10 @@ SQL/HTML, nunca se editan.
 Ver `.claude/skills/safe-change/SKILL.md` para el detalle completo. Resumen:
 1. Leer `IDS_REFERENCIA_IR.md` — ya contiene IDBODEGA/IDSUCURSAL/columnas verificadas.
    No volver a explorar `INFORMATION_SCHEMA.COLUMNS` si el dato ya está documentado ahí.
-2. Reusar `generar_merma_ir.py` / `generar_bodegas_ir.py` como base — modificar parámetros
-   (lista de bodegas, filtros de fecha, tipos de documento) en vez de reescribir el script.
+2. Reusar `generar_merma_ir.py` / `generar_bodegas_ir.py` / `generar_bodegas_gestion.py`
+   como base — modificar parámetros (lista de bodegas, filtros de fecha, tipos de
+   documento) en vez de reescribir el script. `generar_merma_ir.py` es el que arma el
+   HTML final (todos los tabs); los otros dos solo generan JSON de datos.
 3. Descargas SQL de varias bodegas: siempre en lotes pequeños (2 a la vez, con pausa),
    nunca todas en una sola pasada — evita timeouts/conflictos (ver `LOTE_SIZE` en
    `generar_bodegas_ir.py`).
@@ -29,10 +31,17 @@ Ver `.claude/skills/safe-change/SKILL.md` para el detalle completo. Resumen:
 - No subir nada de esta carpeta a git/repos compartidos sin revisión explícita del usuario.
 
 ## Acceso al reporte público (Firebase — isabel-riquelme-merma)
-- El HTML público (GitHub Pages) exige login (Firebase Auth) y carga datos desde
-  Firestore — NUNCA volver a embeber datos crudos directamente en el HTML.
+- El HTML público (GitHub Pages) exige login (Firebase Auth). `merma` sigue viniendo de
+  Firestore; `bodegas`/`bodegas_gestion` estan TEMPORALMENTE en fetch estático
+  (`bodegas_ir_otras.json`/`bodegas_gestion.json`) por cuota de Firestore agotada — ver
+  detalle y plan de reversión en `CLAUDE.md`. NUNCA volver a embeber datos crudos
+  directamente dentro del `<script>` del HTML (los JSON externos son un mal menor
+  temporal, no el objetivo final).
 - Proyecto Firebase propio (`isabel-riquelme-merma`), reglas Firestore `auth != null`.
-  Nunca mezclar con el proyecto Firebase de `ferreteria-oviedo`.
+  Nunca mezclar con el proyecto Firebase de `ferreteria-oviedo`. Se mantiene este nombre
+  de proyecto Firebase aunque el proyecto en general se llame ahora "BODEGAS GESTION".
 - Usuario de login `riquelme`; la clave vive SOLO en
   `_CREDENCIAL_LOGIN_NO_SUBIR.txt` (gitignored). Nunca teclear/imprimir esa clave en
   ningún comando, archivo o respuesta — ver sección 5-6 de `.claude/skills/safe-change/SKILL.md`.
+- Repo GitHub y URL pública: nombre viejo (`merma-isabel-riquelme`) hasta que el usuario
+  confirme el rename a `bodegas-gestion` — no asumir que ya se hizo.
