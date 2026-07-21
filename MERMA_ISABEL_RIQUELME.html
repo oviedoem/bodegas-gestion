@@ -102,7 +102,12 @@
 </div>
 <div class="tabs">
   <button class="tab-btn active" id="tabBtn_merma" onclick="cambiarTab('merma')">📦 Merma (Bodega MIR)</button>
-  <button class="tab-btn" id="tabBtn_bodegas" onclick="cambiarTab('bodegas')">🏬 Otras Bodegas</button>
+  <button class="tab-btn" id="tabBtn_bodegas" onclick="cambiarTab('bodegas')">🏬 Otras Bodegas IR</button>
+  <button class="tab-btn" id="tabBtn_elmanzano" onclick="cambiarTab('elmanzano')">🏭 El Manzano</button>
+  <button class="tab-btn" id="tabBtn_sanvicente" onclick="cambiarTab('sanvicente')">🏬 San Vicente</button>
+  <button class="tab-btn" id="tabBtn_lascabras" onclick="cambiarTab('lascabras')">🏬 Las Cabras</button>
+  <button class="tab-btn" id="tabBtn_litueche" onclick="cambiarTab('litueche')">🏬 Litueche</button>
+  <button class="tab-btn" id="tabBtn_cd" onclick="cambiarTab('cd')">📦 Centro Distribución</button>
 </div>
 <div class="wrap">
 
@@ -146,7 +151,7 @@
     <tbody id="merma_tbody"></tbody>
   </table>
   </div>
-  <div class="footer-note">Ferretería Oviedo El Manzano · Reporte generado desde sistema interno — no contiene credenciales</div>
+  <div class="footer-note">Ferretería Oviedo · Reporte generado desde sistema interno — no contiene credenciales</div>
 </div>
 
 <div class="card tab-panel" id="panel_bodegas">
@@ -190,8 +195,234 @@
     <tbody id="bodegas_tbody"></tbody>
   </table>
   </div>
-  <div class="footer-note">Ferretería Oviedo El Manzano · Reporte generado desde sistema interno — no contiene credenciales</div>
+  <div class="footer-note">Ferretería Oviedo · Reporte generado desde sistema interno — no contiene credenciales</div>
 </div>
+
+
+<div class="card tab-panel" id="panel_elmanzano">
+  <div class="sub" id="meta_elmanzano"></div>
+  <div class="chk-row" id="elmanzano_chkBodegas"></div>
+  <div class="bar">
+    <input type="text" id="elmanzano_qBuscar" placeholder="Código o descripción" oninput="render('elmanzano')" style="width:200px">
+    <select id="elmanzano_qTipoDoc" onchange="render('elmanzano')"><option value="">Todos los tipos de documento</option></select>
+    <select id="elmanzano_qUsuario" onchange="render('elmanzano')"><option value="">Todos los usuarios</option></select>
+    <select id="elmanzano_qFamilia" onchange="render('elmanzano')"><option value="">Todas las familias</option></select>
+    <select id="elmanzano_qMarca" onchange="render('elmanzano')"><option value="">Todas las marcas</option></select>
+    <label>Días ≥ <input type="number" id="elmanzano_qDiasMin" style="width:55px" oninput="render('elmanzano')"></label>
+    <label>Días ≤ <input type="number" id="elmanzano_qDiasMax" style="width:55px" oninput="render('elmanzano')"></label>
+    <label>Desde <input type="date" id="elmanzano_qFechaDesde" oninput="render('elmanzano')"></label>
+    <label>Hasta <input type="date" id="elmanzano_qFechaHasta" oninput="render('elmanzano')"></label>
+  </div>
+  <div class="bar">
+    <button class="btn btn-excel" onclick="exportarExcel('elmanzano')">📊 Descargar Excel</button>
+    <button class="btn btn-html" onclick="exportarHtml('elmanzano')">🌐 Descargar HTML</button>
+    <button class="btn btn-mail" onclick="enviarCorreo('elmanzano')">✉️ Enviar por correo</button>
+    <span id="elmanzano_count"></span>
+  </div>
+  <div class="kpis" id="elmanzano_kpis"></div>
+  <div class="scroll-hint">👉 Desliza la tabla horizontalmente (barra naranja abajo) para ver Estación/PC, Fecha registro sistema y Observación</div>
+  <div class="tablewrap">
+  <table>
+    <colgroup>
+      <col style="width:60px"><col style="width:80px"><col style="width:220px"><col style="width:90px"><col style="width:95px">
+      <col style="width:130px"><col style="width:70px">
+      <col style="width:55px"><col style="width:55px"><col style="width:80px">
+      <col style="width:80px"><col style="width:50px"><col style="width:90px">
+      <col style="width:90px"><col style="width:100px"><col style="width:120px"><col style="width:220px">
+    </colgroup>
+    <thead><tr>
+      <th>Bodega</th><th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th>
+      <th>Tipo Doc.</th><th class="right">Folio</th>
+      <th class="right">Disp.</th><th class="right">Físico</th><th class="right">Costo unit.</th>
+      <th class="center">Fecha Reg.</th><th class="right">Días</th><th class="right">Valorizado</th>
+      <th>Usuario</th><th>Estación / PC</th><th class="center">Fecha registro sistema</th><th>Observación</th>
+    </tr></thead>
+    <tbody id="elmanzano_tbody"></tbody>
+  </table>
+  </div>
+  <div class="footer-note">Ferretería Oviedo · Reporte generado desde sistema interno — no contiene credenciales</div>
+</div>
+
+
+<div class="card tab-panel" id="panel_sanvicente">
+  <div class="sub" id="meta_sanvicente"></div>
+  <div class="chk-row" id="sanvicente_chkBodegas"></div>
+  <div class="bar">
+    <input type="text" id="sanvicente_qBuscar" placeholder="Código o descripción" oninput="render('sanvicente')" style="width:200px">
+    <select id="sanvicente_qTipoDoc" onchange="render('sanvicente')"><option value="">Todos los tipos de documento</option></select>
+    <select id="sanvicente_qUsuario" onchange="render('sanvicente')"><option value="">Todos los usuarios</option></select>
+    <select id="sanvicente_qFamilia" onchange="render('sanvicente')"><option value="">Todas las familias</option></select>
+    <select id="sanvicente_qMarca" onchange="render('sanvicente')"><option value="">Todas las marcas</option></select>
+    <label>Días ≥ <input type="number" id="sanvicente_qDiasMin" style="width:55px" oninput="render('sanvicente')"></label>
+    <label>Días ≤ <input type="number" id="sanvicente_qDiasMax" style="width:55px" oninput="render('sanvicente')"></label>
+    <label>Desde <input type="date" id="sanvicente_qFechaDesde" oninput="render('sanvicente')"></label>
+    <label>Hasta <input type="date" id="sanvicente_qFechaHasta" oninput="render('sanvicente')"></label>
+  </div>
+  <div class="bar">
+    <button class="btn btn-excel" onclick="exportarExcel('sanvicente')">📊 Descargar Excel</button>
+    <button class="btn btn-html" onclick="exportarHtml('sanvicente')">🌐 Descargar HTML</button>
+    <button class="btn btn-mail" onclick="enviarCorreo('sanvicente')">✉️ Enviar por correo</button>
+    <span id="sanvicente_count"></span>
+  </div>
+  <div class="kpis" id="sanvicente_kpis"></div>
+  <div class="scroll-hint">👉 Desliza la tabla horizontalmente (barra naranja abajo) para ver Estación/PC, Fecha registro sistema y Observación</div>
+  <div class="tablewrap">
+  <table>
+    <colgroup>
+      <col style="width:60px"><col style="width:80px"><col style="width:220px"><col style="width:90px"><col style="width:95px">
+      <col style="width:130px"><col style="width:70px">
+      <col style="width:55px"><col style="width:55px"><col style="width:80px">
+      <col style="width:80px"><col style="width:50px"><col style="width:90px">
+      <col style="width:90px"><col style="width:100px"><col style="width:120px"><col style="width:220px">
+    </colgroup>
+    <thead><tr>
+      <th>Bodega</th><th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th>
+      <th>Tipo Doc.</th><th class="right">Folio</th>
+      <th class="right">Disp.</th><th class="right">Físico</th><th class="right">Costo unit.</th>
+      <th class="center">Fecha Reg.</th><th class="right">Días</th><th class="right">Valorizado</th>
+      <th>Usuario</th><th>Estación / PC</th><th class="center">Fecha registro sistema</th><th>Observación</th>
+    </tr></thead>
+    <tbody id="sanvicente_tbody"></tbody>
+  </table>
+  </div>
+  <div class="footer-note">Ferretería Oviedo · Reporte generado desde sistema interno — no contiene credenciales</div>
+</div>
+
+
+<div class="card tab-panel" id="panel_lascabras">
+  <div class="sub" id="meta_lascabras"></div>
+  <div class="chk-row" id="lascabras_chkBodegas"></div>
+  <div class="bar">
+    <input type="text" id="lascabras_qBuscar" placeholder="Código o descripción" oninput="render('lascabras')" style="width:200px">
+    <select id="lascabras_qTipoDoc" onchange="render('lascabras')"><option value="">Todos los tipos de documento</option></select>
+    <select id="lascabras_qUsuario" onchange="render('lascabras')"><option value="">Todos los usuarios</option></select>
+    <select id="lascabras_qFamilia" onchange="render('lascabras')"><option value="">Todas las familias</option></select>
+    <select id="lascabras_qMarca" onchange="render('lascabras')"><option value="">Todas las marcas</option></select>
+    <label>Días ≥ <input type="number" id="lascabras_qDiasMin" style="width:55px" oninput="render('lascabras')"></label>
+    <label>Días ≤ <input type="number" id="lascabras_qDiasMax" style="width:55px" oninput="render('lascabras')"></label>
+    <label>Desde <input type="date" id="lascabras_qFechaDesde" oninput="render('lascabras')"></label>
+    <label>Hasta <input type="date" id="lascabras_qFechaHasta" oninput="render('lascabras')"></label>
+  </div>
+  <div class="bar">
+    <button class="btn btn-excel" onclick="exportarExcel('lascabras')">📊 Descargar Excel</button>
+    <button class="btn btn-html" onclick="exportarHtml('lascabras')">🌐 Descargar HTML</button>
+    <button class="btn btn-mail" onclick="enviarCorreo('lascabras')">✉️ Enviar por correo</button>
+    <span id="lascabras_count"></span>
+  </div>
+  <div class="kpis" id="lascabras_kpis"></div>
+  <div class="scroll-hint">👉 Desliza la tabla horizontalmente (barra naranja abajo) para ver Estación/PC, Fecha registro sistema y Observación</div>
+  <div class="tablewrap">
+  <table>
+    <colgroup>
+      <col style="width:60px"><col style="width:80px"><col style="width:220px"><col style="width:90px"><col style="width:95px">
+      <col style="width:130px"><col style="width:70px">
+      <col style="width:55px"><col style="width:55px"><col style="width:80px">
+      <col style="width:80px"><col style="width:50px"><col style="width:90px">
+      <col style="width:90px"><col style="width:100px"><col style="width:120px"><col style="width:220px">
+    </colgroup>
+    <thead><tr>
+      <th>Bodega</th><th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th>
+      <th>Tipo Doc.</th><th class="right">Folio</th>
+      <th class="right">Disp.</th><th class="right">Físico</th><th class="right">Costo unit.</th>
+      <th class="center">Fecha Reg.</th><th class="right">Días</th><th class="right">Valorizado</th>
+      <th>Usuario</th><th>Estación / PC</th><th class="center">Fecha registro sistema</th><th>Observación</th>
+    </tr></thead>
+    <tbody id="lascabras_tbody"></tbody>
+  </table>
+  </div>
+  <div class="footer-note">Ferretería Oviedo · Reporte generado desde sistema interno — no contiene credenciales</div>
+</div>
+
+
+<div class="card tab-panel" id="panel_litueche">
+  <div class="sub" id="meta_litueche"></div>
+  <div class="chk-row" id="litueche_chkBodegas"></div>
+  <div class="bar">
+    <input type="text" id="litueche_qBuscar" placeholder="Código o descripción" oninput="render('litueche')" style="width:200px">
+    <select id="litueche_qTipoDoc" onchange="render('litueche')"><option value="">Todos los tipos de documento</option></select>
+    <select id="litueche_qUsuario" onchange="render('litueche')"><option value="">Todos los usuarios</option></select>
+    <select id="litueche_qFamilia" onchange="render('litueche')"><option value="">Todas las familias</option></select>
+    <select id="litueche_qMarca" onchange="render('litueche')"><option value="">Todas las marcas</option></select>
+    <label>Días ≥ <input type="number" id="litueche_qDiasMin" style="width:55px" oninput="render('litueche')"></label>
+    <label>Días ≤ <input type="number" id="litueche_qDiasMax" style="width:55px" oninput="render('litueche')"></label>
+    <label>Desde <input type="date" id="litueche_qFechaDesde" oninput="render('litueche')"></label>
+    <label>Hasta <input type="date" id="litueche_qFechaHasta" oninput="render('litueche')"></label>
+  </div>
+  <div class="bar">
+    <button class="btn btn-excel" onclick="exportarExcel('litueche')">📊 Descargar Excel</button>
+    <button class="btn btn-html" onclick="exportarHtml('litueche')">🌐 Descargar HTML</button>
+    <button class="btn btn-mail" onclick="enviarCorreo('litueche')">✉️ Enviar por correo</button>
+    <span id="litueche_count"></span>
+  </div>
+  <div class="kpis" id="litueche_kpis"></div>
+  <div class="scroll-hint">👉 Desliza la tabla horizontalmente (barra naranja abajo) para ver Estación/PC, Fecha registro sistema y Observación</div>
+  <div class="tablewrap">
+  <table>
+    <colgroup>
+      <col style="width:60px"><col style="width:80px"><col style="width:220px"><col style="width:90px"><col style="width:95px">
+      <col style="width:130px"><col style="width:70px">
+      <col style="width:55px"><col style="width:55px"><col style="width:80px">
+      <col style="width:80px"><col style="width:50px"><col style="width:90px">
+      <col style="width:90px"><col style="width:100px"><col style="width:120px"><col style="width:220px">
+    </colgroup>
+    <thead><tr>
+      <th>Bodega</th><th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th>
+      <th>Tipo Doc.</th><th class="right">Folio</th>
+      <th class="right">Disp.</th><th class="right">Físico</th><th class="right">Costo unit.</th>
+      <th class="center">Fecha Reg.</th><th class="right">Días</th><th class="right">Valorizado</th>
+      <th>Usuario</th><th>Estación / PC</th><th class="center">Fecha registro sistema</th><th>Observación</th>
+    </tr></thead>
+    <tbody id="litueche_tbody"></tbody>
+  </table>
+  </div>
+  <div class="footer-note">Ferretería Oviedo · Reporte generado desde sistema interno — no contiene credenciales</div>
+</div>
+
+
+<div class="card tab-panel" id="panel_cd">
+  <div class="sub" id="meta_cd"></div>
+  <div class="chk-row" id="cd_chkBodegas"></div>
+  <div class="bar">
+    <input type="text" id="cd_qBuscar" placeholder="Código o descripción" oninput="render('cd')" style="width:200px">
+    <select id="cd_qTipoDoc" onchange="render('cd')"><option value="">Todos los tipos de documento</option></select>
+    <select id="cd_qUsuario" onchange="render('cd')"><option value="">Todos los usuarios</option></select>
+    <select id="cd_qFamilia" onchange="render('cd')"><option value="">Todas las familias</option></select>
+    <select id="cd_qMarca" onchange="render('cd')"><option value="">Todas las marcas</option></select>
+    <label>Días ≥ <input type="number" id="cd_qDiasMin" style="width:55px" oninput="render('cd')"></label>
+    <label>Días ≤ <input type="number" id="cd_qDiasMax" style="width:55px" oninput="render('cd')"></label>
+    <label>Desde <input type="date" id="cd_qFechaDesde" oninput="render('cd')"></label>
+    <label>Hasta <input type="date" id="cd_qFechaHasta" oninput="render('cd')"></label>
+  </div>
+  <div class="bar">
+    <button class="btn btn-excel" onclick="exportarExcel('cd')">📊 Descargar Excel</button>
+    <button class="btn btn-html" onclick="exportarHtml('cd')">🌐 Descargar HTML</button>
+    <button class="btn btn-mail" onclick="enviarCorreo('cd')">✉️ Enviar por correo</button>
+    <span id="cd_count"></span>
+  </div>
+  <div class="kpis" id="cd_kpis"></div>
+  <div class="scroll-hint">👉 Desliza la tabla horizontalmente (barra naranja abajo) para ver Estación/PC, Fecha registro sistema y Observación</div>
+  <div class="tablewrap">
+  <table>
+    <colgroup>
+      <col style="width:60px"><col style="width:80px"><col style="width:220px"><col style="width:90px"><col style="width:95px">
+      <col style="width:130px"><col style="width:70px">
+      <col style="width:55px"><col style="width:55px"><col style="width:80px">
+      <col style="width:80px"><col style="width:50px"><col style="width:90px">
+      <col style="width:90px"><col style="width:100px"><col style="width:120px"><col style="width:220px">
+    </colgroup>
+    <thead><tr>
+      <th>Bodega</th><th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th>
+      <th>Tipo Doc.</th><th class="right">Folio</th>
+      <th class="right">Disp.</th><th class="right">Físico</th><th class="right">Costo unit.</th>
+      <th class="center">Fecha Reg.</th><th class="right">Días</th><th class="right">Valorizado</th>
+      <th>Usuario</th><th>Estación / PC</th><th class="center">Fecha registro sistema</th><th>Observación</th>
+    </tr></thead>
+    <tbody id="cd_tbody"></tbody>
+  </table>
+  </div>
+  <div class="footer-note">Ferretería Oviedo · Reporte generado desde sistema interno — no contiene credenciales</div>
+</div>
+
 
 </div>
 </div><!-- /appRoot -->
@@ -253,20 +484,32 @@ function cargarDatosFirestore(){
     db.collection('merma').get(),
     db.collection('bodegas_meta').doc('info').get(),
     db.collection('bodegas').get(),
+    db.collection('bodegas_gestion_meta').doc('info').get(),
+    db.collection('bodegas_gestion').get(),
   ]).then(function(res){
     var metaMerma = res[0].exists ? res[0].data() : {};
     var regMerma = snapshotToRegistros(res[1]);
     var metaBod = res[2].exists ? res[2].data() : {};
     var regBod = snapshotToRegistros(res[3]);
+    var metaGestion = res[4].exists ? res[4].data() : {};
+    var regGestion = snapshotToRegistros(res[5]);
 
     VISTAS.merma.DATA = Object.assign({registros: regMerma}, metaMerma);
     VISTAS.bodegas.DATA = Object.assign({registros: regBod}, metaBod);
     if(metaBod.bodegasIncluidas) VISTAS.bodegas.DATA.bodegasIncluidas = JSON.parse(metaBod.bodegasIncluidas);
 
-    initVista('merma');
-    initVista('bodegas');
-    render('merma');
-    render('bodegas');
+    // bodegas_gestion trae todas las sucursales nuevas + CD en una sola coleccion,
+    // cada registro marcado con su 'vista' (elmanzano/sanvicente/lascabras/litueche/cd)
+    var bodegasPorVista = metaGestion.bodegasPorVista ? JSON.parse(metaGestion.bodegasPorVista) : {};
+    VISTAS_GESTION.forEach(function(v){
+      VISTAS[v].DATA = {
+        registros: regGestion.filter(function(r){ return r.vista===v; }),
+        generado: metaGestion.generado, fuente: metaGestion.fuente,
+        bodegasIncluidas: bodegasPorVista[v] || [],
+      };
+    });
+
+    Object.keys(VISTAS).forEach(function(v){ initVista(v); render(v); });
   }).catch(function(e){
     document.getElementById('appRoot').innerHTML =
       '<div style="padding:40px;text-align:center;color:#dc2626">Error cargando datos desde Firestore: '+e.message+'</div>';
@@ -274,9 +517,15 @@ function cargarDatosFirestore(){
 }
 
 // ── Datasets (uno por pestaña) — se llenan via Firestore tras login ─────────
+var VISTAS_GESTION = ["elmanzano", "sanvicente", "lascabras", "litueche", "cd"];
 var VISTAS = {
   merma:   { DATA: {registros:[]}, conBodega:false, label:'Merma IR' },
-  bodegas: { DATA: {registros:[]}, conBodega:true,  label:'Otras Bodegas IR' }
+  bodegas: { DATA: {registros:[]}, conBodega:true,  label:'Otras Bodegas IR' },
+  elmanzano: { DATA: {registros:[]}, conBodega:true, label:"El Manzano" },
+  sanvicente: { DATA: {registros:[]}, conBodega:true, label:"San Vicente" },
+  lascabras: { DATA: {registros:[]}, conBodega:true, label:"Las Cabras" },
+  litueche: { DATA: {registros:[]}, conBodega:true, label:"Litueche" },
+  cd: { DATA: {registros:[]}, conBodega:true, label:"Centro Distribuci\u00f3n" }
 };
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -327,16 +576,16 @@ function initVista(v){
 
   if(cfg.conBodega){
     var bods = (cfg.DATA.bodegasIncluidas||[]);
-    var cont = document.getElementById('bodegas_chkBodegas');
+    var cont = document.getElementById(v+'_chkBodegas');
     cont.innerHTML = bods.map(function(b){
-      return '<label><input type="checkbox" class="bodegaChk" value="'+esc(b.simbolo)+'" checked onchange="render(&#39;bodegas&#39;)">'+
+      return '<label><input type="checkbox" class="bodegaChk" value="'+esc(b.simbolo)+'" checked onchange="render(&#39;'+v+'&#39;)">'+
         esc(b.simbolo)+' — '+esc(b.nombre)+'</label>';
     }).join('');
   }
 }
 
-function bodegasSeleccionadas(){
-  return Array.from(document.querySelectorAll('.bodegaChk:checked')).map(function(c){return c.value;});
+function bodegasSeleccionadas(v){
+  return Array.from(document.querySelectorAll('#'+v+'_chkBodegas .bodegaChk:checked')).map(function(c){return c.value;});
 }
 
 function filtrar(v){
@@ -350,7 +599,7 @@ function filtrar(v){
   var dMax=parseInt($(v,'qDiasMax').value); if(isNaN(dMax)) dMax=Infinity;
   var fDesde=$(v,'qFechaDesde').value;
   var fHasta=$(v,'qFechaHasta').value;
-  var bodSel = cfg.conBodega ? bodegasSeleccionadas() : null;
+  var bodSel = cfg.conBodega ? bodegasSeleccionadas(v) : null;
 
   return cfg.REG.filter(function(r){
     if(bodSel && bodSel.indexOf(r.bodega)<0) return false;

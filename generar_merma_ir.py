@@ -252,15 +252,92 @@ def main():
     log(f"[OK] {OUT_HTML.name}")
 
 
+# Vistas nuevas del proyecto BODEGAS GESTION (id_js, emoji+label boton tab, label largo).
+# Datos vienen de bodegas_gestion.json / coleccion Firestore 'bodegas_gestion' (ver
+# generar_bodegas_gestion.py e IDS_REFERENCIA_BODEGAS_GESTION.md).
+VISTAS_GESTION_DEF = [
+    ("elmanzano",  "🏭 El Manzano",            "El Manzano"),
+    ("sanvicente", "🏬 San Vicente",           "San Vicente"),
+    ("lascabras",  "🏬 Las Cabras",            "Las Cabras"),
+    ("litueche",   "🏬 Litueche",              "Litueche"),
+    ("cd",         "📦 Centro Distribución",   "Centro Distribución"),
+]
+
+PANEL_GESTION_TEMPLATE = """
+<div class="card tab-panel" id="panel___VID__">
+  <div class="sub" id="meta___VID__"></div>
+  <div class="chk-row" id="__VID___chkBodegas"></div>
+  <div class="bar">
+    <input type="text" id="__VID___qBuscar" placeholder="Código o descripción" oninput="render('__VID__')" style="width:200px">
+    <select id="__VID___qTipoDoc" onchange="render('__VID__')"><option value="">Todos los tipos de documento</option></select>
+    <select id="__VID___qUsuario" onchange="render('__VID__')"><option value="">Todos los usuarios</option></select>
+    <select id="__VID___qFamilia" onchange="render('__VID__')"><option value="">Todas las familias</option></select>
+    <select id="__VID___qMarca" onchange="render('__VID__')"><option value="">Todas las marcas</option></select>
+    <label>Días ≥ <input type="number" id="__VID___qDiasMin" style="width:55px" oninput="render('__VID__')"></label>
+    <label>Días ≤ <input type="number" id="__VID___qDiasMax" style="width:55px" oninput="render('__VID__')"></label>
+    <label>Desde <input type="date" id="__VID___qFechaDesde" oninput="render('__VID__')"></label>
+    <label>Hasta <input type="date" id="__VID___qFechaHasta" oninput="render('__VID__')"></label>
+  </div>
+  <div class="bar">
+    <button class="btn btn-excel" onclick="exportarExcel('__VID__')">📊 Descargar Excel</button>
+    <button class="btn btn-html" onclick="exportarHtml('__VID__')">🌐 Descargar HTML</button>
+    <button class="btn btn-mail" onclick="enviarCorreo('__VID__')">✉️ Enviar por correo</button>
+    <span id="__VID___count"></span>
+  </div>
+  <div class="kpis" id="__VID___kpis"></div>
+  <div class="scroll-hint">👉 Desliza la tabla horizontalmente (barra naranja abajo) para ver Estación/PC, Fecha registro sistema y Observación</div>
+  <div class="tablewrap">
+  <table>
+    <colgroup>
+      <col style="width:60px"><col style="width:80px"><col style="width:220px"><col style="width:90px"><col style="width:95px">
+      <col style="width:130px"><col style="width:70px">
+      <col style="width:55px"><col style="width:55px"><col style="width:80px">
+      <col style="width:80px"><col style="width:50px"><col style="width:90px">
+      <col style="width:90px"><col style="width:100px"><col style="width:120px"><col style="width:220px">
+    </colgroup>
+    <thead><tr>
+      <th>Bodega</th><th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th>
+      <th>Tipo Doc.</th><th class="right">Folio</th>
+      <th class="right">Disp.</th><th class="right">Físico</th><th class="right">Costo unit.</th>
+      <th class="center">Fecha Reg.</th><th class="right">Días</th><th class="right">Valorizado</th>
+      <th>Usuario</th><th>Estación / PC</th><th class="center">Fecha registro sistema</th><th>Observación</th>
+    </tr></thead>
+    <tbody id="__VID___tbody"></tbody>
+  </table>
+  </div>
+  <div class="footer-note">Ferretería Oviedo · Reporte generado desde sistema interno — no contiene credenciales</div>
+</div>
+"""
+
+
 def generar_html(data):
     # IMPORTANTE: el HTML publicado en GitHub Pages ya NO embebe los datos crudos.
     # Los datos viven en Firestore (proyecto isabel-riquelme-merma) y se cargan en el
     # navegador SOLO despues de iniciar sesion (ver firestore.rules: auth != null).
-    # generar_bodegas_ir.py / generar_merma_ir.py siguen escribiendo los JSON locales
-    # (merma_isabel_riquelme.json, bodegas_ir_otras.json) que luego sube
-    # _subir_datos_firestore.py — ese paso es manual/script aparte, no parte del HTML.
+    # generar_bodegas_ir.py / generar_merma_ir.py / generar_bodegas_gestion.py siguen
+    # escribiendo los JSON locales que luego sube _subir_datos_firestore.py — ese paso
+    # es manual/script aparte, no parte del HTML.
     logo_b64 = LOGO_B64.read_text(encoding="utf-8").strip() if LOGO_B64.exists() else ""
-    html = HTML_TEMPLATE.replace("__LOGO_B64__", logo_b64)
+
+    tabs_gestion = "\n".join(
+        f'  <button class="tab-btn" id="tabBtn_{vid}" onclick="cambiarTab(\'{vid}\')">{tab_label}</button>'
+        for vid, tab_label, _ in VISTAS_GESTION_DEF
+    )
+    panels_gestion = "\n".join(
+        PANEL_GESTION_TEMPLATE.replace("__VID__", vid) for vid, _, _ in VISTAS_GESTION_DEF
+    )
+    vistas_gestion_ids = json.dumps([vid for vid, _, _ in VISTAS_GESTION_DEF])
+    vistas_gestion_js = ",\n  ".join(
+        f"{vid}: {{ DATA: {{registros:[]}}, conBodega:true, label:{json.dumps(label)} }}"
+        for vid, _, label in VISTAS_GESTION_DEF
+    )
+
+    html = (HTML_TEMPLATE
+            .replace("__LOGO_B64__", logo_b64)
+            .replace("__TABS_GESTION__", tabs_gestion)
+            .replace("__PANELS_GESTION__", panels_gestion)
+            .replace("__VISTAS_GESTION_IDS__", vistas_gestion_ids)
+            .replace("__VISTAS_GESTION_JS__", vistas_gestion_js))
     OUT_HTML.write_text(html, encoding="utf-8")
 
 
@@ -368,7 +445,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 </div>
 <div class="tabs">
   <button class="tab-btn active" id="tabBtn_merma" onclick="cambiarTab('merma')">📦 Merma (Bodega MIR)</button>
-  <button class="tab-btn" id="tabBtn_bodegas" onclick="cambiarTab('bodegas')">🏬 Otras Bodegas</button>
+  <button class="tab-btn" id="tabBtn_bodegas" onclick="cambiarTab('bodegas')">🏬 Otras Bodegas IR</button>
+__TABS_GESTION__
 </div>
 <div class="wrap">
 
@@ -412,7 +490,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <tbody id="merma_tbody"></tbody>
   </table>
   </div>
-  <div class="footer-note">Ferretería Oviedo El Manzano · Reporte generado desde sistema interno — no contiene credenciales</div>
+  <div class="footer-note">Ferretería Oviedo · Reporte generado desde sistema interno — no contiene credenciales</div>
 </div>
 
 <div class="card tab-panel" id="panel_bodegas">
@@ -456,8 +534,10 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <tbody id="bodegas_tbody"></tbody>
   </table>
   </div>
-  <div class="footer-note">Ferretería Oviedo El Manzano · Reporte generado desde sistema interno — no contiene credenciales</div>
+  <div class="footer-note">Ferretería Oviedo · Reporte generado desde sistema interno — no contiene credenciales</div>
 </div>
+
+__PANELS_GESTION__
 
 </div>
 </div><!-- /appRoot -->
@@ -519,20 +599,32 @@ function cargarDatosFirestore(){
     db.collection('merma').get(),
     db.collection('bodegas_meta').doc('info').get(),
     db.collection('bodegas').get(),
+    db.collection('bodegas_gestion_meta').doc('info').get(),
+    db.collection('bodegas_gestion').get(),
   ]).then(function(res){
     var metaMerma = res[0].exists ? res[0].data() : {};
     var regMerma = snapshotToRegistros(res[1]);
     var metaBod = res[2].exists ? res[2].data() : {};
     var regBod = snapshotToRegistros(res[3]);
+    var metaGestion = res[4].exists ? res[4].data() : {};
+    var regGestion = snapshotToRegistros(res[5]);
 
     VISTAS.merma.DATA = Object.assign({registros: regMerma}, metaMerma);
     VISTAS.bodegas.DATA = Object.assign({registros: regBod}, metaBod);
     if(metaBod.bodegasIncluidas) VISTAS.bodegas.DATA.bodegasIncluidas = JSON.parse(metaBod.bodegasIncluidas);
 
-    initVista('merma');
-    initVista('bodegas');
-    render('merma');
-    render('bodegas');
+    // bodegas_gestion trae todas las sucursales nuevas + CD en una sola coleccion,
+    // cada registro marcado con su 'vista' (elmanzano/sanvicente/lascabras/litueche/cd)
+    var bodegasPorVista = metaGestion.bodegasPorVista ? JSON.parse(metaGestion.bodegasPorVista) : {};
+    VISTAS_GESTION.forEach(function(v){
+      VISTAS[v].DATA = {
+        registros: regGestion.filter(function(r){ return r.vista===v; }),
+        generado: metaGestion.generado, fuente: metaGestion.fuente,
+        bodegasIncluidas: bodegasPorVista[v] || [],
+      };
+    });
+
+    Object.keys(VISTAS).forEach(function(v){ initVista(v); render(v); });
   }).catch(function(e){
     document.getElementById('appRoot').innerHTML =
       '<div style="padding:40px;text-align:center;color:#dc2626">Error cargando datos desde Firestore: '+e.message+'</div>';
@@ -540,9 +632,11 @@ function cargarDatosFirestore(){
 }
 
 // ── Datasets (uno por pestaña) — se llenan via Firestore tras login ─────────
+var VISTAS_GESTION = __VISTAS_GESTION_IDS__;
 var VISTAS = {
   merma:   { DATA: {registros:[]}, conBodega:false, label:'Merma IR' },
-  bodegas: { DATA: {registros:[]}, conBodega:true,  label:'Otras Bodegas IR' }
+  bodegas: { DATA: {registros:[]}, conBodega:true,  label:'Otras Bodegas IR' },
+  __VISTAS_GESTION_JS__
 };
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -593,16 +687,16 @@ function initVista(v){
 
   if(cfg.conBodega){
     var bods = (cfg.DATA.bodegasIncluidas||[]);
-    var cont = document.getElementById('bodegas_chkBodegas');
+    var cont = document.getElementById(v+'_chkBodegas');
     cont.innerHTML = bods.map(function(b){
-      return '<label><input type="checkbox" class="bodegaChk" value="'+esc(b.simbolo)+'" checked onchange="render(&#39;bodegas&#39;)">'+
+      return '<label><input type="checkbox" class="bodegaChk" value="'+esc(b.simbolo)+'" checked onchange="render(&#39;'+v+'&#39;)">'+
         esc(b.simbolo)+' — '+esc(b.nombre)+'</label>';
     }).join('');
   }
 }
 
-function bodegasSeleccionadas(){
-  return Array.from(document.querySelectorAll('.bodegaChk:checked')).map(function(c){return c.value;});
+function bodegasSeleccionadas(v){
+  return Array.from(document.querySelectorAll('#'+v+'_chkBodegas .bodegaChk:checked')).map(function(c){return c.value;});
 }
 
 function filtrar(v){
@@ -616,7 +710,7 @@ function filtrar(v){
   var dMax=parseInt($(v,'qDiasMax').value); if(isNaN(dMax)) dMax=Infinity;
   var fDesde=$(v,'qFechaDesde').value;
   var fHasta=$(v,'qFechaHasta').value;
-  var bodSel = cfg.conBodega ? bodegasSeleccionadas() : null;
+  var bodSel = cfg.conBodega ? bodegasSeleccionadas(v) : null;
 
   return cfg.REG.filter(function(r){
     if(bodSel && bodSel.indexOf(r.bodega)<0) return false;
