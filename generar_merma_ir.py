@@ -593,41 +593,49 @@ function snapshotToRegistros(snap){
   return out;
 }
 
+// TEMPORAL (2026-07-21): Firestore agoto su cuota gratuita de escrituras subiendo
+// 'bodegas'/'bodegas_gestion' (esquema 1-doc-por-codigo, ~14000 escrituras). Mientras
+// no resetea, esas dos colecciones se leen de los JSON estaticos publicados junto al
+// HTML (bodegas_ir_otras.json / bodegas_gestion.json) en vez de Firestore. 'merma'
+// sigue viniendo de Firestore normal (no se toco, sigue con cuota disponible).
+// Revertir cuando la cuota resetee: volver a leer 'bodegas'/'bodegas_gestion' de
+// Firestore (ver historial git de esta funcion) y considerar el esquema chunked
+// (1 doc grande por sucursal en vez de 1 por codigo) para no volver a agotarla.
+function vistaDeSucursal(idSucursal){
+  return {"04":"elmanzano","05":"sanvicente","06":"lascabras","11":"litueche"}[idSucursal];
+}
+
 function cargarDatosFirestore(){
   Promise.all([
     db.collection('merma_meta').doc('info').get(),
     db.collection('merma').get(),
-    db.collection('bodegas_meta').doc('info').get(),
-    db.collection('bodegas').get(),
-    db.collection('bodegas_gestion_meta').doc('info').get(),
-    db.collection('bodegas_gestion').get(),
+    fetch('bodegas_ir_otras.json').then(function(r){ return r.json(); }),
+    fetch('bodegas_gestion.json').then(function(r){ return r.json(); }),
   ]).then(function(res){
     var metaMerma = res[0].exists ? res[0].data() : {};
     var regMerma = snapshotToRegistros(res[1]);
-    var metaBod = res[2].exists ? res[2].data() : {};
-    var regBod = snapshotToRegistros(res[3]);
-    var metaGestion = res[4].exists ? res[4].data() : {};
-    var regGestion = snapshotToRegistros(res[5]);
+    var dataBod = res[2];
+    var dataGestion = res[3];
 
     VISTAS.merma.DATA = Object.assign({registros: regMerma}, metaMerma);
-    VISTAS.bodegas.DATA = Object.assign({registros: regBod}, metaBod);
-    if(metaBod.bodegasIncluidas) VISTAS.bodegas.DATA.bodegasIncluidas = JSON.parse(metaBod.bodegasIncluidas);
+    VISTAS.bodegas.DATA = dataBod;
 
-    // bodegas_gestion trae todas las sucursales nuevas + CD en una sola coleccion,
-    // cada registro marcado con su 'vista' (elmanzano/sanvicente/lascabras/litueche/cd)
-    var bodegasPorVista = metaGestion.bodegasPorVista ? JSON.parse(metaGestion.bodegasPorVista) : {};
-    VISTAS_GESTION.forEach(function(v){
+    dataGestion.sucursales.forEach(function(s){
+      var v = vistaDeSucursal(s.idSucursal);
       VISTAS[v].DATA = {
-        registros: regGestion.filter(function(r){ return r.vista===v; }),
-        generado: metaGestion.generado, fuente: metaGestion.fuente,
-        bodegasIncluidas: bodegasPorVista[v] || [],
+        registros: s.registros, generado: dataGestion.generado, fuente: dataGestion.fuente,
+        bodegasIncluidas: s.bodegasIncluidas,
       };
     });
+    VISTAS.cd.DATA = {
+      registros: dataGestion.compartidas.registros, generado: dataGestion.generado, fuente: dataGestion.fuente,
+      bodegasIncluidas: dataGestion.compartidas.bodegasIncluidas,
+    };
 
     Object.keys(VISTAS).forEach(function(v){ initVista(v); render(v); });
   }).catch(function(e){
     document.getElementById('appRoot').innerHTML =
-      '<div style="padding:40px;text-align:center;color:#dc2626">Error cargando datos desde Firestore: '+e.message+'</div>';
+      '<div style="padding:40px;text-align:center;color:#dc2626">Error cargando datos: '+e.message+'</div>';
   });
 }
 
