@@ -2,6 +2,59 @@
 Verificado por consulta SQL directa (`P_BODEGAS`) el 2026-07-21. No editar a mano —
 re-consultar con `verificar_bodegas_gestion.py` si cambia el ERP.
 
+## Actualización 2026-07-21 (v2) — categorías ampliadas
+Tras revisión de consistencia contra el catálogo completo de `P_BODEGAS` para las 5
+sucursales, se agregaron categorías nuevas pedidas por el usuario:
+- **Logística**: Recepción, Ingreso, Tránsito, Distribución, Despacho Proveedor.
+- **Auxiliar**: Gestión, Merma, Garantía, Remate, Marketing, + casos puntuales
+  (Consumo San Vicente, Volumen Las Cabras).
+- **Exhibición**: incluida para las 5 sucursales (antes excluida como "Comercial") —
+  ver nota de volumen abajo, son bodegas MUY grandes.
+- **Facturación** (Bodega Ferretería=20, Casa Central=1, Ferreteria=2, etc.):
+  confirmado que se mantienen EXCLUIDAS — no son de ninguna sucursal individual.
+
+### Gap corregido
+- **Garantía Las Cabras** (GFL, IDBODEGA=91) faltaba — agregada a
+  `generar_bodegas_gestion.py`. Isabel Riquelme ya tenía la suya (GAR=53) en
+  `generar_bodegas_ir.py`.
+
+### Bodegas atípicas incluidas (no encajan 100% en las categorías estándar)
+| IDBODEGA | Símbolo (ERP) | Nombre | Sucursal | Categoría asignada |
+|:---:|:---:|---|---|---|
+| 43 | CSV (duplicado con Calzada=44) | Consumo San Vicente | 05 | Auxiliar |
+| 97 | VLC | Volumen Las Cabras | 06 | Auxiliar |
+
+⚠️ **Consumo San Vicente (43) y Calzada San Vicente (44) comparten el mismo
+`SIMBOLO_BODEGA` ("CSV") en el ERP** — son bodegas distintas. Cualquier script que
+identifique bodegas por símbolo en vez de IDBODEGA las va a confundir. Se corrigió
+`generar_bodegas_gestion.py` para indexar internamente por IDBODEGA, no por símbolo.
+
+### Exhibición — volumen alto (no es error)
+Las bodegas de Exhibición concentran muchísimo stock valorizado (vitrina/showroom):
+EEM=1819 códigos, ESV=1786, ELC=1411, ELE=1523, EIR=2090. Es esperado — es donde vive
+el stock "en exhibición, valorizado pero no disponible para venta regular".
+
+### Bodegas compartidas/globales — ampliado
+Antes solo Centro de Distribución (CD=23). Se agregaron, mismo criterio (bodega única,
+no repetida por sucursal, vive bajo un IDSUCURSAL administrativo distinto):
+
+| IDBODEGA | Símbolo | Nombre | IDSUCURSAL real (ERP) |
+|:---:|:---:|---|:---:|
+| 23 | CD | Centro de Distribucion | 08 |
+| 98 | BDP | Despacho Proveedor | 09 (Ventas Empresas) |
+| 84 | REM | Remate | 01 (Casa Matriz) |
+| 36 | MKT | Marketing | 01 (Casa Matriz) |
+
+Nota: existe una bodega "Despacho Proveedor - NO USAR" (IDBODEGA=17, IDSUCURSAL=01)
+marcada explícitamente por el ERP para no usar — excluida a propósito.
+
+### Categorías descritas por el usuario pero NO agregadas como bodegas nuevas
+- **Ingreso**: ya cubierto (categoría original).
+- **Dormidas** (sin ingreso >90 días): no es una bodega, es un criterio de antigüedad
+  ya soportado por el campo `diasAntiguedad`/clase CSS `.d90` en el HTML (resalta en
+  rojo). Si se quiere un KPI dedicado "Dormidas" (conteo de códigos ≥90 días), falta
+  agregarlo — no se hizo en esta pasada.
+
 Complementa (no reemplaza) `IDS_REFERENCIA_IR.md`, que documenta el detalle propio de
 Isabel Riquelme (Firebase, MERMA.xlsx, notas de folio vacío, stock negativo, etc.).
 

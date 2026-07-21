@@ -38,6 +38,7 @@ BODEGAS = [
     (77, 'BMC', 'Marticorena Stgo'),
     (92, 'RST', 'Recepcion Santiago'),
     (99, 'HEL', 'Herramientas Electricas'),
+    (85, 'EIR', 'Exhibicion Isabel Riquelme'),  # agregada 2026-07-21 (categoria Exhibicion)
 ]
 LOTE_SIZE = 2  # bajar de a 2 bodegas para evitar conflictos/timeouts en SQL
 

@@ -41,6 +41,7 @@ SUCURSALES = [
             (55, "RCE", "Recepcion El Manzano"),
             (72, "IEM", "Ingreso El Manzano"),
             (46, "TEM", "Transito El Manzano"),
+            (83, "EEM", "Exhibicion El Manzano"),
         ],
     },
     {
@@ -53,6 +54,8 @@ SUCURSALES = [
             (45, "TSV", "Transito San Vicente"),
             (44, "CSV", "Calzada San Vicente"),
             (88, "DSV", "Distribucion San Vicente"),
+            (95, "ESV", "Exhibicion San Vicente"),
+            (43, "CSV", "Consumo San Vicente"),  # OJO: mismo SIMBOLO_BODEGA que Calzada (44) en el ERP
         ],
     },
     {
@@ -64,6 +67,9 @@ SUCURSALES = [
             (71, "ILC", "Ingreso Las Cabras"),
             (16, "TLC", "Transito Las Cabras"),
             (35, "CLC", "Calzada Las Cabras"),
+            (91, "GFL", "Garantia Las Cabras"),
+            (96, "ELC", "Exhibicion Las Cabras"),
+            (97, "VLC", "Volumen Las Cabras"),
         ],
     },
     {
@@ -75,13 +81,19 @@ SUCURSALES = [
             (59, "TLE", "Transito Litueche"),
             (78, "CLT", "Calzada Litueche"),
             (79, "DLT", "Distribucion Litueche"),
+            (64, "ELE", "Exhibicion Litueche"),
         ],
     },
 ]
 
-# Centro de Distribucion — bodega compartida (IDSUCURSAL=08 en el ERP), no repetida
-# por sucursal. Se descarga una sola vez y se expone en el JSON aparte.
-CD_BODEGA = (23, "CD", "Centro de Distribucion")
+# Bodegas compartidas/globales (viven bajo un IDSUCURSAL administrativo distinto —
+# 08/01/09 — no repetidas por sucursal, se agrupan en un solo tab "Compartidas").
+COMPARTIDAS = [
+    (23, "CD",  "Centro de Distribucion"),
+    (98, "BDP", "Despacho Proveedor"),
+    (84, "REM", "Remate"),
+    (36, "MKT", "Marketing"),
+]
 
 DOC_NOMBRES = {
     "GRT": "Guía Recepción Traslado", "GIB": "Guía Ingreso Entre Bodegas",
@@ -232,11 +244,15 @@ def main():
     for suc in SUCURSALES:
         for idbod, simbolo, nombre in suc["bodegas"]:
             todas_bodegas.append((idbod, simbolo, nombre, suc["idSucursal"]))
-    todas_bodegas.append((CD_BODEGA[0], CD_BODEGA[1], CD_BODEGA[2], "CD"))
+    for idbod, simbolo, nombre in COMPARTIDAS:
+        todas_bodegas.append((idbod, simbolo, nombre, "COMPARTIDAS"))
 
     log(f"[2/3] Descargando {len(todas_bodegas)} bodegas en lotes de {LOTE_SIZE} "
         f"(evita timeouts/conflictos en la bajada)...")
 
+    # Clave = IDBODEGA (no simbolo): el ERP repite SIMBOLO_BODEGA "CSV" para dos
+    # bodegas distintas de San Vicente (Calzada=44 y Consumo=43) — usar el simbolo
+    # como clave pisaria una descarga con la otra.
     resultados_por_bodega = {}
     resumen = []
     lotes = [todas_bodegas[i:i + LOTE_SIZE] for i in range(0, len(todas_bodegas), LOTE_SIZE)]
@@ -245,13 +261,13 @@ def main():
         for idbod, simbolo, nombre, idsuc_tab in lote:
             try:
                 registros, total_crudo = descargar_bodega(cur, idbod, simbolo, nombre)
-                resultados_por_bodega[simbolo] = registros
+                resultados_por_bodega[idbod] = registros
                 resumen.append((idsuc_tab, simbolo, nombre, len(registros), total_crudo))
                 log(f"        [OK] {simbolo} ({nombre}): {len(registros)} codigos "
                     f"({total_crudo} filas crudas antes de deduplicar)")
             except Exception as e:
                 log(f"        [ERROR] {simbolo} ({nombre}): {e} — se omite, resto del lote continua")
-                resultados_por_bodega[simbolo] = []
+                resultados_por_bodega[idbod] = []
                 resumen.append((idsuc_tab, simbolo, nombre, 0, 0))
         if n < len(lotes):
             time.sleep(1.5)
@@ -259,13 +275,13 @@ def main():
     cur.close()
     conn.close()
 
-    # ── Armar estructura final: una entrada por sucursal + una para CD ──────
+    # ── Armar estructura final: una entrada por sucursal + una para Compartidas ──
     sucursales_out = []
     total_general = 0
     for suc in SUCURSALES:
         registros = []
         for idbod, simbolo, nombre in suc["bodegas"]:
-            registros.extend(resultados_por_bodega.get(simbolo, []))
+            registros.extend(resultados_por_bodega.get(idbod, []))
         registros.sort(key=lambda r: r.get("diasAntiguedad") if r.get("diasAntiguedad") is not None else -1, reverse=True)
         sucursales_out.append({
             "idSucursal": suc["idSucursal"], "nombre": suc["nombre"],
@@ -274,16 +290,19 @@ def main():
         })
         total_general += len(registros)
 
-    cd_registros = resultados_por_bodega.get(CD_BODEGA[1], [])
-    total_general += len(cd_registros)
+    compartidas_registros = []
+    for idbod, simbolo, nombre in COMPARTIDAS:
+        compartidas_registros.extend(resultados_por_bodega.get(idbod, []))
+    compartidas_registros.sort(key=lambda r: r.get("diasAntiguedad") if r.get("diasAntiguedad") is not None else -1, reverse=True)
+    total_general += len(compartidas_registros)
 
     data = {
         "generado": datetime.date.today().isoformat(),
         "fuente": "Sistema interno",
         "sucursales": sucursales_out,
-        "centroDistribucion": {
-            "idBodega": CD_BODEGA[0], "simbolo": CD_BODEGA[1], "nombre": CD_BODEGA[2],
-            "total": len(cd_registros), "registros": cd_registros,
+        "compartidas": {
+            "bodegasIncluidas": [{"id": b[0], "simbolo": b[1], "nombre": b[2]} for b in COMPARTIDAS],
+            "total": len(compartidas_registros), "registros": compartidas_registros,
         },
         "total": total_general,
     }

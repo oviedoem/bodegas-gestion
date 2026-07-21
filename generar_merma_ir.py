@@ -260,7 +260,7 @@ VISTAS_GESTION_DEF = [
     ("sanvicente", "🏬 San Vicente",           "San Vicente"),
     ("lascabras",  "🏬 Las Cabras",            "Las Cabras"),
     ("litueche",   "🏬 Litueche",              "Litueche"),
-    ("cd",         "📦 Centro Distribución",   "Centro Distribución"),
+    ("cd",         "📦 Compartidas",           "Bodegas Compartidas (CD/Desp.Prov./Remate/Marketing)"),
 ]
 
 PANEL_GESTION_TEMPLATE = """
