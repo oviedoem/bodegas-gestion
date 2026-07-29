@@ -191,6 +191,40 @@
   .chk-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;background:#f9fafb;border:1px solid var(--border);
            border-radius:8px;padding:9px 12px}
   .chk-row label{font-size:12px;font-weight:600;color:#374151;display:flex;align-items:center;gap:5px;cursor:pointer}
+
+  /* ── Botón instalar PWA — prominente con animación ── */
+  #installBanner{
+    position:fixed;bottom:0;left:0;right:0;z-index:8888;
+    display:none;
+    background:linear-gradient(135deg,#1e3a8a,#2563eb);
+    padding:14px 20px 18px;
+    text-align:center;
+    box-shadow:0 -4px 24px rgba(37,99,235,0.5);
+    animation:slideUp .4s cubic-bezier(.22,1,.36,1);
+  }
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  #installBanner .ib-title{color:rgba(255,255,255,.7);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+  #installBanner button{
+    background:#fff;color:#1d4ed8;border:none;
+    border-radius:12px;padding:11px 28px;
+    font-size:15px;font-weight:800;cursor:pointer;
+    letter-spacing:.01em;
+    box-shadow:0 4px 16px rgba(0,0,0,.25);
+    display:inline-flex;align-items:center;gap:8px;
+    animation:pulse-btn 2s infinite;
+    transition:transform .15s;
+  }
+  #installBanner button:hover{transform:scale(1.04);}
+  #installBanner button:active{transform:scale(.97);}
+  @keyframes pulse-btn{
+    0%,100%{box-shadow:0 4px 16px rgba(0,0,0,.25),0 0 0 0 rgba(255,255,255,.4)}
+    50%{box-shadow:0 4px 16px rgba(0,0,0,.25),0 0 0 8px rgba(255,255,255,0)}
+  }
+  #installBanner .ib-close{
+    position:absolute;top:8px;right:12px;background:none;border:none;
+    color:rgba(255,255,255,.4);font-size:18px;cursor:pointer;padding:4px;
+  }
+  #installBanner .ib-close:hover{color:rgba(255,255,255,.8);}
 </style>
 </head>
 <body>
@@ -852,12 +886,47 @@ function exportarHtml(v){
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+esc(VISTAS[v].label)+' — Bodegas Gestión</title></head>'+
     '<body><h2>Análisis '+esc(VISTAS[v].label)+' — Sucursal Isabel Riquelme</h2>'+
     '<p style="font-size:12px;color:#666">Exportado: '+new Date().toLocaleString('es-CL')+' · '+FIL.length+' registros</p>'+
-    '<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px"><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table><button id="installBtn" onclick="installApp()">
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-  Instalar app
-</button>
+    '<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px"><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table></body></html>';
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='Isabel_Riquelme_'+v+'_'+new Date().toISOString().slice(0,10)+'.html';
+  a.click();
+}
+
+function enviarCorreo(v){
+  var cfg=VISTAS[v], FIL=cfg.FIL;
+  if(!FIL.length){ alert('No hay datos para enviar con el filtro actual.'); return; }
+  var totalVal=FIL.reduce(function(s,r){var qty=(r.fisico!=null?r.fisico:r.disp)||0; return s+qty*(r.costo||0);},0);
+  var asunto=cfg.label+' — Bodegas Gestión — '+FIL.length+' códigos';
+  var cuerpo='ANÁLISIS '+cfg.label.toUpperCase()+' — SUCURSAL ISABEL RIQUELME\n'+
+    'Generado: '+cfg.DATA.generado+'\n'+
+    'Códigos filtrados: '+FIL.length+' / '+cfg.REG.length+'\n'+
+    'Valorizado total: $'+fmt(totalVal)+'\n\n'+
+    'Detalle (primeros 40):\n'+
+    FIL.slice(0,40).map(function(r,i){
+      return (i+1)+'. '+(cfg.conBodega?r.bodega+' ':'')+r.codigoTecnico+' — '+(r.descripcion||'').substring(0,50)+' | '+
+        (r.tipoDocNombre||r.tipoDoc||'s/d')+' | '+r.diasAntiguedad+' dias | $'+fmt((r.fisico||r.disp||0)*(r.costo||0))+
+        ' | '+(r.usuario||'-')+' / '+(r.estacionPc||'-');
+    }).join('\n')+
+    (FIL.length>40?'\n... y '+(FIL.length-40)+' más (ver Excel adjunto descargado aparte).':'')+
+    '\n\n--- Generado desde reporte local Ferretería Oviedo ---';
+  var mailto='mailto:?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
+  window.open(mailto,'_self');
+}
+// render('merma')/render('bodegas') ya no se llaman aqui — los dispara
+// cargarDatosFirestore() (via onAuthStateChanged) una vez el usuario inicia sesion.
+</script>
+
+<div id="installBanner">
+  <button onclick="installApp()" type="button" id="installBtn">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Instalar app
+  </button>
+  <button class="ib-close" onclick="document.getElementById('installBanner').style.display='none'" type="button">✕</button>
+</div>
 <script>
-/* ── Particles engine (copia exacta ferresystem, sin CDN) ── */
+/* ── Particles engine (copia exacta ferresystem) ── */
 (function(){
   var cv=document.getElementById("particleCanvas");
   if(!cv)return;
@@ -940,21 +1009,23 @@ document.addEventListener("keydown",function(e){
 /* ── PWA Install ── */
 var _deferredInstall=null;
 window.addEventListener("beforeinstallprompt",function(e){
-  e.preventDefault();_deferredInstall=e;
-  var btn=document.getElementById("installBtn");
-  if(btn)btn.style.display="flex";
+  e.preventDefault();
+  _deferredInstall=e;
+  var banner=document.getElementById("installBanner");
+  if(banner) banner.style.display="block";
 });
 function installApp(){
   if(!_deferredInstall)return;
   _deferredInstall.prompt();
   _deferredInstall.userChoice.then(function(){
     _deferredInstall=null;
-    var btn=document.getElementById("installBtn");
-    if(btn)btn.style.display="none";
+    var banner=document.getElementById("installBanner");
+    if(banner) banner.style.display="none";
   });
 }
 window.addEventListener("appinstalled",function(){
-  var btn=document.getElementById("installBtn");if(btn)btn.style.display="none";
+  var banner=document.getElementById("installBanner");
+  if(banner) banner.style.display="none";
 });
 
 /* ── Service Worker ── */
@@ -972,37 +1043,6 @@ if("serviceWorker" in navigator){
       });
     }).catch(function(){});
 }
-</script>
-</body></html>';
-  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='Isabel_Riquelme_'+v+'_'+new Date().toISOString().slice(0,10)+'.html';
-  a.click();
-}
-
-function enviarCorreo(v){
-  var cfg=VISTAS[v], FIL=cfg.FIL;
-  if(!FIL.length){ alert('No hay datos para enviar con el filtro actual.'); return; }
-  var totalVal=FIL.reduce(function(s,r){var qty=(r.fisico!=null?r.fisico:r.disp)||0; return s+qty*(r.costo||0);},0);
-  var asunto=cfg.label+' — Bodegas Gestión — '+FIL.length+' códigos';
-  var cuerpo='ANÁLISIS '+cfg.label.toUpperCase()+' — SUCURSAL ISABEL RIQUELME\n'+
-    'Generado: '+cfg.DATA.generado+'\n'+
-    'Códigos filtrados: '+FIL.length+' / '+cfg.REG.length+'\n'+
-    'Valorizado total: $'+fmt(totalVal)+'\n\n'+
-    'Detalle (primeros 40):\n'+
-    FIL.slice(0,40).map(function(r,i){
-      return (i+1)+'. '+(cfg.conBodega?r.bodega+' ':'')+r.codigoTecnico+' — '+(r.descripcion||'').substring(0,50)+' | '+
-        (r.tipoDocNombre||r.tipoDoc||'s/d')+' | '+r.diasAntiguedad+' dias | $'+fmt((r.fisico||r.disp||0)*(r.costo||0))+
-        ' | '+(r.usuario||'-')+' / '+(r.estacionPc||'-');
-    }).join('\n')+
-    (FIL.length>40?'\n... y '+(FIL.length-40)+' más (ver Excel adjunto descargado aparte).':'')+
-    '\n\n--- Generado desde reporte local Ferretería Oviedo ---';
-  var mailto='mailto:?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
-  window.open(mailto,'_self');
-}
-// render('merma')/render('bodegas') ya no se llaman aqui — los dispara
-// cargarDatosFirestore() (via onAuthStateChanged) una vez el usuario inicia sesion.
 </script>
 </body>
 </html>
