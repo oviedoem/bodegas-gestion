@@ -345,27 +345,54 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Merma — Sucursal Isabel Riquelme — Ferretería Oviedo</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#1d4ed8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<title>Bodegas Gestión — Ferretería Oviedo</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <style>
-  #loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,#111827,#DA0000);
-               display:flex;align-items:center;justify-content:center;z-index:9999}
-  .login-box{background:#fff;border-radius:16px;padding:32px 30px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
-  .login-box img{height:50px;margin-bottom:14px}
-  .login-box h2{font-size:16px;margin:0 0 18px;color:#111827}
-  .login-box input{width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;
-                    margin-bottom:10px;font-family:inherit;box-sizing:border-box}
-  .login-box button{width:100%;padding:11px;background:#DA0000;color:#fff;border:none;border-radius:8px;
-                     font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
-  .login-box button:hover{background:#c93a08}
-  .login-err{color:#dc2626;font-size:12px;margin-top:8px;min-height:16px}
+  /* ── LOGIN SCREEN (ferresystem design) ─────────────────────────── */
+  #loginScreen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#070b14}
+  #particleBg{position:absolute;inset:0;background:linear-gradient(135deg,#070b14 0%,#0b1220 40%,#0d1829 70%,#060a12 100%);z-index:0}
+  #particleCanvas{position:absolute;inset:0;z-index:1}
+  .lg-card{position:relative;z-index:2;background:rgba(10,18,35,0.78);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border:1px solid rgba(99,179,237,0.14);border-radius:22px;padding:40px 36px 36px;width:340px;max-width:92vw;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.55)}
+  .lg-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(37,99,235,0.18);border:1px solid rgba(59,130,246,0.35);border-radius:20px;padding:5px 13px;margin-bottom:20px;font-size:11px;font-weight:700;color:#93c5fd;letter-spacing:.5px;text-transform:uppercase}
+  .lg-dot{width:7px;height:7px;border-radius:50%;background:#22d3ee;animation:pulse-dot 1.6s ease-in-out infinite}
+  .lg-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 60%,#3b82f6 100%);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 0 0 0 rgba(59,130,246,.5);animation:pulse-icon 2s ease-in-out infinite}
+  .lg-icon svg{width:32px;height:32px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .lg-title{font-size:20px;font-weight:800;color:#e2e8f0;margin:0 0 4px;letter-spacing:-.3px}
+  .lg-sub{font-size:12px;color:#64748b;margin:0 0 26px}
+  .lg-label{display:block;font-size:11px;font-weight:700;color:#64748b;text-align:left;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+  .lg-input-wrap{position:relative;margin-bottom:14px}
+  .lg-input{width:100%;padding:12px 14px;background:rgba(15,23,42,0.7);border:1px solid rgba(99,179,237,0.2);border-radius:10px;font-size:14px;color:#e2e8f0;font-family:inherit;box-sizing:border-box;outline:none;transition:border-color .2s}
+  .lg-input:focus{border-color:rgba(59,130,246,.6)}
+  .lg-toggle{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;padding:2px;display:flex;align-items:center}
+  .lg-btn{width:100%;padding:13px;background:linear-gradient(135deg,#1d4ed8 0%,#3b82f6 100%);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px;animation:pulse-btn 2.2s ease-in-out infinite;transition:opacity .2s}
+  .lg-btn:hover{opacity:.88}
+  .lg-err{color:#f87171;font-size:12px;margin-top:10px;min-height:16px}
+  @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+  @keyframes pulse-icon{0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,.5)}70%{box-shadow:0 0 0 14px rgba(59,130,246,0)}}
+  @keyframes pulse-btn{0%,100%{box-shadow:0 4px 16px rgba(0,0,0,.25),0 0 0 0 rgba(255,255,255,.4)}50%{box-shadow:0 4px 16px rgba(0,0,0,.25),0 0 0 8px rgba(255,255,255,0)}}
+  /* ── INSTALL BANNER ────────────────────────────────────────────── */
+  #installBanner{position:fixed;bottom:0;left:0;right:0;z-index:8888;display:none;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:14px 20px;align-items:center;gap:14px;box-shadow:0 -4px 24px rgba(0,0,0,.35);animation:slideUp .4s cubic-bezier(.22,1,.36,1)}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  #installBanner .ib-icon{font-size:26px;flex-shrink:0;animation:pulse-icon 2s ease-in-out infinite}
+  #installBanner .ib-text{flex:1}
+  #installBanner .ib-text b{display:block;font-size:14px;font-weight:800}
+  #installBanner .ib-text span{font-size:12px;opacity:.8}
+  #installBanner .ib-btn{background:#fff;color:#1d4ed8;border:none;border-radius:8px;padding:10px 18px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;animation:pulse-btn 2.2s ease-in-out infinite}
+  #installBanner .ib-close{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;opacity:.7;flex-shrink:0;padding:0 4px}
+  /* ── APP ───────────────────────────────────────────────────────── */
   #appRoot{display:none}
   .btn-logout{background:#374151;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;
               font-weight:700;cursor:pointer;font-family:inherit;margin-left:auto}
-  :root{--naranja:#DA0000;--naranja2:#c93a08;--dark:#111827;--border:#e5e7eb;--gris:#6b7280;
+  :root{--naranja:#2563eb;--naranja2:#1d4ed8;--dark:#111827;--border:#e5e7eb;--gris:#6b7280;
         --verde:#059669;--rojo:#dc2626;--amarillo:#d97706}
   *{box-sizing:border-box}
   body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;margin:0;padding:0;color:#1a1a1a}
@@ -424,21 +451,43 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <body>
 
 <div id="loginScreen">
-  <div class="login-box">
-    <img src="data:image/jpeg;base64,__LOGO_B64__" alt="Ferretería Oviedo">
-    <h2>Análisis Isabel Riquelme — Acceso restringido</h2>
-    <input type="text" id="loginUser" placeholder="Usuario" autocomplete="username">
-    <input type="password" id="loginPass" placeholder="Contraseña" autocomplete="current-password">
-    <button onclick="doLogin()">Ingresar</button>
-    <div class="login-err" id="loginErr"></div>
+  <div id="particleBg"></div>
+  <canvas id="particleCanvas"></canvas>
+  <div class="lg-card">
+    <div class="lg-badge"><span class="lg-dot"></span>Sistema Activo</div>
+    <div class="lg-icon">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div class="lg-title">Bodegas Gestión</div>
+    <div class="lg-sub">Ferretería Oviedo — Acceso restringido</div>
+    <label class="lg-label">Usuario</label>
+    <div class="lg-input-wrap">
+      <input class="lg-input" type="text" id="loginUser" placeholder="riquelme" autocomplete="username">
+    </div>
+    <label class="lg-label">Contraseña</label>
+    <div class="lg-input-wrap">
+      <input class="lg-input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+      <button class="lg-toggle" type="button" onclick="lgTogglePass()" title="Mostrar/ocultar">
+        <svg id="lgEyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <button class="lg-btn" onclick="doLogin()">Ingresar</button>
+    <div class="lg-err" id="loginErr"></div>
   </div>
+</div>
+
+<div id="installBanner">
+  <span class="ib-icon">📲</span>
+  <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
+  <button class="ib-btn" id="installBtn">Instalar</button>
+  <button class="ib-close" onclick="document.getElementById('installBanner').style.display='none'">✕</button>
 </div>
 
 <div id="appRoot">
 <div class="topbar">
   <img src="data:image/jpeg;base64,__LOGO_B64__" alt="Ferretería Oviedo">
   <div>
-    <h1>Análisis Sucursal Isabel Riquelme — Ferretería Oviedo</h1>
+    <h1>Bodegas Gestión — Ferretería Oviedo</h1>
     <div class="sub">Datos protegidos — requieren inicio de sesión (Firebase Auth + Firestore rules)</div>
   </div>
   <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
@@ -570,6 +619,18 @@ function doLogin(){
       err.textContent = (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' ||
         e.code === 'auth/invalid-credential') ? 'Usuario o contraseña incorrectos' : ('Error: ' + e.code);
     });
+}
+
+function lgTogglePass(){
+  var p = document.getElementById('loginPass');
+  var icon = document.getElementById('lgEyeIcon');
+  if(p.type === 'password'){
+    p.type = 'text';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    p.type = 'password';
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
 }
 
 function doLogout(){
@@ -808,7 +869,7 @@ function exportarExcel(v){
   var ws=XLSX.utils.aoa_to_sheet(rows);
   var wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,VISTAS[v].label);
-  XLSX.writeFile(wb,'Isabel_Riquelme_'+v+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  XLSX.writeFile(wb,'Bodegas_Gestion_'+v+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
 function exportarHtml(v){
@@ -819,14 +880,14 @@ function exportarHtml(v){
   var tbody=FIL.map(function(r){
     return '<tr>'+filaArray(v,r).map(function(val){return '<td style="padding:5px 8px;border-bottom:1px solid #eee">'+esc(val)+'</td>';}).join('')+'</tr>';
   }).join('');
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+esc(VISTAS[v].label)+' Isabel Riquelme</title></head>'+
-    '<body><h2>Análisis '+esc(VISTAS[v].label)+' — Sucursal Isabel Riquelme</h2>'+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+esc(VISTAS[v].label)+' — Bodegas Gestión</title></head>'+
+    '<body><h2>'+esc(VISTAS[v].label)+' — Bodegas Gestión</h2>'+
     '<p style="font-size:12px;color:#666">Exportado: '+new Date().toLocaleString('es-CL')+' · '+FIL.length+' registros</p>'+
     '<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px"><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table></body></html>';
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download='Isabel_Riquelme_'+v+'_'+new Date().toISOString().slice(0,10)+'.html';
+  a.download='Bodegas_Gestion_'+v+'_'+new Date().toISOString().slice(0,10)+'.html';
   a.click();
 }
 
@@ -834,8 +895,8 @@ function enviarCorreo(v){
   var cfg=VISTAS[v], FIL=cfg.FIL;
   if(!FIL.length){ alert('No hay datos para enviar con el filtro actual.'); return; }
   var totalVal=FIL.reduce(function(s,r){var qty=(r.fisico!=null?r.fisico:r.disp)||0; return s+qty*(r.costo||0);},0);
-  var asunto=cfg.label+' — Sucursal Isabel Riquelme — '+FIL.length+' códigos';
-  var cuerpo='ANÁLISIS '+cfg.label.toUpperCase()+' — SUCURSAL ISABEL RIQUELME\n'+
+  var asunto=cfg.label+' — Bodegas Gestión — '+FIL.length+' códigos';
+  var cuerpo='ANÁLISIS '+cfg.label.toUpperCase()+' — BODEGAS GESTIÓN\n'+
     'Generado: '+cfg.DATA.generado+'\n'+
     'Códigos filtrados: '+FIL.length+' / '+cfg.REG.length+'\n'+
     'Valorizado total: $'+fmt(totalVal)+'\n\n'+
@@ -852,6 +913,62 @@ function enviarCorreo(v){
 }
 // render('merma')/render('bodegas') ya no se llaman aqui — los dispara
 // cargarDatosFirestore() (via onAuthStateChanged) una vez el usuario inicia sesion.
+
+// ── PARTÍCULAS LOGIN (constellation azul) ──────────────────────────
+(function(){
+  var canvas = document.getElementById('particleCanvas');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W, H, pts, mouse = {x:-9999,y:-9999};
+  var C = {n:80, maxDist:120, ptColor:'rgba(99,179,237,', lineColor:'rgba(99,179,237,', ptR:2, repel:100, speed:.5};
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function init(){
+    pts = [];
+    for(var i=0;i<C.n;i++) pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*C.speed,vy:(Math.random()-.5)*C.speed});
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<pts.length;i++){
+      var p=pts[i];
+      var dx=mouse.x-p.x, dy=mouse.y-p.y, dist2=dx*dx+dy*dy;
+      if(dist2<C.repel*C.repel && dist2>0){var f=C.repel/Math.sqrt(dist2);p.vx-=dx/dist2*f*.2;p.vy-=dy/dist2*f*.2;}
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W) p.vx*=-1; if(p.y<0||p.y>H) p.vy*=-1;
+      ctx.beginPath(); ctx.arc(p.x,p.y,C.ptR,0,Math.PI*2);
+      ctx.fillStyle=C.ptColor+'0.8)'; ctx.fill();
+    }
+    for(var i=0;i<pts.length;i++) for(var j=i+1;j<pts.length;j++){
+      var dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.sqrt(dx*dx+dy*dy);
+      if(d<C.maxDist){
+        ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y);
+        ctx.strokeStyle=C.lineColor+(1-d/C.maxDist)*.5+')'; ctx.lineWidth=.8; ctx.stroke();
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', function(){resize();init();});
+  canvas.addEventListener('mousemove', function(e){mouse.x=e.clientX;mouse.y=e.clientY;});
+  canvas.addEventListener('mouseleave', function(){mouse.x=-9999;mouse.y=-9999;});
+  canvas.addEventListener('touchmove', function(e){var t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;},{passive:true});
+  resize(); init(); draw();
+})();
+
+// ── PWA: Service Worker + Install Banner ───────────────────────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){
+    reg.update();
+  });
+}
+var _deferredInstall = null;
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault(); _deferredInstall = e;
+  var b = document.getElementById('installBanner');
+  if(b){ b.style.display='flex'; }
+});
+document.getElementById('installBtn') && document.getElementById('installBtn').addEventListener('click', function(){
+  if(_deferredInstall){ _deferredInstall.prompt(); _deferredInstall.userChoice.then(function(){ _deferredInstall=null; document.getElementById('installBanner').style.display='none'; }); }
+});
+window.addEventListener('appinstalled', function(){ document.getElementById('installBanner').style.display='none'; });
 </script>
 </body>
 </html>
