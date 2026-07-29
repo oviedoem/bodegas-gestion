@@ -1,0 +1,26 @@
+{
+  "name": "Bodegas Gestión — Ferretería Oviedo",
+  "short_name": "Bodegas Gestión",
+  "description": "Sistema de gestión de bodegas internas — Ferretería Oviedo",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#080d1a",
+  "theme_color": "#DA0000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23DA0000'/%3E%3Cpath stroke='%23fff' stroke-width='10' stroke-linecap='round' stroke-linejoin='round' fill='none' d='M96 28l68 39v58l-68 39L28 125V67z M28 67l68 39 68-39 M96 106v62'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23DA0000'/%3E%3Cpath stroke='%23fff' stroke-width='26' stroke-linecap='round' stroke-linejoin='round' fill='none' d='M256 74l181 104v156L256 438 75 334V178z M75 178l181 104 181-104 M256 282v156'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "es-CL"
+}
