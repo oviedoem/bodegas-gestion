@@ -11,3 +11,8 @@ __pycache__/
 _CREDENCIAL_LOGIN_NO_SUBIR.txt
 _setup_firebase_auth.py
 _subir_datos_firestore.py
+
+# JSONs de bodegas — datos crudos, no deben estar en el repo público
+# (actualmente trackeados por error histórico — pendiente remover del historial)
+bodegas_ir_otras.json
+bodegas_gestion.json
