@@ -959,7 +959,18 @@ window.addEventListener("appinstalled",function(){
 
 /* ── Service Worker ── */
 if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("sw.js").catch(function(){});
+  navigator.serviceWorker.register("sw.js", {updateViaCache: "none"})
+    .then(function(reg){
+      reg.update();
+      reg.addEventListener("updatefound", function(){
+        var newSW = reg.installing;
+        newSW.addEventListener("statechange", function(){
+          if(newSW.state === "installed" && navigator.serviceWorker.controller){
+            window.location.reload();
+          }
+        });
+      });
+    }).catch(function(){});
 }
 </script>
 </body></html>';
