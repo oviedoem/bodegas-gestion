@@ -90,8 +90,10 @@ LEFT JOIN Foviedo.dbo.P_HIPERFAMILIAS HF ON HF.IDHIPERFAMILIA = B.IDHIPERFAMILIA
 LEFT JOIN Foviedo.dbo.P_FAMILIAS FA ON FA.IDFAMILIA = B.IDFAMILIA AND FA.IDHIPERFAMILIA = B.IDHIPERFAMILIA
 LEFT JOIN Foviedo.dbo.P_SUBFAMILIAS SF ON SF.IDSUBFAMILIA = B.IDSUBFAMILIA AND SF.IDFAMILIA = B.IDFAMILIA AND SF.IDHIPERFAMILIA = B.IDHIPERFAMILIA
 LEFT JOIN Foviedo.dbo.P_MARCAS MA ON MA.IDMARCA = B.IDMARCA
-LEFT JOIN ENTRADAS N
+INNER JOIN ENTRADAS N
     ON N.IDBODEGA = A.IDBODEGA AND N.CODIGO_TECNICO = A.CODIGO_TECNICO
+    -- INNER (no LEFT): productos sin documento de entrada en los tipos permitidos
+    -- se excluyen, igual que descargar_bod.py del panel admin.
 LEFT JOIN Foviedo.dbo.M_Documentos_Encabezado_Observacion G
     ON G.IDDOCUMENTO = N.IDDOCUMENTO AND G.IDNUMERO = N.IDNUMERO
 LEFT JOIN Foviedo.dbo.M_DOCUMENTOS_ENCABEZADO ENC
@@ -162,6 +164,8 @@ def _deduplicar_y_acumular(registros):
     resultado = []
     for cod, docs in grupos.items():
         total_fisico = docs[0].get("fisico", 0) if docs else 0
+        if total_fisico == 0:
+            continue  # ya filtrado en SQL; seguridad extra igual que descargar_bod.py
 
         grt_fechas = {d["_fechaRaw"] for d in docs if d["tipoDoc"] == "GRT"}
         earliest_grt = min(grt_fechas) if grt_fechas else None
