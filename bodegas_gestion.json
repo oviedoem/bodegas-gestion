@@ -224287,7 +224287,7 @@
         "nombre": "Marketing"
       }
     ],
-    "total": 343,
+    "total": 341,
     "registros": [
       {
         "bodega": "MCD",
@@ -232472,56 +232472,8 @@
         "familia": "PISOS",
         "subfamilia": "CERAMICA",
         "marca": "CERAM-ALPA PISO-MURO"
-      },
-      {
-        "bodega": "BDP",
-        "bodegaNombre": "Despacho Proveedor",
-        "tipoDoc": "",
-        "tipoDocNombre": "",
-        "folio": "",
-        "codigoTecnico": "VCA344542",
-        "descripcion": "PINO BRUTO CALIBRADO 32X32X3.20",
-        "disp": -500.0,
-        "fisico": -500.0,
-        "cantidad": 0.0,
-        "costo": 790,
-        "fechaRegistro": "",
-        "fechaRegistroIso": "",
-        "diasAntiguedad": null,
-        "observacion": "",
-        "usuario": "",
-        "estacionPc": "",
-        "fechaRegistroSistema": "",
-        "hiperfamilia": "PRODUCTOS CALZADOS",
-        "familia": "C. MATERIALES CONSTRUCCION",
-        "subfamilia": "C.MATERIALES CONSTRUCCION",
-        "marca": "CALZADOS"
-      },
-      {
-        "bodega": "BDP",
-        "bodegaNombre": "Despacho Proveedor",
-        "tipoDoc": "",
-        "tipoDocNombre": "",
-        "folio": "",
-        "codigoTecnico": "VCA348846",
-        "descripcion": "(V/C) MALLA CUADRADA GALV. TIPO 60 X 1,5 X 25",
-        "disp": -12.0,
-        "fisico": -12.0,
-        "cantidad": 0.0,
-        "costo": 37769,
-        "fechaRegistro": "",
-        "fechaRegistroIso": "",
-        "diasAntiguedad": null,
-        "observacion": "",
-        "usuario": "",
-        "estacionPc": "",
-        "fechaRegistroSistema": "",
-        "hiperfamilia": "PRODUCTOS CALZADOS",
-        "familia": "C. MATERIALES FERRETERIA",
-        "subfamilia": "C.MATERIALES FERRETERIA",
-        "marca": "CALZADOS"
       }
     ]
   },
-  "total": 9678
+  "total": 9676
 }
