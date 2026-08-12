@@ -51,23 +51,18 @@ DOC_NOMBRES = {
 }
 
 SQL = """
-WITH ENTRADAS_RANGO AS (
+WITH ENTRADAS AS (
     SELECT
         E.IDBODEGA, E.CODIGO_TECNICO, E.IDSUCURSAL, E.IDDOCUMENTO, E.IDNUMERO,
-        E.NUMERO, E.FECHA_EMISION, E.CANTIDAD, MD.DOC,
-        ROW_NUMBER() OVER (
-            PARTITION BY E.IDBODEGA, E.CODIGO_TECNICO
-            ORDER BY E.FECHA_EMISION DESC, E.IDNUMERO DESC
-        ) AS RN
+        E.NUMERO, E.FECHA_EMISION, E.CANTIDAD, MD.DOC
     FROM Foviedo.dbo.M_DOCUMENTOS_DETALLE E
     INNER JOIN Foviedo.dbo.M_DOCUMENTOS MD ON MD.IDDOCUMENTO = E.IDDOCUMENTO
     WHERE E.IDBODEGA = ?
-      AND MD.DOC IN ('GRC','GRT','GME','GIB','Gdc','GBR','GRP','GRI','GRN','GIN','GDC','GDV','GII','GTS','GEI','GST')
-),
-ENTRADAS AS (
-    SELECT * FROM ENTRADAS_RANGO WHERE RN = 1
+      -- GEI (egreso inventario) y GST (solicitud traslado) excluidos: son egresos/no entradas
+      -- igual que panel admin descargar_bod.py (auditoria 2026-05-27)
+      AND MD.DOC IN ('GRC','GRT','GME','GIB','Gdc','GBR','GRP','GRI','GRN','GIN','GDC','GDV','GII','GTS')
 )
-SELECT
+SELECT DISTINCT
     D.SIMBOLO_BODEGA                                       AS BODEGA,
     N.DOC                                                  AS TIPO_DOC,
     N.NUMERO                                               AS FOLIO,
@@ -148,6 +143,69 @@ def fecha_hora_str(v):
     return v.strftime("%d/%m/%Y %H:%M:%S") if hasattr(v, "strftime") else str(v)
 
 
+def _deduplicar_y_acumular(registros):
+    """
+    Misma logica que panel admin descargar_bod.py (_deduplicar_y_acumular).
+    Paso 1 — Dedup por producto:
+      - GRT siempre incluido.
+      - GME o GIB en la misma fecha que un GRT → GRT manda, excluir GME/GIB.
+      - GIB cuando existe cualquier GRT con fecha anterior o igual → excluir GIB.
+      - Otros tipos → siempre incluidos.
+    Paso 2 — Acumulacion mas nuevo → mas antiguo hasta cubrir ST_FISICO.
+    Paso 3 — Conservar solo el mas reciente por codigoTecnico del set acumulado.
+    """
+    from collections import defaultdict
+    grupos = defaultdict(list)
+    for r in registros:
+        grupos[r["codigoTecnico"]].append(r)
+
+    resultado = []
+    for cod, docs in grupos.items():
+        total_fisico = docs[0].get("fisico", 0) if docs else 0
+
+        grt_fechas = {d["_fechaRaw"] for d in docs if d["tipoDoc"] == "GRT"}
+        earliest_grt = min(grt_fechas) if grt_fechas else None
+
+        dedup = []
+        for doc in docs:
+            tipo = doc["tipoDoc"]
+            fecha = doc["_fechaRaw"]
+            if tipo == "GRT":
+                dedup.append(doc)
+            elif tipo in ("GME", "GIB"):
+                if fecha in grt_fechas:
+                    continue
+                if tipo == "GIB" and earliest_grt is not None and earliest_grt <= fecha:
+                    continue
+                dedup.append(doc)
+            else:
+                dedup.append(doc)
+
+        if total_fisico > 0:
+            acum = 0
+            for doc in dedup:
+                if acum >= total_fisico:
+                    break
+                acum += doc.get("cantidad", 0)
+                resultado.append(doc)
+        else:
+            if dedup:
+                resultado.append(dedup[0])
+
+    visto = {}
+    for doc in resultado:
+        cod = doc["codigoTecnico"]
+        dias = doc.get("diasAntiguedad") if doc.get("diasAntiguedad") is not None else 999999
+        prev_dias = visto[cod].get("diasAntiguedad") if cod in visto and visto[cod].get("diasAntiguedad") is not None else 999999
+        if cod not in visto or dias < prev_dias:
+            visto[cod] = doc
+
+    for r in visto.values():
+        r.pop("_fechaRaw", None)
+
+    return list(visto.values()), len(registros)
+
+
 def descargar_bodega(cursor, idbodega, simbolo, nombre):
     cursor.execute(SQL, idbodega, idbodega, IDSUCURSAL)
     hoy = datetime.date.today()
@@ -163,6 +221,7 @@ def descargar_bodega(cursor, idbodega, simbolo, nombre):
         estacion = str(row[15] or "").strip()
         hiper, fam, sub, marca = (str(row[i] or "").strip() for i in range(16, 20))
         dias = (hoy - fecha_reg.date()).days if fecha_reg and hasattr(fecha_reg, "date") else None
+        fecha_raw = fecha_reg.date().isoformat() if fecha_reg and hasattr(fecha_reg, "date") else ""
         crudos.append({
             "bodega": simbolo, "bodegaNombre": nombre, "tipoDoc": tipo_doc,
             "tipoDocNombre": DOC_NOMBRES.get(tipo_doc, tipo_doc) if tipo_doc else "",
@@ -173,17 +232,10 @@ def descargar_bodega(cursor, idbodega, simbolo, nombre):
             "usuario": usuario, "estacionPc": estacion,
             "fechaRegistroSistema": fecha_hora_str(fecha_sis),
             "hiperfamilia": hiper, "familia": fam, "subfamilia": sub, "marca": marca,
+            "_fechaRaw": fecha_raw,
         })
 
-    # quedarse con el movimiento mas reciente por (bodega, codigo) — igual criterio que merma
-    mas_reciente = {}
-    for r in crudos:
-        k = (r["bodega"], r["codigoTecnico"])
-        d = r["diasAntiguedad"] if r["diasAntiguedad"] is not None else 999999
-        prev = mas_reciente.get(k)
-        if prev is None or d < (prev["diasAntiguedad"] if prev["diasAntiguedad"] is not None else 999999):
-            mas_reciente[k] = r
-    return list(mas_reciente.values()), len(crudos)
+    return _deduplicar_y_acumular(crudos)
 
 
 def main():
