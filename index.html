@@ -522,12 +522,16 @@ function doLogout(){
   auth.signOut();
 }
 
+var MODO_SV = false;
+
 auth.onAuthStateChanged(function(user){
   if(user){
+    MODO_SV = !!(user.email && user.email.match(/^sv\./i));
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appRoot').style.display = 'block';
     cargarDatosFirestore();
   } else {
+    MODO_SV = false;
     document.getElementById('appRoot').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
   }
@@ -578,7 +582,20 @@ function cargarDatosFirestore(){
       bodegasIncluidas: dataGestion.compartidas.bodegasIncluidas,
     };
 
+    // Recalcular diasAntiguedad desde fechaRegistroIso (siempre fresco, independiente de cuándo se generó el JSON)
+    var HOY_MS = Date.now();
+    function recalcDias(regs){
+      (regs||[]).forEach(function(r){
+        if(r.fechaRegistroIso){
+          var d=new Date(r.fechaRegistroIso);
+          if(!isNaN(d.getTime())) r.diasAntiguedad=Math.round((HOY_MS-d.getTime())/86400000);
+        }
+      });
+    }
+    Object.keys(VISTAS).forEach(function(v){ recalcDias(VISTAS[v].DATA.registros); });
+
     Object.keys(VISTAS).forEach(function(v){ initVista(v); render(v); });
+    if(MODO_SV) aplicarModoSV();
   }).catch(function(e){
     document.getElementById('appRoot').innerHTML =
       '<div style="padding:40px;text-align:center;color:#dc2626">Error cargando datos: '+e.message+'</div>';
@@ -618,10 +635,26 @@ function fillSelect(v, base, valores){
   });
 }
 
+function aplicarModoSV(){
+  // Oculta todas las pestañas excepto San Vicente para usuarios sv.*
+  var TABS_SV = ['sanvicente'];
+  Object.keys(VISTAS).forEach(function(k){
+    var btn=document.getElementById('tabBtn_'+k);
+    var panel=document.getElementById('panel_'+k);
+    if(TABS_SV.indexOf(k)<0){
+      if(btn) btn.style.display='none';
+      if(panel){ panel.classList.remove('active'); }
+    }
+  });
+  cambiarTab('sanvicente');
+}
+
 function cambiarTab(v){
   Object.keys(VISTAS).forEach(function(k){
+    var btn=document.getElementById('tabBtn_'+k);
+    if(MODO_SV && k!=='sanvicente') return; // no revelar tabs ocultos en modo SV
     document.getElementById('panel_'+k).classList.toggle('active', k===v);
-    document.getElementById('tabBtn_'+k).classList.toggle('active', k===v);
+    if(btn) btn.classList.toggle('active', k===v);
   });
 }
 
@@ -702,7 +735,7 @@ function render(v){
   $(v,'kpis').innerHTML =
     '<div class="kpi"><div class="l">Códigos</div><div class="n">'+FIL.length+'</div></div>'+
     '<div class="kpi"><div class="l">Valorizado</div><div class="n">'+clp(totalVal)+'</div></div>'+
-    '<div class="kpi red"><div class="l">Sin movimiento SQL</div><div class="n">'+sinMov+'</div></div>'+
+    '<div class="kpi red"><div class="l">Sin movimiento</div><div class="n">'+sinMov+'</div></div>'+
     '<div class="kpi red"><div class="l">Stock negativo (s/recepción)</div><div class="n">'+stockNeg+'</div></div>'+
     '<div class="kpi"><div class="l">Máx. días</div><div class="n">'+maxDias+'</div></div>';
 
