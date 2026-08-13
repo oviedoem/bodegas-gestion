@@ -559,8 +559,8 @@ function cargarDatosFirestore(){
   Promise.all([
     db.collection('merma_meta').doc('info').get(),
     db.collection('merma').get(),
-    fetch('bodegas_ir_otras.json').then(function(r){ return r.json(); }),
-    fetch('bodegas_gestion.json').then(function(r){ return r.json(); }),
+    fetch('bodegas_ir_otras.json', {cache:'no-store'}).then(function(r){ return r.json(); }),
+    fetch('bodegas_gestion.json', {cache:'no-store'}).then(function(r){ return r.json(); }),
   ]).then(function(res){
     var metaMerma = res[0].exists ? res[0].data() : {};
     var regMerma = snapshotToRegistros(res[1]);
