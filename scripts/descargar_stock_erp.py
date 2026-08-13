@@ -403,7 +403,9 @@ def combinar():
     print("\n=== Combinando en bodegas_gestion.json ===")
     sucursales_out = []
     total_global = 0
-    for suc_code in ("IR", "EM", "SV", "LC", "LT"):
+    # IR va en bodegas_ir_otras.json (lo lee la app por separado via VISTAS.bodegas)
+    # Solo EM/SV/LC/LT van en sucursales de bodegas_gestion.json
+    for suc_code in ("EM", "SV", "LC", "LT"):
         f = DATA_DIR / f"bodegas_{suc_code}.json"
         if not f.exists():
             print(f"  [WARN] Falta: {f.name}")
@@ -423,7 +425,7 @@ def combinar():
         "fuente":       "ERP Reporte_Bodegas_Detalle.asp",
         "nota_limpieza":"diasAntiguedad=null (ERP no provee; requiere SQL o SSRS GRT)",
         "total":        total_global,
-        "compartidas":  [],
+        "compartidas":  {"registros": [], "bodegasIncluidas": ""},
         "sucursales":   sucursales_out,
     }
     out = BASE_DIR / "bodegas_gestion.json"
