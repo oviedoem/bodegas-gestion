@@ -385,14 +385,20 @@ def descargar_sucursal(suc_code):
 
     DATA_DIR.mkdir(exist_ok=True)
     out = DATA_DIR / f"bodegas_{suc_code}.json"
+    # Construir bodegasIncluidas: lista de {simbolo, nombre} para los checkboxes de la app
+    bodegas_incluidas = [
+        {"simbolo": sim_unico, "nombre": nom}
+        for (_, sim_unico, nom, _) in bodegas
+    ]
     payload = {
-        "generado":   datetime.date.today().isoformat(),
-        "fuente":     "ERP Reporte_Bodegas_Detalle.asp",
-        "sucursal":   suc_code,
-        "idSucursal": suc["idSucursal"],
-        "nombre":     suc["nombre"],
-        "total":      len(todos),
-        "registros":  todos,
+        "generado":        datetime.date.today().isoformat(),
+        "fuente":          "ERP Reporte_Bodegas_Detalle.asp",
+        "sucursal":        suc_code,
+        "idSucursal":      suc["idSucursal"],
+        "nombre":          suc["nombre"],
+        "total":           len(todos),
+        "bodegasIncluidas": bodegas_incluidas,
+        "registros":       todos,
     }
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n  Guardado: {out} ({len(todos)} registros)")
@@ -411,11 +417,17 @@ def combinar():
             print(f"  [WARN] Falta: {f.name}")
             continue
         d = json.loads(f.read_text(encoding="utf-8"))
+        # bodegasIncluidas: desde JSON si ya existe, si no reconstruir desde SUCURSALES
+        bi = d.get("bodegasIncluidas") or [
+            {"simbolo": sim_unico, "nombre": nom}
+            for (_, sim_unico, nom, _) in SUCURSALES[suc_code]["bodegas"]
+        ]
         sucursales_out.append({
-            "idSucursal": d["idSucursal"],
-            "nombre":     d["nombre"],
-            "total":      d["total"],
-            "registros":  d["registros"],
+            "idSucursal":      d["idSucursal"],
+            "nombre":          d["nombre"],
+            "total":           d["total"],
+            "bodegasIncluidas": bi,
+            "registros":       d["registros"],
         })
         total_global += d["total"]
         print(f"  {suc_code}: {d['total']} registros ({d['generado']})")

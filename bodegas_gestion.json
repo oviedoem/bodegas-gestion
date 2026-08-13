@@ -12,6 +12,32 @@
       "idSucursal": "04",
       "nombre": "El Manzano",
       "total": 2803,
+      "bodegasIncluidas": [
+        {
+          "simbolo": "GEM",
+          "nombre": "Gestion El Manzano"
+        },
+        {
+          "simbolo": "MEM",
+          "nombre": "Mermas El Manzano"
+        },
+        {
+          "simbolo": "TEM",
+          "nombre": "Transito El Manzano"
+        },
+        {
+          "simbolo": "RCE",
+          "nombre": "Recepcion El Manzano"
+        },
+        {
+          "simbolo": "IEM",
+          "nombre": "Ingreso El Manzano"
+        },
+        {
+          "simbolo": "EEM",
+          "nombre": "Exhibicion El Manzano"
+        }
+      ],
       "registros": [
         {
           "bodega": "GEM",
@@ -67291,6 +67317,44 @@
       "idSucursal": "05",
       "nombre": "San Vicente",
       "total": 2617,
+      "bodegasIncluidas": [
+        {
+          "simbolo": "GSV",
+          "nombre": "Gestion San Vicente"
+        },
+        {
+          "simbolo": "MSV",
+          "nombre": "Mermas San Vicente"
+        },
+        {
+          "simbolo": "CONSV",
+          "nombre": "Consumo San Vicente"
+        },
+        {
+          "simbolo": "CSV",
+          "nombre": "Calzada San Vicente"
+        },
+        {
+          "simbolo": "TSV",
+          "nombre": "Transito San Vicente"
+        },
+        {
+          "simbolo": "RSV",
+          "nombre": "Recepcion San Vicente"
+        },
+        {
+          "simbolo": "ISV",
+          "nombre": "Ingreso San Vicente"
+        },
+        {
+          "simbolo": "DSV",
+          "nombre": "Distribucion San Vicente"
+        },
+        {
+          "simbolo": "ESV",
+          "nombre": "Exhibicion San Vicente"
+        }
+      ],
       "registros": [
         {
           "bodega": "GSV",
@@ -130106,6 +130170,44 @@
       "idSucursal": "06",
       "nombre": "Las Cabras",
       "total": 2359,
+      "bodegasIncluidas": [
+        {
+          "simbolo": "TLC",
+          "nombre": "Transito Las Cabras"
+        },
+        {
+          "simbolo": "CLC",
+          "nombre": "Calzada Las Cabras"
+        },
+        {
+          "simbolo": "GLC",
+          "nombre": "Gestion Las Cabras"
+        },
+        {
+          "simbolo": "MLC",
+          "nombre": "Mermas Las Cabras"
+        },
+        {
+          "simbolo": "RLC",
+          "nombre": "Recepcion Las Cabras"
+        },
+        {
+          "simbolo": "ILC",
+          "nombre": "Ingreso Las Cabras"
+        },
+        {
+          "simbolo": "GFL",
+          "nombre": "Garantia Las Cabras"
+        },
+        {
+          "simbolo": "ELC",
+          "nombre": "Exhibicion Las Cabras"
+        },
+        {
+          "simbolo": "VLC",
+          "nombre": "Volumen Las Cabras"
+        }
+      ],
       "registros": [
         {
           "bodega": "TLC",
@@ -186729,6 +186831,36 @@
       "idSucursal": "11",
       "nombre": "Litueche",
       "total": 2079,
+      "bodegasIncluidas": [
+        {
+          "simbolo": "TLE",
+          "nombre": "Transito Litueche"
+        },
+        {
+          "simbolo": "GLE",
+          "nombre": "Gestion Litueche"
+        },
+        {
+          "simbolo": "ELE",
+          "nombre": "Exhibicion Litueche"
+        },
+        {
+          "simbolo": "ILE",
+          "nombre": "Ingreso Litueche"
+        },
+        {
+          "simbolo": "MLE",
+          "nombre": "Mermas Litueche"
+        },
+        {
+          "simbolo": "CLT",
+          "nombre": "Calzada Litueche"
+        },
+        {
+          "simbolo": "DLT",
+          "nombre": "Distribucion Litueche"
+        }
+      ],
       "registros": [
         {
           "bodega": "TLE",
