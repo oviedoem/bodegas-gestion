@@ -36,6 +36,11 @@
   @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
   @keyframes pulse-icon{0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,.5)}70%{box-shadow:0 0 0 14px rgba(59,130,246,0)}}
   @keyframes pulse-btn{0%,100%{box-shadow:0 4px 16px rgba(0,0,0,.25),0 0 0 0 rgba(255,255,255,.4)}50%{box-shadow:0 4px 16px rgba(0,0,0,.25),0 0 0 8px rgba(255,255,255,0)}}
+  /* ── VERSION BADGE ─────────────────────────────────────────────── */
+  .version-badge{position:fixed;bottom:10px;right:12px;z-index:1000;background:rgba(15,23,42,.84);color:rgba(255,255,255,.85);font-size:10px;font-weight:600;padding:4px 10px;border-radius:8px;pointer-events:none;letter-spacing:.4px;border:1px solid rgba(99,102,241,.35);box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;gap:5px}
+  /* ── UPDATE BANNER ─────────────────────────────────────────────── */
+  #updateBanner{position:fixed;top:0;left:0;right:0;z-index:9999;display:none;background:linear-gradient(135deg,#065f46,#059669);color:#fff;padding:10px 20px;align-items:center;justify-content:center;gap:14px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-size:13px;font-weight:600}
+  #updateBanner button{background:#fff;color:#065f46;border:none;border-radius:7px;padding:7px 18px;font-weight:800;font-size:12px;cursor:pointer;min-height:36px}
   /* ── INSTALL BANNER ────────────────────────────────────────────── */
   #installBanner{position:fixed;bottom:0;left:0;right:0;z-index:8888;display:none;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:14px 20px;align-items:center;gap:14px;box-shadow:0 -4px 24px rgba(0,0,0,.35);animation:slideUp .4s cubic-bezier(.22,1,.36,1)}
   @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -163,6 +168,11 @@
   </div>
 </div>
 
+<div id="updateBanner">
+  🔄 Nueva versión disponible
+  <button onclick="doUpdate()">Actualizar ahora</button>
+</div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.3</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -906,10 +916,33 @@ function enviarCorreo(v){
   resize(); init(); draw();
 })();
 
-// ── PWA: Service Worker + Install Banner ───────────────────────────
+// ── PWA: Service Worker + Install Banner + Update Banner ────────────
+var _swReg = null;
+function doUpdate(){
+  if(_swReg && _swReg.waiting){
+    _swReg.waiting.postMessage({type:'SKIP_WAITING'});
+  } else {
+    location.reload();
+  }
+}
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){
+    _swReg = reg;
     reg.update();
+    // Detectar SW ya en espera (recarga posterior a update)
+    if(reg.waiting){ document.getElementById('updateBanner').style.display='flex'; }
+    reg.addEventListener('updatefound', function(){
+      var nw = reg.installing;
+      nw && nw.addEventListener('statechange', function(){
+        if(nw.state === 'installed' && navigator.serviceWorker.controller){
+          document.getElementById('updateBanner').style.display='flex';
+        }
+      });
+    });
+  });
+  // Cuando el SW nuevo activa, recargar
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    location.reload();
   });
 }
 var _deferredInstall = null;

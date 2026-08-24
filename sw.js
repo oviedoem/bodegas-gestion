@@ -1,9 +1,13 @@
 /* Service Worker — Bodegas Gestión */
 /* VERSIÓN: cambiar este string en cada deploy para forzar refresh en todos los dispositivos */
-const CACHE_VERSION = 'bodegas-gestion-v5';
+const CACHE_VERSION = 'bodegas-gestion-v8';
 
 self.addEventListener('install', e => {
-  self.skipWaiting(); /* activa inmediatamente sin esperar que cierren tabs */
+  /* No llamar skipWaiting() aqui — el banner en index.html controla cuando activar */
+});
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
