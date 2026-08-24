@@ -15,14 +15,12 @@ _subir_datos_firestore.py
 # JSONs de bodegas — solo locales, los .enc (cifrados) si van al repo
 bodegas_gestion.json
 bodegas_ir_otras.json
-# JSONs solicitud stock Las Cabras — solo locales, se sirven estáticos sin cifrar
-data/stock-critico-lc.json
+# Datos intermedios por sucursal — se excluyen individualmente (no el directorio)
+data/bodegas_*.json
 data/oc-pendientes-lc.json
-data/oc-pend-resumen-lc.json
+# stock-critico-lc.json y oc-pend-resumen-lc.json SÍ van al repo (tab Solicitud LC)
 # Scripts de subida/cifrado y credenciales — solo uso local, nunca al repo
 _subir_firestore_chunked.py
 _cifrar_y_subir_clave.py
 _service_account.json
 _CLAVE_FIRESTORE_MANUAL.json
-# Datos intermedios por sucursal (no van al repo)
-data/
