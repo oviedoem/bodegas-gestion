@@ -490,7 +490,7 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var auth = firebase.auth();
 var db = firebase.firestore();
-var LOGIN_DOMAIN = "isabel-riquelme-merma.local"; // usuario "riquelme" -> riquelme@<dominio interno>
+var LOGIN_DOMAIN = "oviedo.cl"; // usuario "saliaga" -> saliaga@oviedo.cl, "rrojas" -> rrojas@oviedo.cl
 
 function doLogin(){
   var user = (document.getElementById('loginUser').value || '').trim().toLowerCase();
@@ -526,7 +526,7 @@ var MODO_SV = false;
 
 auth.onAuthStateChanged(function(user){
   if(user){
-    MODO_SV = !!(user.email && user.email.match(/^sv\./i));
+    MODO_SV = !!(user.email && user.email.toLowerCase() === 'saliaga@oviedo.cl');
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appRoot').style.display = 'block';
     cargarDatosFirestore();
