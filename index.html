@@ -711,7 +711,7 @@ function initVista(v){
     var bods = (cfg.DATA.bodegasIncluidas||[]);
     var cont = document.getElementById(v+'_chkBodegas');
     cont.innerHTML = bods.map(function(b){
-      return '<label><input type="checkbox" class="bodegaChk" value="'+esc(b.simbolo)+'" checked onchange="render(&#39;'+v+'&#39;)">'+
+      return '<label><input type="checkbox" class="bodegaChk" value="'+esc(b.nombre)+'" checked onchange="render(&#39;'+v+'&#39;)">'+
         esc(b.simbolo)+' — '+esc(b.nombre)+'</label>';
     }).join('');
   }
@@ -735,7 +735,7 @@ function filtrar(v){
   var bodSel = cfg.conBodega ? bodegasSeleccionadas(v) : null;
 
   return cfg.REG.filter(function(r){
-    if(bodSel && bodSel.indexOf(r.bodega)<0) return false;
+    if(bodSel && bodSel.indexOf(r.bodegaNombre)<0) return false;
     if(tipoDoc && r.tipoDocNombre!==tipoDoc) return false;
     if(usuario && r.usuario!==usuario) return false;
     if(familia && r.familia!==familia) return false;
