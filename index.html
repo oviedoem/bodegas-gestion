@@ -172,7 +172,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.8</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.9</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -706,7 +706,7 @@ function initVista(v){
   cfg.REG = REG; cfg.FIL = [];
 
   document.getElementById('meta_'+v).textContent =
-    'Generado: '+(cfg.DATA.generado||'—')+' · Fuente: '+(cfg.DATA.fuente||'—')+' · Total códigos: '+(cfg.DATA.total!=null?cfg.DATA.total:REG.length);
+    'Generado: '+(cfg.DATA.generado||'—')+' · Total códigos: '+(cfg.DATA.total!=null?cfg.DATA.total:REG.length);
 
   // limpiar selects por si initVista se llama mas de una vez (recarga de sesion)
   ['qTipoDoc','qUsuario','qFamilia','qMarca'].forEach(function(base){
@@ -946,6 +946,13 @@ if('serviceWorker' in navigator){
     location.reload();
   });
 }
+// Bloqueo disuasivo de herramientas de desarrollo
+document.addEventListener('keydown', function(e){
+  if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C'))||(e.ctrlKey&&e.key==='U')){
+    e.preventDefault(); e.stopPropagation(); return false;
+  }
+});
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); return false; });
 var _deferredInstall = null;
 window.addEventListener('beforeinstallprompt', function(e){
   e.preventDefault(); _deferredInstall = e;
