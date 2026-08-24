@@ -271,8 +271,9 @@ def _deduplicar_y_acumular(registros):
             elif tipo in ('GME', 'GIB'):
                 if fecha in grt_fechas:
                     continue
-                if tipo == 'GIB' and earliest_grt is not None and earliest_grt <= fecha:
-                    continue
+                # GIB con GRT del mismo dia → excluir (mismo movimiento).
+                # GIB con GRT de fecha anterior NO se excluye: un GIB reciente
+                # es mas representativo que un GRT de años atras (bug POLI0024 GSV).
                 dedup.append(doc)
             else:
                 dedup.append(doc)
