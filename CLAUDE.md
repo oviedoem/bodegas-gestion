@@ -49,35 +49,37 @@ E:\python-portable\python.exe "E:\BODEGAS GESTION\generar_bodegas_gestion.py"
 Después de correr los 3, `generar_merma_ir.py` ya generó el HTML final leyendo
 `merma_isabel_riquelme.json` — no hace falta un paso aparte para "armar" el HTML.
 
-## Publicación y seguridad de acceso (Firebase — desde 2026-06-27)
-- Repo público (nombre viejo, pendiente rename a `bodegas-gestion`):
-  github.com/oviedoem/merma-isabel-riquelme · URL actual:
-  https://oviedoem.github.io/merma-isabel-riquelme/
-- Proyecto Firebase **propio e independiente**: `isabel-riquelme-merma` (se mantiene
-  este nombre aunque el proyecto se llame BODEGAS GESTION — decisión explícita del
-  usuario, no recrear el proyecto Firebase). NUNCA reusar el Firestore/Auth de
-  `ferreteria-oviedo`.
-- El HTML publicado **ya no embebe los datos crudos**. Tiene pantalla de login (Firebase
-  Auth) y los datos se cargan SOLO después de iniciar sesión.
-- Usuario de login: `riquelme` (mapeado internamente a
-  `riquelme@isabel-riquelme-merma.local` para Firebase Auth). La clave es aleatoria,
-  generada por script — vive SOLO en `E:\BODEGAS GESTION\_CREDENCIAL_LOGIN_NO_SUBIR.txt`
-  (excluido de git, nunca en texto plano en ningún commit/chat/log).
-- **`merma`**: colección Firestore normal (1 doc por registro, ~427 docs, chico).
-- **`bodegas` / `bodegas_gestion` — TEMPORAL fetch estático (desde 2026-07-21):**
-  Firestore agotó su cuota gratuita de escrituras (Spark plan, 20K/día) subiendo estas
-  dos colecciones con el esquema antiguo (1 doc por código, ~14000 escrituras). Mientras
-  no resetee/se decida otra cosa, el HTML lee `bodegas_ir_otras.json` y
-  `bodegas_gestion.json` directo por `fetch()` (archivos publicados junto al HTML,
-  mismo repo). Esto NO empeoró la seguridad real: esos JSON ya estaban públicos por un
-  descuido de commits previos (quedaron trackeados en git desde antes). **Pendiente:**
-  revertir a Firestore con esquema "chunked" (pocos docs grandes por sucursal en vez de
-  uno por código) y agregar esos JSON a `.gitignore` para cerrar la exposición de una
-  vez. Ver `generar_merma_ir.py` (comentario "TEMPORAL" en `cargarDatosFirestore`).
-- Para subir datos nuevos a Firestore: recrear un script puntual (estilo
-  `_subir_firestore_chunked.py`, ya borrado tras su uso) que haga login como `riquelme`
-  leyendo la clave SOLO de ese `.txt` local, y escriba vía REST de Firestore. Nunca
-  imprimir la clave ni el idToken en ningún log/chat.
+## Publicación y seguridad de acceso (Firebase — actualizado 2026-08-24)
+- Repo: github.com/oviedoem/bodegas-gestion · URL: https://oviedoem.github.io/bodegas-gestion/
+- Proyecto Firebase **propio e independiente**: `isabel-riquelme-merma`. NUNCA reusar
+  Firestore/Auth de `ferreteria-oviedo`.
+- Login domain: `oviedo.cl`. Usuarios activos (2026-08-24):
+  - `rrojas@oviedo.cl` — admin (todas las vistas)
+  - `saliaga@oviedo.cl` — MODO_SV: solo San Vicente
+  - `spavez@oviedo.cl` — MODO_LC: solo Las Cabras + Solicitud Stock LC
+  La cuenta `riquelme` ya no existe en Auth.
+- **`merma`**: Firestore colección `merma` (sin cambios).
+- **`bodegas` / `bodegas_gestion` — JSON cifrado AES-256 (desde V.10 / 2026-08-24):**
+  Los datos viven como `bodegas_gestion.enc` y `bodegas_ir_otras.enc` en el repo (cifrados,
+  indescifrables sin la clave). La clave AES-256 está en Firestore `bodegas_clave/actual`
+  (1 lectura/sesión). Descifrado en browser con Web Crypto API. **Cuota: 1 escritura por
+  actualización** (vs 14000 del esquema antiguo).
+- Para actualizar datos de bodegas (cifradas):
+  ```
+  python scripts/descargar_bodegas_sql.py      # genera JSON locales
+  python _cifrar_y_subir_clave.py              # cifra .enc + sube clave a Firestore (1 escritura)
+  git add bodegas_gestion.enc bodegas_ir_otras.enc && git push
+  ```
+- Para actualizar datos de Solicitud Stock LC (públicos, sin cifrar):
+  ```
+  python scripts/descargar_stock_critico_lc.py    # R_STOCK_PRODUCTOS → stock-critico-lc.json
+  python scripts/descargar_oc_pendientes_lc.py    # M_DOCUMENTOS_DETALLE → oc-pend-resumen-lc.json
+  git add data/stock-critico-lc.json data/oc-pend-resumen-lc.json && git push
+  ```
+- `_cifrar_y_subir_clave.py` usa `_service_account.json` (cuenta de servicio Firebase,
+  gitignored). Nunca subir el service account al repo.
+- Los JSON planos (`bodegas_gestion.json`, `bodegas_ir_otras.json`) están en `.gitignore`
+  — solo existen localmente como fuente para el script de cifrado.
 
 ## Seguridad
 - Nunca dejar credenciales SQL, IPs ni tokens visibles en HTML/JSON/commits de esta carpeta.
