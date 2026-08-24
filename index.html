@@ -172,7 +172,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.10</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.11</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -564,15 +564,18 @@ function doLogout(){
 }
 
 var MODO_SV = false;
+var MODO_LC = false;
 
 auth.onAuthStateChanged(function(user){
   if(user){
     MODO_SV = !!(user.email && user.email.toLowerCase() === 'saliaga@oviedo.cl');
+    MODO_LC = !!(user.email && user.email.toLowerCase() === 'spavez@oviedo.cl');
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appRoot').style.display = 'block';
     cargarDatosFirestore();
   } else {
     MODO_SV = false;
+    MODO_LC = false;
     document.getElementById('appRoot').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
   }
@@ -655,6 +658,7 @@ function cargarDatosFirestore(){
     });
     Object.keys(VISTAS).forEach(function(v){ initVista(v); render(v); });
     if(MODO_SV) aplicarModoSV();
+    if(MODO_LC) aplicarModoLC();
   }).catch(function(e){
     document.getElementById('appRoot').innerHTML =
       '<div style="padding:40px;text-align:center;color:#dc2626">Error cargando datos: '+e.message+'</div>';
@@ -695,7 +699,6 @@ function fillSelect(v, base, valores){
 }
 
 function aplicarModoSV(){
-  // Oculta todas las pestañas excepto San Vicente para usuarios sv.*
   var TABS_SV = ['sanvicente'];
   Object.keys(VISTAS).forEach(function(k){
     var btn=document.getElementById('tabBtn_'+k);
@@ -708,10 +711,24 @@ function aplicarModoSV(){
   cambiarTab('sanvicente');
 }
 
+function aplicarModoLC(){
+  var TABS_LC = ['lascabras'];
+  Object.keys(VISTAS).forEach(function(k){
+    var btn=document.getElementById('tabBtn_'+k);
+    var panel=document.getElementById('panel_'+k);
+    if(TABS_LC.indexOf(k)<0){
+      if(btn) btn.style.display='none';
+      if(panel){ panel.classList.remove('active'); }
+    }
+  });
+  cambiarTab('lascabras');
+}
+
 function cambiarTab(v){
   Object.keys(VISTAS).forEach(function(k){
     var btn=document.getElementById('tabBtn_'+k);
     if(MODO_SV && k!=='sanvicente') return; // no revelar tabs ocultos en modo SV
+    if(MODO_LC && k!=='lascabras') return;  // no revelar tabs ocultos en modo LC
     document.getElementById('panel_'+k).classList.toggle('active', k===v);
     if(btn) btn.classList.toggle('active', k===v);
   });
