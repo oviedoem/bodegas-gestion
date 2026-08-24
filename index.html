@@ -172,7 +172,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.11</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.12</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -195,6 +195,7 @@
   <button class="tab-btn" id="tabBtn_elmanzano" onclick="cambiarTab('elmanzano')">🏭 El Manzano</button>
   <button class="tab-btn" id="tabBtn_sanvicente" onclick="cambiarTab('sanvicente')">🏬 San Vicente</button>
   <button class="tab-btn" id="tabBtn_lascabras" onclick="cambiarTab('lascabras')">🏬 Las Cabras</button>
+  <button class="tab-btn" id="tabBtn_solicitud_lc" onclick="cambiarTab('solicitud_lc')" style="display:none">📋 Solicitud Stock LC</button>
   <button class="tab-btn" id="tabBtn_litueche" onclick="cambiarTab('litueche')">🏬 Litueche</button>
   <button class="tab-btn" id="tabBtn_cd" onclick="cambiarTab('cd')">📦 Compartidas</button>
 </div>
@@ -420,6 +421,83 @@
   </table>
   </div>
   <div class="footer-note">Ferretería Oviedo · Reporte generado desde sistema interno — no contiene credenciales</div>
+</div>
+
+
+<!-- ── Tab Solicitud Stock Las Cabras — solo spavez@oviedo.cl (MODO_LC) ── -->
+<div class="card tab-panel" id="panel_solicitud_lc">
+  <div class="card-title" style="margin-bottom:14px"><span>📋</span> Solicitud de Stock — Las Cabras</div>
+
+  <!-- Filtros -->
+  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px">
+    <label style="font-size:12px;font-weight:600">Desde
+      <input type="date" id="slc_reqDesde" style="margin-left:6px;font-size:12px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px">
+    </label>
+    <label style="font-size:12px;font-weight:600">Hasta
+      <input type="date" id="slc_reqHasta" style="margin-left:6px;font-size:12px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px">
+    </label>
+    <label style="font-size:12px;font-weight:600">Cobertura
+      <select id="slc_reqDias" style="margin-left:6px;font-size:12px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px">
+        <option value="30">30 días</option>
+        <option value="60" selected>60 días</option>
+        <option value="90">90 días</option>
+      </select>
+    </label>
+    <!-- Parámetros ERP -->
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600">
+      Parámetros
+      <label style="cursor:pointer;display:flex;align-items:center;gap:3px;font-weight:500" title="Mostrar solo códigos con ST_MIN configurado en ERP">
+        <input type="checkbox" id="slc_reqConMin" checked>
+        <span style="font-size:12px">Con mínimo</span>
+      </label>
+      <label style="cursor:pointer;display:flex;align-items:center;gap:3px;font-weight:500" title="Mostrar solo códigos con ST_REPOSICION configurado en ERP">
+        <input type="checkbox" id="slc_reqConRepo" checked>
+        <span style="font-size:12px">Con repos.</span>
+      </label>
+      <label style="cursor:pointer;display:flex;align-items:center;gap:3px;font-weight:500" title="Mostrar códigos SIN mínimo ni reposición (a definir)">
+        <input type="checkbox" id="slc_reqSinDefinir">
+        <span style="font-size:12px">Sin definir</span>
+      </label>
+    </div>
+    <!-- N ítems -->
+    <label style="font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px">
+      Mostrar
+      <input type="number" id="slc_reqN" value="50" min="1" max="500"
+        style="width:58px;font-size:12px;padding:4px 6px;border:1px solid #d1d5db;border-radius:6px;text-align:center">
+      ítems
+    </label>
+    <button class="btn btn-sm" onclick="slcPrellenar()">🔄 Pre-llenar</button>
+    <button class="btn btn-sm" style="background:#059669;color:white" onclick="slcEnviarEmail()">📧 Enviar a Adquisiciones</button>
+    <button class="btn btn-sm" style="background:#4b5563;color:white" onclick="slcDescargarExcel()">⬇️ Descargar Excel</button>
+  </div>
+
+  <!-- Frescura datos OC -->
+  <div id="slc_ocFrescura" style="margin-bottom:8px;font-size:11px;color:#6b7280"></div>
+
+  <!-- Tabla -->
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px" id="slc_reqTable">
+      <thead>
+        <tr style="background:#f3f4f6">
+          <th style="padding:8px 6px;text-align:left;border-bottom:2px solid #e5e7eb;width:28px;color:#9ca3af">#</th>
+          <th style="padding:8px 6px;text-align:left;border-bottom:2px solid #e5e7eb;min-width:85px">Código</th>
+          <th style="padding:8px 6px;text-align:left;border-bottom:2px solid #e5e7eb;min-width:180px">Producto</th>
+          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:68px">Mínimo<br>actual</th>
+          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:78px">Reposición<br>actual</th>
+          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:68px">Crítico<br>ERP</th>
+          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:68px">Stock<br>actual</th>
+          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:64px;background:#ede9fe;color:#4c1d95" title="Unidades en OC vigente aún no recibidas (SQL, sync 22:00)">OC<br>Pend</th>
+          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:82px">Mínimo<br>solicitado</th>
+          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:88px">Reposición<br>solicitado</th>
+        </tr>
+      </thead>
+      <tbody id="slc_reqBody">
+        <tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:24px;font-size:13px">
+          Selecciona rango de fechas y presiona "Pre-llenar"
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 
@@ -673,6 +751,7 @@ var VISTAS = {
   elmanzano: { DATA: {registros:[]}, conBodega:true, label:"El Manzano" },
   sanvicente: { DATA: {registros:[]}, conBodega:true, label:"San Vicente" },
   lascabras: { DATA: {registros:[]}, conBodega:true, label:"Las Cabras" },
+  solicitud_lc: { DATA: {registros:[]}, conBodega:false, label:"Solicitud Stock LC" },
   litueche: { DATA: {registros:[]}, conBodega:true, label:"Litueche" },
   cd: { DATA: {registros:[]}, conBodega:true, label:"Bodegas Compartidas (CD/Desp.Prov./Remate/Marketing)" }
 };
@@ -712,7 +791,7 @@ function aplicarModoSV(){
 }
 
 function aplicarModoLC(){
-  var TABS_LC = ['lascabras'];
+  var TABS_LC = ['lascabras', 'solicitud_lc'];
   Object.keys(VISTAS).forEach(function(k){
     var btn=document.getElementById('tabBtn_'+k);
     var panel=document.getElementById('panel_'+k);
@@ -721,6 +800,9 @@ function aplicarModoLC(){
       if(panel){ panel.classList.remove('active'); }
     }
   });
+  // mostrar boton solicitud_lc (nace con display:none por defecto)
+  var btnSol=document.getElementById('tabBtn_solicitud_lc');
+  if(btnSol) btnSol.style.display='';
   cambiarTab('lascabras');
 }
 
@@ -728,7 +810,8 @@ function cambiarTab(v){
   Object.keys(VISTAS).forEach(function(k){
     var btn=document.getElementById('tabBtn_'+k);
     if(MODO_SV && k!=='sanvicente') return; // no revelar tabs ocultos en modo SV
-    if(MODO_LC && k!=='lascabras') return;  // no revelar tabs ocultos en modo LC
+    var LC_TABS=['lascabras','solicitud_lc'];
+    if(MODO_LC && LC_TABS.indexOf(k)<0) return; // no revelar tabs ocultos en modo LC
     document.getElementById('panel_'+k).classList.toggle('active', k===v);
     if(btn) btn.classList.toggle('active', k===v);
   });
@@ -998,6 +1081,195 @@ document.getElementById('installBtn') && document.getElementById('installBtn').a
   if(_deferredInstall){ _deferredInstall.prompt(); _deferredInstall.userChoice.then(function(){ _deferredInstall=null; document.getElementById('installBanner').style.display='none'; }); }
 });
 window.addEventListener('appinstalled', function(){ document.getElementById('installBanner').style.display='none'; });
+
+// ── SOLICITUD STOCK LAS CABRAS (solo MODO_LC / spavez@oviedo.cl) ────────────
+
+var _slcParams   = null;  // stock-critico-lc.json — ST_MIN/MAX/CRITICO/REPO por codigo
+var _slcOcResumen = null; // oc-pend-resumen-lc.json — qty OC pendiente por codigo
+var _slcOcGenerado = null;
+
+function _slcCargarDatos(cb){
+  // Carga los 2 JSON en paralelo; llama cb() cuando ambos están listos.
+  var pendiente = 2;
+  function listo(){ if(--pendiente === 0) cb(); }
+
+  if(_slcParams === null){
+    fetch('data/stock-critico-lc.json?t='+Math.floor(Date.now()/3600000))
+      .then(function(r){ return r.ok ? r.json() : {}; })
+      .then(function(j){ _slcParams = (j && j.productos) || {}; listo(); })
+      .catch(function(){ _slcParams = {}; listo(); });
+  } else { listo(); }
+
+  if(_slcOcResumen === null){
+    fetch('data/oc-pend-resumen-lc.json?t='+Math.floor(Date.now()/3600000))
+      .then(function(r){ return r.ok ? r.json() : {}; })
+      .then(function(j){
+        _slcOcGenerado = j._generado || null;
+        delete j._generado;
+        _slcOcResumen = j;
+        listo();
+      })
+      .catch(function(){ _slcOcResumen = {}; listo(); });
+  } else { listo(); }
+}
+
+function slcPrellenar(){
+  if(_slcParams === null || _slcOcResumen === null){
+    _slcCargarDatos(slcPrellenar);
+    return;
+  }
+
+  var desde = document.getElementById('slc_reqDesde').value;
+  var hasta  = document.getElementById('slc_reqHasta').value;
+  if(!desde || !hasta){
+    document.getElementById('slc_reqBody').innerHTML =
+      '<tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:24px">Selecciona el rango de fechas.</td></tr>';
+    return;
+  }
+  var conMin      = document.getElementById('slc_reqConMin').checked;
+  var conRepo     = document.getElementById('slc_reqConRepo').checked;
+  var sinDefinir  = document.getElementById('slc_reqSinDefinir').checked;
+  var nItems      = Math.max(1, parseInt(document.getElementById('slc_reqN').value) || 50);
+
+  // Obtener stock actual de Las Cabras desde VISTAS (bodegas_gestion.enc ya cargado)
+  var stockMap = {};
+  var vistaLC  = VISTAS['lascabras'] && VISTAS['lascabras'].DATA && VISTAS['lascabras'].DATA.registros;
+  if(vistaLC){
+    vistaLC.forEach(function(r){
+      var c = (r.codigoTecnico || r.codigo || '').trim().toUpperCase();
+      if(!c) return;
+      if(!stockMap[c]) stockMap[c] = {slc:0, plc:0, clc:0, glc:0};
+      var bod = (r.bodegaCorta || r.bodega || '').toUpperCase();
+      if(stockMap[c][bod.toLowerCase()] !== undefined)
+        stockMap[c][bod.toLowerCase()] += Number(r.cantidadDisponible || r.disponible || 0);
+    });
+  }
+
+  // Filtrar y armar lista desde _slcParams
+  var lista = Object.keys(_slcParams).filter(function(cod){
+    var p = _slcParams[cod];
+    if(sinDefinir) return !(p.min > 0 || p.repo > 0);
+    if(conMin  && !(p.min  > 0)) return false;
+    if(conRepo && !(p.repo > 0)) return false;
+    return true;
+  }).map(function(cod){
+    var p  = _slcParams[cod];
+    var st = stockMap[cod] || {};
+    var stockActual = (st.slc||0) + (st.plc||0) + (st.clc||0) + (st.glc||0);
+    return {
+      cod:         cod,
+      min:         p.min    || 0,
+      max:         p.max    || 0,
+      critico:     p.critico|| 0,
+      repo:        p.repo   || 0,
+      disp:        p.disp   || 0,
+      stockActual: stockActual,
+      ocPend:      Number(_slcOcResumen[cod] || 0),
+    };
+  }).sort(function(a,b){
+    // Ordenar: stock <= critico primero, luego por stock asc
+    var aCrit = a.stockActual <= a.critico ? 0 : 1;
+    var bCrit = b.stockActual <= b.critico ? 0 : 1;
+    if(aCrit !== bCrit) return aCrit - bCrit;
+    return a.stockActual - b.stockActual;
+  }).slice(0, nItems);
+
+  if(!lista.length){
+    document.getElementById('slc_reqBody').innerHTML =
+      '<tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:24px">Sin productos para los filtros seleccionados.</td></tr>';
+    return;
+  }
+
+  var inp = 'style="width:68px;text-align:right;padding:3px 5px;border:1px solid #d1d5db;border-radius:4px;font-size:12px"';
+  var rows = lista.map(function(p, i){
+    var stockSty = p.stockActual <= p.critico ? 'color:#dc2626;font-weight:700' : '';
+    var reposSty = p.repo > 0 ? 'color:#d97706;font-weight:700' : '';
+    var ocSty    = p.ocPend > 0 ? 'color:#7c3aed;font-weight:700' : 'color:#9ca3af';
+    return '<tr>'+
+      '<td style="color:#9ca3af;font-size:11px;padding:6px 5px">'+(i+1)+'</td>'+
+      '<td style="font-family:monospace;font-size:11px;white-space:nowrap;padding:6px 5px">'+esc(p.cod)+'</td>'+
+      '<td style="font-size:12px;padding:6px 5px">'+esc(p.cod)+'</td>'+
+      '<td class="right" style="font-size:12px;padding:6px 5px">'+p.min+'</td>'+
+      '<td class="right" style="font-size:12px;padding:6px 5px;'+reposSty+'">'+p.repo+'</td>'+
+      '<td class="right" style="font-size:12px;padding:6px 5px">'+p.critico+'</td>'+
+      '<td class="right" style="font-size:12px;padding:6px 5px;'+stockSty+'">'+p.stockActual+'</td>'+
+      '<td class="right" style="font-size:12px;padding:6px 5px;'+ocSty+'">'+(p.ocPend||'—')+'</td>'+
+      '<td class="right" style="padding:4px 5px"><input type="number" '+inp+' class="slc-minsol" data-cod="'+esc(p.cod)+'" value="'+p.min+'"></td>'+
+      '<td class="right" style="padding:4px 5px"><input type="number" '+inp+' class="slc-repossol" data-cod="'+esc(p.cod)+'" value="'+p.repo+'"></td>'+
+    '</tr>';
+  }).join('');
+  document.getElementById('slc_reqBody').innerHTML = rows;
+
+  // Indicador frescura OC
+  var elOc = document.getElementById('slc_ocFrescura');
+  if(elOc && _slcOcGenerado){
+    var hrsOc = Math.round((Date.now() - new Date(_slcOcGenerado).getTime()) / 3600000);
+    elOc.innerHTML = !isNaN(hrsOc)
+      ? (hrsOc > 26
+         ? '<span style="color:#d97706">⚠️ Datos OC de hace '+hrsOc+'h — ejecutar descargar_oc_pendientes_lc.py</span>'
+         : '<span style="color:#059669">✓ Columna OC Pend actualizada hace '+hrsOc+'h</span>')
+      : '';
+  } else if(elOc){
+    elOc.innerHTML = '<span style="color:#9ca3af">OC Pend: sin datos (ejecutar descargar_oc_pendientes_lc.py)</span>';
+  }
+}
+
+function slcEnviarEmail(){
+  var filas = document.querySelectorAll('#slc_reqTable tbody tr');
+  if(!filas.length || filas[0].querySelector('td[colspan]')){
+    alert('Pre-llena la tabla primero.'); return;
+  }
+  var desde = document.getElementById('slc_reqDesde').value || '';
+  var hasta  = document.getElementById('slc_reqHasta').value || '';
+  var lineas = ['Solicitud de Stock — Las Cabras', 'Período: '+desde+' al '+hasta, ''];
+  lineas.push('Código\tMínimo\tRepos.\tCrítico\tStock\tOC Pend\tMín. Solic.\tRepo. Solic.');
+  filas.forEach(function(tr){
+    var cods = tr.querySelectorAll('td');
+    if(cods.length < 10) return;
+    var cod     = cods[1].textContent.trim();
+    var minAct  = cods[3].textContent.trim();
+    var repAct  = cods[4].textContent.trim();
+    var crit    = cods[5].textContent.trim();
+    var stock   = cods[6].textContent.trim();
+    var ocPend  = cods[7].textContent.trim();
+    var minSol  = tr.querySelector('.slc-minsol')  ? tr.querySelector('.slc-minsol').value  : '';
+    var repSol  = tr.querySelector('.slc-repossol') ? tr.querySelector('.slc-repossol').value : '';
+    lineas.push([cod,minAct,repAct,crit,stock,ocPend,minSol,repSol].join('\t'));
+  });
+  var body = encodeURIComponent(lineas.join('\n'));
+  window.location.href = 'mailto:?subject='+encodeURIComponent('Solicitud Stock Las Cabras '+hasta)+'&body='+body;
+}
+
+function slcDescargarExcel(){
+  var filas = document.querySelectorAll('#slc_reqTable tbody tr');
+  if(!filas.length || filas[0].querySelector('td[colspan]')){
+    alert('Pre-llena la tabla primero.'); return;
+  }
+  var desde = document.getElementById('slc_reqDesde').value || '';
+  var hasta  = document.getElementById('slc_reqHasta').value || '';
+  var rows = [['#','Código','Mínimo','Reposición','Crítico','Stock actual','OC Pend','Mín. solicitado','Repo. solicitado']];
+  filas.forEach(function(tr, i){
+    var cods = tr.querySelectorAll('td');
+    if(cods.length < 10) return;
+    rows.push([
+      i+1,
+      cods[1].textContent.trim(),
+      cods[3].textContent.trim(),
+      cods[4].textContent.trim(),
+      cods[5].textContent.trim(),
+      cods[6].textContent.trim(),
+      cods[7].textContent.trim(),
+      tr.querySelector('.slc-minsol')  ? tr.querySelector('.slc-minsol').value  : '',
+      tr.querySelector('.slc-repossol') ? tr.querySelector('.slc-repossol').value : '',
+    ]);
+  });
+  var tsv = rows.map(function(r){ return r.join('\t'); }).join('\n');
+  var blob = new Blob(['﻿'+tsv], {type:'text/tab-separated-values;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'solicitud-stock-lc-'+hasta+'.xls'; a.click();
+  URL.revokeObjectURL(url);
+}
 </script>
 </body>
 </html>
