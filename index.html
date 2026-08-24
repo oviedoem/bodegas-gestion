@@ -172,7 +172,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.12</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.13</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -726,7 +726,7 @@ function cargarDatosFirestore(){
       });
   }).then(function(){
     var HOY_MS = Date.now();
-    Object.keys(VISTAS).forEach(function(v){
+    Object.keys(VISTAS).filter(function(v){ return v!=='solicitud_lc'; }).forEach(function(v){
       (VISTAS[v].DATA.registros||[]).forEach(function(r){
         if(r.fechaRegistroIso){
           var d=new Date(r.fechaRegistroIso);
@@ -734,7 +734,9 @@ function cargarDatosFirestore(){
         }
       });
     });
-    Object.keys(VISTAS).forEach(function(v){ initVista(v); render(v); });
+    // solicitud_lc tiene render propio (slcPrellenar) — no pasar al loop estándar
+    var VISTAS_STD = Object.keys(VISTAS).filter(function(v){ return v !== 'solicitud_lc'; });
+    VISTAS_STD.forEach(function(v){ initVista(v); render(v); });
     if(MODO_SV) aplicarModoSV();
     if(MODO_LC) aplicarModoLC();
   }).catch(function(e){
