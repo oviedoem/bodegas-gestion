@@ -31,17 +31,38 @@ Ver `.claude/skills/safe-change/SKILL.md` para el detalle completo. Resumen:
 - No subir nada de esta carpeta a git/repos compartidos sin revisión explícita del usuario.
 
 ## Acceso al reporte público (Firebase — isabel-riquelme-merma)
-- El HTML público (GitHub Pages) exige login (Firebase Auth). `merma` sigue viniendo de
-  Firestore; `bodegas`/`bodegas_gestion` estan TEMPORALMENTE en fetch estático
-  (`bodegas_ir_otras.json`/`bodegas_gestion.json`) por cuota de Firestore agotada — ver
-  detalle y plan de reversión en `CLAUDE.md`. NUNCA volver a embeber datos crudos
-  directamente dentro del `<script>` del HTML (los JSON externos son un mal menor
-  temporal, no el objetivo final).
+- El HTML (GitHub Pages oviedoem/bodegas-gestion) exige login Firebase Auth.
+- **Arquitectura de datos (desde V.10 / 2026-08-24):**
+  - `merma` → Firestore colección `merma` (sin cambios)
+  - `bodegas` → JSON cifrado AES-256-CBC: `bodegas_gestion.enc` + `bodegas_ir_otras.enc`
+    (en el repo, son indescifrables sin la clave)
+  - La clave AES vive en Firestore `bodegas_clave/actual` (1 lectura por sesión tras login)
+  - Descifrado en browser con Web Crypto API (`crypto.subtle.decrypt`)
+  - **Cuota usada por actualización: 1 escritura** (vs 14000 esquema anterior)
+- Para actualizar datos: correr `scripts/descargar_bodegas_sql.py` → luego
+  `_cifrar_y_subir_clave.py` (usa `_service_account.json`) → `git add *.enc && git push`
+- `_service_account.json` y `_cifrar_y_subir_clave.py` están en `.gitignore` (solo locales).
 - Proyecto Firebase propio (`isabel-riquelme-merma`), reglas Firestore `auth != null`.
-  Nunca mezclar con el proyecto Firebase de `ferreteria-oviedo`. Se mantiene este nombre
-  de proyecto Firebase aunque el proyecto en general se llame ahora "BODEGAS GESTION".
-- Usuario de login `riquelme`; la clave vive SOLO en
-  `_CREDENCIAL_LOGIN_NO_SUBIR.txt` (gitignored). Nunca teclear/imprimir esa clave en
-  ningún comando, archivo o respuesta — ver sección 5-6 de `.claude/skills/safe-change/SKILL.md`.
-- Repo GitHub y URL pública: nombre viejo (`merma-isabel-riquelme`) hasta que el usuario
-  confirme el rename a `bodegas-gestion` — no asumir que ya se hizo.
+  Nunca mezclar con Firebase de `ferreteria-oviedo`.
+- Usuarios activos en Firebase Auth (2026-08-24):
+  - `rrojas@oviedo.cl` — admin, todas las vistas
+  - `saliaga@oviedo.cl` — MODO_SV: solo San Vicente
+  - `spavez@oviedo.cl` — MODO_LC: solo Las Cabras + Solicitud Stock LC
+  Login domain: `oviedo.cl` (configurado en `LOGIN_DOMAIN` del HTML).
+- Repo GitHub: `oviedoem/bodegas-gestion` — URL: https://oviedoem.github.io/bodegas-gestion/
+
+## Scripts Solicitud Stock Las Cabras (desde V.12/V.14)
+- `scripts/descargar_stock_critico_lc.py` — R_STOCK_PRODUCTOS bodegas SLC=33,PLC=34,CLC=35,GLC=37
+  → `data/stock-critico-lc.json` (en repo, público, no cifrado)
+- `scripts/descargar_oc_pendientes_lc.py` — M_DOCUMENTOS_DETALLE OCs vigentes bodegas LC
+  → `data/oc-pendientes-lc.json` (local, gitignored) + `data/oc-pend-resumen-lc.json` (en repo)
+- Ambos usan `.strip().upper()` en CODIGO_TECNICO (fix mismatch de claves)
+- Para actualizar: correr ambos scripts → `git add data/stock-critico-lc.json data/oc-pend-resumen-lc.json && git push`
+
+## Regla VISTAS dict (evitar bug crítico V.12)
+- El dict `VISTAS` en index.html registra vistas estándar (bodegas con bodega+render loop).
+- `solicitud_lc` está en VISTAS pero se excluye del loop estándar con `VISTAS_STD`:
+  ```js
+  var VISTAS_STD = Object.keys(VISTAS).filter(function(v){ return v !== 'solicitud_lc'; });
+  ```
+- Cualquier vista nueva que NO use `initVista`/`render` debe añadirse a este filtro.
