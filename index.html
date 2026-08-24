@@ -149,7 +149,7 @@
     <div class="lg-sub">Ferretería Oviedo — Acceso restringido</div>
     <label class="lg-label">Usuario</label>
     <div class="lg-input-wrap">
-      <input class="lg-input" type="text" id="loginUser" placeholder="riquelme" autocomplete="username">
+      <input class="lg-input" type="text" id="loginUser" placeholder="usuario o email completo" autocomplete="username">
     </div>
     <label class="lg-label">Contraseña</label>
     <div class="lg-input-wrap">
@@ -528,7 +528,8 @@ function doLogin(){
   var err = document.getElementById('loginErr');
   err.textContent = '';
   if(!user || !pass){ err.textContent = 'Ingresa usuario y contraseña'; return; }
-  auth.signInWithEmailAndPassword(user + '@' + LOGIN_DOMAIN, pass)
+  var email = user.indexOf('@') >= 0 ? user : user + '@' + LOGIN_DOMAIN;
+  auth.signInWithEmailAndPassword(email, pass)
     .then(function(){ /* onAuthStateChanged hace el resto */ })
     .catch(function(e){
       err.textContent = (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' ||
