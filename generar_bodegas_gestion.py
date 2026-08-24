@@ -36,52 +36,52 @@ SUCURSALES = [
     {
         "idSucursal": "04", "nombre": "El Manzano",
         "bodegas": [
-            (28, "GEM", "Gestion El Manzano"),
-            (29, "MEM", "Mermas El Manzano"),
-            (55, "RCE", "Recepcion El Manzano"),
-            (72, "IEM", "Ingreso El Manzano"),
-            (46, "TEM", "Transito El Manzano"),
-            (83, "EEM", "Exhibicion El Manzano"),
+            (28, "GEM", "Gestion El Manzano",      "04"),
+            (29, "MEM", "Mermas El Manzano",        "04"),
+            (55, "RCE", "Recepcion El Manzano",     "04"),
+            (72, "IEM", "Ingreso El Manzano",       "04"),
+            (46, "TEM", "Transito El Manzano",      "04"),
+            (83, "EEM", "Exhibicion El Manzano",    "04"),
         ],
     },
     {
         "idSucursal": "05", "nombre": "San Vicente",
         "bodegas": [
-            (41, "GSV", "Gestion San Vicente"),
-            (42, "MSV", "Mermas San Vicente"),
-            (56, "RSV", "Recepcion San Vicente"),
-            (70, "ISV", "Ingreso San Vicente"),
-            (45, "TSV", "Transito San Vicente"),
-            (44, "CSV", "Calzada San Vicente"),
-            (88, "DSV", "Distribucion San Vicente"),
-            (95, "ESV", "Exhibicion San Vicente"),
-            (43, "CSV", "Consumo San Vicente"),  # OJO: mismo SIMBOLO_BODEGA que Calzada (44) en el ERP
+            (41, "GSV", "Gestion San Vicente",      "05"),
+            (42, "MSV", "Mermas San Vicente",        "05"),
+            (56, "RSV", "Recepcion San Vicente",     "05"),
+            (70, "ISV", "Ingreso San Vicente",       "05"),
+            (45, "TSV", "Transito San Vicente",      "05"),
+            (44, "CSV", "Calzada San Vicente",       "05"),
+            (88, "DSV", "Distribucion San Vicente",  "14"),  # vive bajo IDSUCURSAL=14 (Distribucion)
+            (95, "ESV", "Exhibicion San Vicente",    "05"),
+            (43, "CSV", "Consumo San Vicente",       "05"),  # OJO: mismo SIMBOLO_BODEGA que Calzada (44)
         ],
     },
     {
         "idSucursal": "06", "nombre": "Las Cabras",
         "bodegas": [
-            (37, "GLC", "Gestion Las Cabras"),
-            (38, "MLC", "Mermas Las Cabras"),
-            (57, "RLC", "Recepcion Las Cabras"),
-            (71, "ILC", "Ingreso Las Cabras"),
-            (16, "TLC", "Transito Las Cabras"),
-            (35, "CLC", "Calzada Las Cabras"),
-            (91, "GFL", "Garantia Las Cabras"),
-            (96, "ELC", "Exhibicion Las Cabras"),
-            (97, "VLC", "Volumen Las Cabras"),
+            (37, "GLC", "Gestion Las Cabras",       "06"),
+            (38, "MLC", "Mermas Las Cabras",         "06"),
+            (57, "RLC", "Recepcion Las Cabras",      "06"),
+            (71, "ILC", "Ingreso Las Cabras",        "06"),
+            (16, "TLC", "Transito Las Cabras",       "06"),
+            (35, "CLC", "Calzada Las Cabras",        "06"),
+            (91, "GFL", "Garantia Las Cabras",       "06"),
+            (96, "ELC", "Exhibicion Las Cabras",     "06"),
+            (97, "VLC", "Volumen Las Cabras",        "06"),
         ],
     },
     {
         "idSucursal": "11", "nombre": "Litueche",
         "bodegas": [
-            (63, "GLE", "Gestion Litueche"),
-            (76, "MLE", "Mermas Litueche"),
-            (74, "ILE", "Ingreso Litueche"),
-            (59, "TLE", "Transito Litueche"),
-            (78, "CLT", "Calzada Litueche"),
-            (79, "DLT", "Distribucion Litueche"),
-            (64, "ELE", "Exhibicion Litueche"),
+            (63, "GLE", "Gestion Litueche",         "11"),
+            (76, "MLE", "Mermas Litueche",           "11"),
+            (74, "ILE", "Ingreso Litueche",          "11"),
+            (59, "TLE", "Transito Litueche",         "11"),
+            (78, "CLT", "Calzada Litueche",          "11"),
+            (79, "DLT", "Distribucion Litueche",     "09"),  # vive bajo IDSUCURSAL=09 (Ventas Empresas)
+            (64, "ELE", "Exhibicion Litueche",       "11"),
         ],
     },
 ]
@@ -92,16 +92,16 @@ SUCURSALES = [
 # Ingreso/Transito/Crossdock — verificado SQL 2026-07-21. Se excluye Ferrocenter
 # (FCM=12, marca/tienda distinta, no es bodega de gestion interna).
 COMPARTIDAS = [
-    (23, "CD",  "Centro de Distribucion"),
-    (7,  "XCD", "CrossDock Centro Distribucion"),
-    (27, "GCD", "Gestion CD"),
-    (73, "ICD", "Ingreso Centro Distribucion"),
-    (26, "MCD", "Mermas CD"),
-    (54, "RCD", "Recepcion Centro Distribucion"),
-    (67, "TCD", "Transito Centro Distribucion"),
-    (98, "BDP", "Despacho Proveedor"),
-    (84, "REM", "Remate"),
-    (36, "MKT", "Marketing"),
+    (23, "CD",  "Centro de Distribucion",          "08"),
+    (7,  "XCD", "CrossDock Centro Distribucion",   "08"),
+    (27, "GCD", "Gestion CD",                      "08"),
+    (73, "ICD", "Ingreso Centro Distribucion",     "08"),
+    (26, "MCD", "Mermas CD",                       "08"),
+    (54, "RCD", "Recepcion Centro Distribucion",   "08"),
+    (67, "TCD", "Transito Centro Distribucion",    "08"),
+    (98, "BDP", "Despacho Proveedor",              "09"),
+    (84, "REM", "Remate",                          "01"),
+    (36, "MKT", "Marketing",                       "01"),
 ]
 
 DOC_NOMBRES = {
@@ -164,6 +164,7 @@ LEFT JOIN Foviedo.dbo.M_Documentos_Encabezado_Observacion G
 LEFT JOIN Foviedo.dbo.M_DOCUMENTOS_ENCABEZADO ENC
     ON ENC.IDDOCUMENTO = N.IDDOCUMENTO AND ENC.IDNUMERO = N.IDNUMERO
 WHERE A.IDBODEGA = ?
+  AND A.IDSUCURSAL = ?
   AND ISNULL(A.ST_FISICO,0) <> 0
 ORDER BY N.FECHA_EMISION DESC
 """
@@ -229,7 +230,6 @@ def _deduplicar_y_acumular(registros):
             continue  # ya filtrado en SQL; seguridad extra igual que descargar_bod.py
 
         grt_fechas = {d["_fechaRaw"] for d in docs if d["tipoDoc"] == "GRT"}
-        earliest_grt = min(grt_fechas) if grt_fechas else None
 
         dedup = []
         for doc in docs:
@@ -238,9 +238,7 @@ def _deduplicar_y_acumular(registros):
             if tipo == "GRT":
                 dedup.append(doc)
             elif tipo in ("GME", "GIB"):
-                if fecha in grt_fechas:
-                    continue
-                if tipo == "GIB" and earliest_grt is not None and earliest_grt <= fecha:
+                if fecha in grt_fechas:  # mismo dia que GRT = doble conteo, excluir
                     continue
                 dedup.append(doc)
             else:
@@ -271,8 +269,8 @@ def _deduplicar_y_acumular(registros):
     return list(visto.values()), len(registros)
 
 
-def descargar_bodega(cursor, idbodega, simbolo, nombre):
-    cursor.execute(SQL, idbodega, idbodega)
+def descargar_bodega(cursor, idbodega, simbolo, nombre, idsucursal):
+    cursor.execute(SQL, idbodega, idbodega, idsucursal)
     hoy = datetime.date.today()
     crudos = []
     for row in cursor.fetchall():
@@ -313,12 +311,12 @@ def main():
     cur = conn.cursor()
     log("      Conexion OK")
 
-    todas_bodegas = []  # (idbodega, simbolo, nombre, idSucursalTab)
+    todas_bodegas = []  # (idbodega, simbolo, nombre, idSucursalTab, idsucursal_real)
     for suc in SUCURSALES:
-        for idbod, simbolo, nombre in suc["bodegas"]:
-            todas_bodegas.append((idbod, simbolo, nombre, suc["idSucursal"]))
-    for idbod, simbolo, nombre in COMPARTIDAS:
-        todas_bodegas.append((idbod, simbolo, nombre, "COMPARTIDAS"))
+        for idbod, simbolo, nombre, idsuc_real in suc["bodegas"]:
+            todas_bodegas.append((idbod, simbolo, nombre, suc["idSucursal"], idsuc_real))
+    for idbod, simbolo, nombre, idsuc_real in COMPARTIDAS:
+        todas_bodegas.append((idbod, simbolo, nombre, "COMPARTIDAS", idsuc_real))
 
     log(f"[2/3] Descargando {len(todas_bodegas)} bodegas en lotes de {LOTE_SIZE} "
         f"(evita timeouts/conflictos en la bajada)...")
@@ -330,13 +328,13 @@ def main():
     resumen = []
     lotes = [todas_bodegas[i:i + LOTE_SIZE] for i in range(0, len(todas_bodegas), LOTE_SIZE)]
     for n, lote in enumerate(lotes, 1):
-        log(f"      Lote {n}/{len(lotes)}: {', '.join(s for _, s, _, _ in lote)}")
-        for idbod, simbolo, nombre, idsuc_tab in lote:
+        log(f"      Lote {n}/{len(lotes)}: {', '.join(s for _, s, _, _, _ in lote)}")
+        for idbod, simbolo, nombre, idsuc_tab, idsuc_real in lote:
             try:
-                registros, total_crudo = descargar_bodega(cur, idbod, simbolo, nombre)
+                registros, total_crudo = descargar_bodega(cur, idbod, simbolo, nombre, idsuc_real)
                 resultados_por_bodega[idbod] = registros
                 resumen.append((idsuc_tab, simbolo, nombre, len(registros), total_crudo))
-                log(f"        [OK] {simbolo} ({nombre}): {len(registros)} codigos "
+                log(f"        [OK] {simbolo} ({nombre}) [suc={idsuc_real}]: {len(registros)} codigos "
                     f"({total_crudo} filas crudas antes de deduplicar)")
             except Exception as e:
                 log(f"        [ERROR] {simbolo} ({nombre}): {e} — se omite, resto del lote continua")
@@ -353,18 +351,18 @@ def main():
     total_general = 0
     for suc in SUCURSALES:
         registros = []
-        for idbod, simbolo, nombre in suc["bodegas"]:
+        for idbod, simbolo, nombre, idsuc_real in suc["bodegas"]:
             registros.extend(resultados_por_bodega.get(idbod, []))
         registros.sort(key=lambda r: r.get("diasAntiguedad") if r.get("diasAntiguedad") is not None else -1, reverse=True)
         sucursales_out.append({
             "idSucursal": suc["idSucursal"], "nombre": suc["nombre"],
-            "bodegasIncluidas": [{"id": b[0], "simbolo": b[1], "nombre": b[2]} for b in suc["bodegas"]],
+            "bodegasIncluidas": [{"id": b[0], "simbolo": b[1], "nombre": b[2], "idsucursal": b[3]} for b in suc["bodegas"]],
             "total": len(registros), "registros": registros,
         })
         total_general += len(registros)
 
     compartidas_registros = []
-    for idbod, simbolo, nombre in COMPARTIDAS:
+    for idbod, simbolo, nombre, idsuc_real in COMPARTIDAS:
         compartidas_registros.extend(resultados_por_bodega.get(idbod, []))
     compartidas_registros.sort(key=lambda r: r.get("diasAntiguedad") if r.get("diasAntiguedad") is not None else -1, reverse=True)
     total_general += len(compartidas_registros)
@@ -374,7 +372,7 @@ def main():
         "fuente": "Sistema interno",
         "sucursales": sucursales_out,
         "compartidas": {
-            "bodegasIncluidas": [{"id": b[0], "simbolo": b[1], "nombre": b[2]} for b in COMPARTIDAS],
+            "bodegasIncluidas": [{"id": b[0], "simbolo": b[1], "nombre": b[2], "idsucursal": b[3]} for b in COMPARTIDAS],
             "total": len(compartidas_registros), "registros": compartidas_registros,
         },
         "total": total_general,

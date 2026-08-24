@@ -629,6 +629,13 @@ function cambiarTab(v){
 function initVista(v){
   var cfg = VISTAS[v];
   var REG = cfg.DATA.registros || [];
+  // Recalcular diasAntiguedad en tiempo real desde fechaRegistroIso
+  var _HOY = new Date(); _HOY.setHours(0,0,0,0);
+  REG.forEach(function(r){
+    if(r.fechaRegistroIso){
+      r.diasAntiguedad = Math.floor((_HOY - new Date(r.fechaRegistroIso)) / 86400000);
+    }
+  });
   cfg.REG = REG; cfg.FIL = [];
 
   document.getElementById('meta_'+v).textContent =
