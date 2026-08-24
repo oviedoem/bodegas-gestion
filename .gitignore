@@ -12,8 +12,13 @@ _CREDENCIAL_LOGIN_NO_SUBIR.txt
 _setup_firebase_auth.py
 _subir_datos_firestore.py
 
-# JSONs de bodegas — bodegas_gestion.json trackeado (GitHub Pages lo sirve)
-# bodegas_ir_otras.json no se publica (datos IR separados)
+# JSONs de bodegas — solo locales, los .enc (cifrados) si van al repo
+bodegas_gestion.json
 bodegas_ir_otras.json
+# Scripts de subida/cifrado y credenciales — solo uso local, nunca al repo
+_subir_firestore_chunked.py
+_cifrar_y_subir_clave.py
+_service_account.json
+_CLAVE_FIRESTORE_MANUAL.json
 # Datos intermedios por sucursal (no van al repo)
 data/

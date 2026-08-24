@@ -172,7 +172,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.9</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.10</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -584,57 +584,75 @@ function snapshotToRegistros(snap){
   return out;
 }
 
-// TEMPORAL (2026-07-21): Firestore agoto su cuota gratuita de escrituras subiendo
-// 'bodegas'/'bodegas_gestion' (esquema 1-doc-por-codigo, ~14000 escrituras). Mientras
-// no resetea, esas dos colecciones se leen de los JSON estaticos publicados junto al
-// HTML (bodegas_ir_otras.json / bodegas_gestion.json) en vez de Firestore. 'merma'
-// sigue viniendo de Firestore normal (no se toco, sigue con cuota disponible).
-// Revertir cuando la cuota resetee: volver a leer 'bodegas'/'bodegas_gestion' de
-// Firestore (ver historial git de esta funcion) y considerar el esquema chunked
-// (1 doc grande por sucursal en vez de 1 por codigo) para no volver a agotarla.
+// Bodegas en JSON cifrado (AES-256-CBC). La clave vive en Firestore (1 read/sesion).
+// Flujo: login → fetch key de bodegas_clave/actual → fetch .enc → descifrar → render.
+// Cifrado via _cifrar_y_subir_clave.py tras cada descargar_bodegas_sql.py.
 function vistaDeSucursal(idSucursal){
   return {"04":"elmanzano","05":"sanvicente","06":"lascabras","11":"litueche"}[idSucursal];
+}
+
+function _b64ToBytes(b64){
+  var bin=atob(b64), out=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+  return out;
+}
+
+function _fetchDescifrar(url, cryptoKey){
+  return fetch(url,{cache:'no-store'}).then(function(r){ return r.arrayBuffer(); })
+    .then(function(buf){
+      var bytes=new Uint8Array(buf);
+      var iv=bytes.slice(0,16), data=bytes.slice(16);
+      return crypto.subtle.decrypt({name:'AES-CBC',iv:iv}, cryptoKey, data);
+    }).then(function(plain){
+      return JSON.parse(new TextDecoder().decode(plain));
+    });
 }
 
 function cargarDatosFirestore(){
   Promise.all([
     db.collection('merma_meta').doc('info').get(),
     db.collection('merma').get(),
-    fetch('bodegas_ir_otras.json', {cache:'no-store'}).then(function(r){ return r.json(); }),
-    fetch('bodegas_gestion.json', {cache:'no-store'}).then(function(r){ return r.json(); }),
+    db.collection('bodegas_clave').doc('actual').get(),
   ]).then(function(res){
     var metaMerma = res[0].exists ? res[0].data() : {};
-    var regMerma = snapshotToRegistros(res[1]);
-    var dataBod = res[2];
-    var dataGestion = res[3];
+    var regMerma  = snapshotToRegistros(res[1]);
+    var claveDoc  = res[2];
 
     VISTAS.merma.DATA = Object.assign({registros: regMerma}, metaMerma);
-    VISTAS.bodegas.DATA = dataBod;
 
-    dataGestion.sucursales.forEach(function(s){
-      var v = vistaDeSucursal(s.idSucursal);
-      VISTAS[v].DATA = {
-        registros: s.registros, generado: dataGestion.generado, fuente: dataGestion.fuente,
-        bodegasIncluidas: s.bodegasIncluidas,
-      };
-    });
-    VISTAS.cd.DATA = {
-      registros: dataGestion.compartidas.registros, generado: dataGestion.generado, fuente: dataGestion.fuente,
-      bodegasIncluidas: dataGestion.compartidas.bodegasIncluidas,
-    };
+    if(!claveDoc.exists){ throw new Error('Clave de bodegas no disponible'); }
+    var claveB64    = claveDoc.data().key;
+    var generadoBod = claveDoc.data().generado || '';
 
-    // Recalcular diasAntiguedad desde fechaRegistroIso (siempre fresco, independiente de cuándo se generó el JSON)
+    return crypto.subtle.importKey('raw', _b64ToBytes(claveB64), {name:'AES-CBC'}, false, ['decrypt'])
+      .then(function(cryptoKey){
+        return Promise.all([
+          _fetchDescifrar('bodegas_gestion.enc', cryptoKey),
+          _fetchDescifrar('bodegas_ir_otras.enc', cryptoKey),
+        ]);
+      }).then(function(jsons){
+        var dataGestion = jsons[0];
+        var dataIr      = jsons[1];
+
+        VISTAS.bodegas.DATA = { registros: dataIr.registros || [], generado: generadoBod };
+
+        (dataGestion.sucursales || []).forEach(function(s){
+          var v = vistaDeSucursal(s.idSucursal);
+          if(v) VISTAS[v].DATA = { registros: s.registros || [], generado: generadoBod };
+        });
+        var comp = dataGestion.compartidas || {};
+        VISTAS.cd.DATA = { registros: comp.registros || [], generado: generadoBod };
+      });
+  }).then(function(){
     var HOY_MS = Date.now();
-    function recalcDias(regs){
-      (regs||[]).forEach(function(r){
+    Object.keys(VISTAS).forEach(function(v){
+      (VISTAS[v].DATA.registros||[]).forEach(function(r){
         if(r.fechaRegistroIso){
           var d=new Date(r.fechaRegistroIso);
           if(!isNaN(d.getTime())) r.diasAntiguedad=Math.round((HOY_MS-d.getTime())/86400000);
         }
       });
-    }
-    Object.keys(VISTAS).forEach(function(v){ recalcDias(VISTAS[v].DATA.registros); });
-
+    });
     Object.keys(VISTAS).forEach(function(v){ initVista(v); render(v); });
     if(MODO_SV) aplicarModoSV();
   }).catch(function(e){
