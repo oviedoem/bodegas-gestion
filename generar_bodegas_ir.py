@@ -168,7 +168,6 @@ def _deduplicar_y_acumular(registros):
             continue  # ya filtrado en SQL; seguridad extra igual que descargar_bod.py
 
         grt_fechas = {d["_fechaRaw"] for d in docs if d["tipoDoc"] == "GRT"}
-        earliest_grt = min(grt_fechas) if grt_fechas else None
 
         dedup = []
         for doc in docs:
@@ -177,9 +176,7 @@ def _deduplicar_y_acumular(registros):
             if tipo == "GRT":
                 dedup.append(doc)
             elif tipo in ("GME", "GIB"):
-                if fecha in grt_fechas:
-                    continue
-                if tipo == "GIB" and earliest_grt is not None and earliest_grt <= fecha:
+                if fecha in grt_fechas:  # mismo dia que GRT = doble conteo, excluir
                     continue
                 dedup.append(doc)
             else:
