@@ -171,7 +171,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.18</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.19</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -465,9 +465,9 @@
         style="width:58px;font-size:12px;padding:4px 6px;border:1px solid #d1d5db;border-radius:6px;text-align:center">
       ítems
     </label>
-    <button class="btn btn-sm" onclick="slcPrellenar()">🔄 Pre-llenar</button>
-    <button class="btn btn-sm" style="background:#059669;color:white" onclick="slcEnviarEmail()">📧 Enviar a Adquisiciones</button>
-    <button class="btn btn-sm" style="background:#4b5563;color:white" onclick="slcDescargarExcel()">⬇️ Descargar Excel</button>
+    <button class="btn btn-sm" onclick="slcPrellenar()" style="background:#2563eb;color:white;font-weight:600">🔄 Pre-llenar</button>
+    <button class="btn btn-sm" style="background:#059669;color:white;font-weight:600" onclick="slcEnviarEmail()">📧 Enviar a Adquisiciones</button>
+    <button class="btn btn-sm" style="background:#374151;color:white;font-weight:600" onclick="slcDescargarExcel()">⬇️ Descargar Excel</button>
   </div>
 
   <!-- Frescura datos OC -->
@@ -1091,8 +1091,9 @@ function slcPrellenar(){
   var sinDefinir  = document.getElementById('slc_reqSinDefinir').checked;
   var nItems      = Math.max(1, parseInt(document.getElementById('slc_reqN').value) || 50);
 
-  // Obtener stock actual de Las Cabras desde VISTAS (bodegas_gestion.enc ya cargado)
+  // Obtener stock actual y descripción de Las Cabras desde VISTAS
   var stockMap = {};
+  var descMap  = {};
   var vistaLC  = VISTAS['lascabras'] && VISTAS['lascabras'].DATA && VISTAS['lascabras'].DATA.registros;
   if(vistaLC){
     vistaLC.forEach(function(r){
@@ -1102,6 +1103,7 @@ function slcPrellenar(){
       var bod = (r.bodegaCorta || r.bodega || '').toUpperCase();
       if(stockMap[c][bod.toLowerCase()] !== undefined)
         stockMap[c][bod.toLowerCase()] += Number(r.cantidadDisponible || r.disponible || 0);
+      if(!descMap[c] && r.descripcion) descMap[c] = r.descripcion;
     });
   }
 
@@ -1118,6 +1120,7 @@ function slcPrellenar(){
     var stockActual = (st.slc||0) + (st.plc||0) + (st.clc||0) + (st.glc||0);
     return {
       cod:         cod,
+      desc:        descMap[cod] || '',
       min:         p.min    || 0,
       max:         p.max    || 0,
       critico:     p.critico|| 0,
@@ -1142,20 +1145,23 @@ function slcPrellenar(){
 
   var inp = 'style="width:68px;text-align:right;padding:3px 5px;border:1px solid #d1d5db;border-radius:4px;font-size:12px"';
   var rows = lista.map(function(p, i){
-    var stockSty = p.stockActual <= p.critico ? 'color:#dc2626;font-weight:700' : '';
-    var reposSty = p.repo > 0 ? 'color:#d97706;font-weight:700' : '';
-    var ocSty    = p.ocPend > 0 ? 'color:#7c3aed;font-weight:700' : 'color:#9ca3af';
-    return '<tr>'+
-      '<td style="color:#9ca3af;font-size:11px;padding:6px 5px">'+(i+1)+'</td>'+
-      '<td style="font-family:monospace;font-size:11px;white-space:nowrap;padding:6px 5px">'+esc(p.cod)+'</td>'+
-      '<td style="font-size:12px;padding:6px 5px">'+esc(p.cod)+'</td>'+
-      '<td class="right" style="font-size:12px;padding:6px 5px">'+p.min+'</td>'+
-      '<td class="right" style="font-size:12px;padding:6px 5px;'+reposSty+'">'+p.repo+'</td>'+
-      '<td class="right" style="font-size:12px;padding:6px 5px">'+p.critico+'</td>'+
-      '<td class="right" style="font-size:12px;padding:6px 5px;'+stockSty+'">'+p.stockActual+'</td>'+
-      '<td class="right" style="font-size:12px;padding:6px 5px;'+ocSty+'">'+(p.ocPend||'—')+'</td>'+
-      '<td class="right" style="padding:4px 5px"><input type="number" '+inp+' class="slc-minsol" data-cod="'+esc(p.cod)+'" value="'+p.min+'"></td>'+
-      '<td class="right" style="padding:4px 5px"><input type="number" '+inp+' class="slc-repossol" data-cod="'+esc(p.cod)+'" value="'+p.repo+'"></td>'+
+    var esCritico  = p.stockActual <= p.critico;
+    var rowBg      = esCritico ? 'background:#fff5f5' : (i%2===0?'':'background:#f9fafb');
+    var stockSty   = esCritico ? 'color:#dc2626;font-weight:700' : '';
+    var reposSty   = p.repo > 0 ? 'color:#d97706;font-weight:700' : '';
+    var ocSty      = p.ocPend > 0 ? 'color:#7c3aed;font-weight:700' : 'color:#9ca3af';
+    var ocCellBg   = 'background:#f5f3ff';
+    return '<tr style="'+rowBg+';border-bottom:1px solid #f0f0f0" onmouseover="this.style.filter=\'brightness(0.96)\'" onmouseout="this.style.filter=\'\'">'+
+      '<td style="color:#9ca3af;font-size:11px;padding:7px 6px;text-align:right">'+(i+1)+'</td>'+
+      '<td style="font-family:monospace;font-size:12px;white-space:nowrap;padding:7px 6px;font-weight:600">'+esc(p.cod)+'</td>'+
+      '<td style="font-size:11px;padding:7px 6px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(p.desc||p.cod)+'">'+esc(p.desc||p.cod)+'</td>'+
+      '<td class="right" style="font-size:12px;padding:7px 6px">'+p.min+'</td>'+
+      '<td class="right" style="font-size:12px;padding:7px 6px;'+reposSty+'">'+p.repo+'</td>'+
+      '<td class="right" style="font-size:12px;padding:7px 6px">'+p.critico+'</td>'+
+      '<td class="right" style="font-size:12px;padding:7px 6px;'+stockSty+'">'+p.stockActual+'</td>'+
+      '<td class="right" style="font-size:12px;padding:7px 6px;'+ocSty+';'+ocCellBg+'">'+(p.ocPend||'—')+'</td>'+
+      '<td class="right" style="padding:5px 6px"><input type="number" '+inp+' class="slc-minsol" data-cod="'+esc(p.cod)+'" value="'+p.min+'"></td>'+
+      '<td class="right" style="padding:5px 6px"><input type="number" '+inp+' class="slc-repossol" data-cod="'+esc(p.cod)+'" value="'+p.repo+'"></td>'+
     '</tr>';
   }).join('');
   document.getElementById('slc_reqBody').innerHTML = rows;
