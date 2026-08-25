@@ -171,7 +171,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.19</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.20</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -1091,9 +1091,20 @@ function slcPrellenar(){
   var sinDefinir  = document.getElementById('slc_reqSinDefinir').checked;
   var nItems      = Math.max(1, parseInt(document.getElementById('slc_reqN').value) || 50);
 
-  // Obtener stock actual y descripción de Las Cabras desde VISTAS
+  // Obtener stock actual de Las Cabras y descripción de TODOS los vistas cargados
   var stockMap = {};
   var descMap  = {};
+  // 1. Construir descMap desde todos los vistas (el mismo codigo puede tener 0 stock en LC
+  //    pero existir en EM/SV/merma con su descripcion completa)
+  Object.keys(VISTAS).forEach(function(v){
+    var regs = VISTAS[v].DATA && VISTAS[v].DATA.registros;
+    if(!regs) return;
+    regs.forEach(function(r){
+      var c = (r.codigoTecnico || r.codigo || '').trim().toUpperCase();
+      if(c && !descMap[c] && r.descripcion) descMap[c] = r.descripcion;
+    });
+  });
+  // 2. Construir stockMap solo con bodegas de Las Cabras
   var vistaLC  = VISTAS['lascabras'] && VISTAS['lascabras'].DATA && VISTAS['lascabras'].DATA.registros;
   if(vistaLC){
     vistaLC.forEach(function(r){
@@ -1103,7 +1114,6 @@ function slcPrellenar(){
       var bod = (r.bodegaCorta || r.bodega || '').toUpperCase();
       if(stockMap[c][bod.toLowerCase()] !== undefined)
         stockMap[c][bod.toLowerCase()] += Number(r.cantidadDisponible || r.disponible || 0);
-      if(!descMap[c] && r.descripcion) descMap[c] = r.descripcion;
     });
   }
 
@@ -1120,7 +1130,7 @@ function slcPrellenar(){
     var stockActual = (st.slc||0) + (st.plc||0) + (st.clc||0) + (st.glc||0);
     return {
       cod:         cod,
-      desc:        descMap[cod] || '',
+      desc:        p.desc || descMap[cod] || '',
       min:         p.min    || 0,
       max:         p.max    || 0,
       critico:     p.critico|| 0,
