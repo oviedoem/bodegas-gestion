@@ -171,7 +171,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.24</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.25</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -797,8 +797,9 @@ function cambiarTab(v){
     document.getElementById('panel_'+k).classList.toggle('active', k===v);
     if(btn) btn.classList.toggle('active', k===v);
   });
-  // Inicializar fechas por defecto en Solicitud LC la primera vez que se abre
+  // Inicializar Solicitud LC la primera vez que se abre
   if(v === 'solicitud_lc'){
+    // Fechas predeterminadas: hoy y 90 días atrás
     var elDesde = document.getElementById('slc_reqDesde');
     var elHasta = document.getElementById('slc_reqHasta');
     if(elDesde && !elDesde.value){
@@ -806,6 +807,10 @@ function cambiarTab(v){
       var desde = new Date(hoy); desde.setDate(hoy.getDate() - 90);
       elHasta.value = hoy.toISOString().slice(0,10);
       elDesde.value = desde.toISOString().slice(0,10);
+    }
+    // Precargar JSON de params para que las marcas estén disponibles de inmediato
+    if(_slcParams === null || _slcOcResumen === null){
+      _slcCargarDatos(function(){});
     }
   }
 }
@@ -1089,7 +1094,17 @@ function _slcCargarDatos(cb){
   if(_slcParams === null){
     fetch('data/stock-critico-lc.json?t='+Math.floor(Date.now()/3600000))
       .then(function(r){ return r.ok ? r.json() : {}; })
-      .then(function(j){ _slcParams = (j && j.productos) || {}; listo(); })
+      .then(function(j){
+        _slcParams = (j && j.productos) || {};
+        // Poblar dropdown de marcas inmediatamente al cargar el JSON
+        var sel = document.getElementById('slc_reqMarca');
+        if(sel && sel.options.length <= 1){
+          var ms = {};
+          Object.keys(_slcParams).forEach(function(c){ var m=(_slcParams[c].marca||'').trim(); if(m) ms[m]=1; });
+          Object.keys(ms).sort().forEach(function(m){ var o=document.createElement('option'); o.value=m; o.textContent=m; sel.appendChild(o); });
+        }
+        listo();
+      })
       .catch(function(){ _slcParams = {}; listo(); });
   } else { listo(); }
 
@@ -1156,21 +1171,6 @@ function slcPrellenar(){
       var bod = (r.bodegaCorta || r.bodega || '').toUpperCase();
       if(stockMap[c][bod.toLowerCase()] !== undefined)
         stockMap[c][bod.toLowerCase()] += Number(r.cantidadDisponible || r.disponible || 0);
-    });
-  }
-
-  // Poblar dropdown de marcas (solo si está vacío o si es la primera vez)
-  var selMarca = document.getElementById('slc_reqMarca');
-  if(selMarca && selMarca.options.length <= 1){
-    var marcasSet = {};
-    Object.keys(_slcParams).forEach(function(cod){
-      var m = (_slcParams[cod].marca || '').trim();
-      if(m) marcasSet[m] = 1;
-    });
-    Object.keys(marcasSet).sort().forEach(function(m){
-      var opt = document.createElement('option');
-      opt.value = m; opt.textContent = m;
-      selMarca.appendChild(opt);
     });
   }
 
