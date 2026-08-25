@@ -171,7 +171,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.22</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.23</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -429,45 +429,66 @@
 
   <!-- Filtros -->
   <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px">
-    <label style="font-size:12px;font-weight:600">Desde
+    <label style="font-size:12px;font-weight:600;color:#374151">Desde
       <input type="date" id="slc_reqDesde" style="margin-left:6px;font-size:12px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px">
     </label>
-    <label style="font-size:12px;font-weight:600">Hasta
+    <label style="font-size:12px;font-weight:600;color:#374151">Hasta
       <input type="date" id="slc_reqHasta" style="margin-left:6px;font-size:12px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px">
     </label>
-    <label style="font-size:12px;font-weight:600">Cobertura
+    <label style="font-size:12px;font-weight:600;color:#374151">Cobertura
       <select id="slc_reqDias" style="margin-left:6px;font-size:12px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px">
         <option value="30">30 días</option>
         <option value="60" selected>60 días</option>
         <option value="90">90 días</option>
       </select>
     </label>
+    <label style="font-size:12px;font-weight:600;color:#374151">Marca
+      <select id="slc_reqMarca" style="margin-left:6px;font-size:12px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;max-width:180px">
+        <option value="">Todas las marcas</option>
+      </select>
+    </label>
+    <!-- Categoría ABC -->
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#374151">
+      Cat.
+      <label style="cursor:pointer;display:flex;align-items:center;gap:3px;font-weight:500">
+        <input type="checkbox" id="slc_reqCatA" checked>
+        <span style="background:#16a34a;color:white;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:700">A</span>
+      </label>
+      <label style="cursor:pointer;display:flex;align-items:center;gap:3px;font-weight:500">
+        <input type="checkbox" id="slc_reqCatB" checked>
+        <span style="background:#ca8a04;color:white;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:700">B</span>
+      </label>
+      <label style="cursor:pointer;display:flex;align-items:center;gap:3px;font-weight:500">
+        <input type="checkbox" id="slc_reqCatC">
+        <span style="background:#ea580c;color:white;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:700">C</span>
+      </label>
+    </div>
     <!-- Parámetros ERP -->
-    <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600">
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#374151">
       Parámetros
       <label style="cursor:pointer;display:flex;align-items:center;gap:3px;font-weight:500" title="Mostrar solo códigos con ST_MIN configurado en ERP">
         <input type="checkbox" id="slc_reqConMin" checked>
-        <span style="font-size:12px">Con mínimo</span>
+        <span style="font-size:12px;color:#374151">Con mínimo</span>
       </label>
       <label style="cursor:pointer;display:flex;align-items:center;gap:3px;font-weight:500" title="Mostrar solo códigos con ST_REPOSICION configurado en ERP">
         <input type="checkbox" id="slc_reqConRepo" checked>
-        <span style="font-size:12px">Con repos.</span>
+        <span style="font-size:12px;color:#374151">Con repos.</span>
       </label>
-      <label style="cursor:pointer;display:flex;align-items:center;gap:3px;font-weight:500" title="Mostrar códigos SIN mínimo ni reposición (a definir)">
+      <label style="cursor:pointer;display:flex;align-items:center;gap:3px;font-weight:500" title="Mostrar solo códigos SIN mínimo ni reposición (a definir)">
         <input type="checkbox" id="slc_reqSinDefinir">
-        <span style="font-size:12px">Sin definir</span>
+        <span style="font-size:12px;color:#374151">Sin definir</span>
       </label>
     </div>
     <!-- N ítems -->
-    <label style="font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px">
+    <label style="font-size:12px;font-weight:600;color:#374151;display:flex;align-items:center;gap:6px">
       Mostrar
-      <input type="number" id="slc_reqN" value="50" min="1" max="500"
-        style="width:58px;font-size:12px;padding:4px 6px;border:1px solid #d1d5db;border-radius:6px;text-align:center">
+      <input type="number" id="slc_reqN" value="10" min="1" max="500"
+        style="width:52px;font-size:12px;padding:4px 6px;border:1px solid #d1d5db;border-radius:6px;text-align:center">
       ítems
     </label>
-    <button class="btn btn-sm" onclick="slcPrellenar()" style="background:#2563eb;color:white;font-weight:600">🔄 Pre-llenar</button>
+    <button class="btn btn-sm" onclick="slcPrellenar()" style="background:white;color:#374151;border:1px solid #d1d5db;font-weight:600">🔄 Pre-llenar</button>
     <button class="btn btn-sm" style="background:#059669;color:white;font-weight:600" onclick="slcEnviarEmail()">📧 Enviar a Adquisiciones</button>
-    <button class="btn btn-sm" style="background:#374151;color:white;font-weight:600" onclick="slcDescargarExcel()">⬇️ Descargar Excel</button>
+    <button class="btn btn-sm" style="background:#4b5563;color:white;font-weight:600" onclick="slcDescargarExcel()">⬇️ Descargar Excel</button>
   </div>
 
   <!-- Frescura datos OC -->
@@ -479,6 +500,7 @@
       <thead>
         <tr style="background:#1f2937;color:white">
           <th style="padding:9px 6px;text-align:right;width:28px;color:#9ca3af;font-weight:400">#</th>
+          <th style="padding:9px 6px;text-align:center;width:24px;font-weight:600">Cat</th>
           <th style="padding:9px 8px;text-align:left;min-width:90px;font-weight:600">Código</th>
           <th style="padding:9px 8px;text-align:left;min-width:260px;font-weight:600">Producto</th>
           <th style="padding:9px 8px;text-align:right;min-width:68px;font-weight:600">Mínimo<br>actual</th>
@@ -491,7 +513,7 @@
         </tr>
       </thead>
       <tbody id="slc_reqBody">
-        <tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:24px;font-size:13px">
+        <tr><td colspan="11" style="text-align:center;color:#9ca3af;padding:24px;font-size:13px">
           Selecciona rango de fechas y presiona "Pre-llenar"
         </td></tr>
       </tbody>
@@ -1083,13 +1105,22 @@ function slcPrellenar(){
   var hasta  = document.getElementById('slc_reqHasta').value;
   if(!desde || !hasta){
     document.getElementById('slc_reqBody').innerHTML =
-      '<tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:24px">Selecciona el rango de fechas.</td></tr>';
+      '<tr><td colspan="11" style="text-align:center;color:#9ca3af;padding:24px">Selecciona el rango de fechas.</td></tr>';
     return;
   }
   var conMin      = document.getElementById('slc_reqConMin').checked;
   var conRepo     = document.getElementById('slc_reqConRepo').checked;
   var sinDefinir  = document.getElementById('slc_reqSinDefinir').checked;
-  var nItems      = Math.max(1, parseInt(document.getElementById('slc_reqN').value) || 50);
+  var nItems      = Math.max(1, parseInt(document.getElementById('slc_reqN').value) || 10);
+  var marcaSel    = (document.getElementById('slc_reqMarca') || {value:''}).value || '';
+  var catA        = document.getElementById('slc_reqCatA') ? document.getElementById('slc_reqCatA').checked : true;
+  var catB        = document.getElementById('slc_reqCatB') ? document.getElementById('slc_reqCatB').checked : true;
+  var catC        = document.getElementById('slc_reqCatC') ? document.getElementById('slc_reqCatC').checked : false;
+  var catsOk      = [];
+  if(catA) catsOk.push('A');
+  if(catB) catsOk.push('B');
+  if(catC) catsOk.push('C');
+  if(!catsOk.length) catsOk = ['A','B','C'];
 
   // Obtener stock actual de Las Cabras y descripción de TODOS los vistas cargados
   var stockMap = {};
@@ -1117,9 +1148,29 @@ function slcPrellenar(){
     });
   }
 
+  // Poblar dropdown de marcas (solo si está vacío o si es la primera vez)
+  var selMarca = document.getElementById('slc_reqMarca');
+  if(selMarca && selMarca.options.length <= 1){
+    var marcasSet = {};
+    Object.keys(_slcParams).forEach(function(cod){
+      var m = (_slcParams[cod].marca || '').trim();
+      if(m) marcasSet[m] = 1;
+    });
+    Object.keys(marcasSet).sort().forEach(function(m){
+      var opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      selMarca.appendChild(opt);
+    });
+  }
+
+  // Función ABC: A=ambos configurados, B=uno, C=ninguno
+  function _slcCat(p){ return (p.min>0 && p.repo>0) ? 'A' : (p.min>0 || p.repo>0) ? 'B' : 'C'; }
+
   // Filtrar y armar lista desde _slcParams
   var lista = Object.keys(_slcParams).filter(function(cod){
     var p = _slcParams[cod];
+    if(marcaSel && (p.marca || '') !== marcaSel) return false;
+    if(catsOk.indexOf(_slcCat(p)) < 0) return false;
     if(sinDefinir) return !(p.min > 0 || p.repo > 0);
     if(conMin  && !(p.min  > 0)) return false;
     if(conRepo && !(p.repo > 0)) return false;
@@ -1131,6 +1182,8 @@ function slcPrellenar(){
     return {
       cod:         cod,
       desc:        p.desc || descMap[cod] || '',
+      marca:       p.marca || '',
+      cat:         _slcCat(p),
       min:         p.min    || 0,
       max:         p.max    || 0,
       critico:     p.critico|| 0,
@@ -1149,7 +1202,7 @@ function slcPrellenar(){
 
   if(!lista.length){
     document.getElementById('slc_reqBody').innerHTML =
-      '<tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:24px">Sin productos para los filtros seleccionados.</td></tr>';
+      '<tr><td colspan="11" style="text-align:center;color:#9ca3af;padding:24px">Sin productos para los filtros seleccionados.</td></tr>';
     return;
   }
 
@@ -1161,8 +1214,10 @@ function slcPrellenar(){
     var reposSty   = p.repo > 0 ? 'color:#d97706;font-weight:700' : '';
     var ocSty      = p.ocPend > 0 ? 'color:#7c3aed;font-weight:700' : 'color:#9ca3af';
     var ocCellBg   = 'background:#f5f3ff';
+    var catColor = p.cat==='A'?'#16a34a':p.cat==='B'?'#ca8a04':'#ea580c';
     return '<tr style="'+rowBg+';border-bottom:1px solid #f0f0f0" onmouseover="this.style.filter=\'brightness(0.96)\'" onmouseout="this.style.filter=\'\'">'+
       '<td style="color:#9ca3af;font-size:11px;padding:7px 6px;text-align:right">'+(i+1)+'</td>'+
+      '<td style="padding:5px 6px;text-align:center"><span style="background:'+catColor+';color:white;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700">'+esc(p.cat)+'</span></td>'+
       '<td style="font-family:monospace;font-size:12px;white-space:nowrap;padding:7px 6px;font-weight:600">'+esc(p.cod)+'</td>'+
       '<td style="font-size:11px;padding:7px 8px;min-width:260px;max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(p.desc||p.cod)+'">'+esc(p.desc||p.cod)+'</td>'+
       '<td class="right" style="font-size:12px;padding:7px 6px">'+p.min+'</td>'+
