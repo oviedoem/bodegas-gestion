@@ -171,7 +171,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.28</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.29</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -1242,30 +1242,152 @@ function slcPrellenar(){
   }
 }
 
+var _slcEmailPlain = '';
+var _slcEmailMailto = '';
+
 function slcEnviarEmail(){
   var filas = document.querySelectorAll('#slc_reqTable tbody tr');
   if(!filas.length || filas[0].querySelector('td[colspan]')){
     alert('Pre-llena la tabla primero.'); return;
   }
-  var desde = document.getElementById('slc_reqDesde').value || '';
+  var desde  = document.getElementById('slc_reqDesde').value || '';
   var hasta  = document.getElementById('slc_reqHasta').value || '';
-  var lineas = ['Solicitud de Stock — Las Cabras', 'Período: '+desde+' al '+hasta, ''];
-  lineas.push('Código\tMínimo\tRepos.\tCrítico\tStock\tOC Pend\tMín. Solic.\tRepo. Solic.');
+  var nItems = document.getElementById('slc_reqN').value || '10';
+  var hoy    = new Date().toLocaleDateString('es-CL');
+  var _diasES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  var diaHoy  = _diasES[new Date().getDay()];
+
+  var borde  = 'border:1px solid #d1d5db';
+  var sCd    = borde+';padding:6px 9px;font-size:12px;vertical-align:middle';
+  var sCdR   = sCd+';text-align:right;white-space:nowrap';
+  var sTh    = 'background:#1e3a5f;color:white;'+borde+';padding:8px 9px;font-size:11px;font-weight:700;vertical-align:bottom;text-align:';
+  var DOT_C  = {'A':'#16a34a','B':'#ca8a04','C':'#ea580c'};
+
+  var rowsHtml = '', plainLineas = [];
+  var idx = 0;
   filas.forEach(function(tr){
-    var cods = tr.querySelectorAll('td');
-    if(cods.length < 10) return;
-    var cod     = cods[1].textContent.trim();
-    var minAct  = cods[3].textContent.trim();
-    var repAct  = cods[4].textContent.trim();
-    var crit    = cods[5].textContent.trim();
-    var stock   = cods[6].textContent.trim();
-    var ocPend  = cods[7].textContent.trim();
-    var minSol  = tr.querySelector('.slc-minsol')  ? tr.querySelector('.slc-minsol').value  : '';
-    var repSol  = tr.querySelector('.slc-repossol') ? tr.querySelector('.slc-repossol').value : '';
-    lineas.push([cod,minAct,repAct,crit,stock,ocPend,minSol,repSol].join('\t'));
+    var inps = tr.querySelectorAll('input');
+    if(!inps.length) return;
+    idx++;
+    var abc    = tr.getAttribute('data-abc') || 'C';
+    var dc     = DOT_C[abc] || DOT_C['C'];
+    var cods   = tr.querySelectorAll('td');
+    var cod    = cods[2].textContent.trim();
+    var prod   = cods[3].textContent.trim();
+    var vta    = cods[4].textContent.trim();
+    var minAct = cods[5].textContent.trim();
+    var repAct = cods[6].textContent.trim();
+    var trans  = cods[7].textContent.trim();
+    var stAct  = cods[8].textContent.trim();
+    var ocPend = cods[9].textContent.trim();
+    var minSol = inps[0].value;
+    var repSol = inps[1].value;
+    var bg     = (idx % 2 === 0) ? '#f3f4f6' : '#ffffff';
+    var dotHtml = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+dc+';margin-right:6px;vertical-align:middle"></span>';
+    rowsHtml +=
+      '<tr style="background:'+bg+'">'+
+        '<td style="'+sCd+';width:70px;font-family:monospace;font-size:11px;white-space:nowrap">'+cod+'</td>'+
+        '<td style="'+sCd+';width:200px;word-break:break-word">'+dotHtml+'<strong>'+prod+'</strong></td>'+
+        '<td style="'+sCdR+';width:58px">'+vta+'</td>'+
+        '<td style="'+sCdR+';width:62px">'+minAct+'</td>'+
+        '<td style="'+sCdR+';width:68px;background:#fef3c7;font-weight:700">'+repAct+'</td>'+
+        '<td style="'+sCdR+';width:58px">'+trans+'</td>'+
+        '<td style="'+sCdR+';width:58px">'+stAct+'</td>'+
+        '<td style="'+sCdR+';width:58px">'+ocPend+'</td>'+
+        '<td style="'+sCdR+';width:68px">'+minSol+'</td>'+
+        '<td style="'+sCdR+';width:72px;background:#d1fae5;font-weight:700">'+repSol+'</td>'+
+      '</tr>';
+    plainLineas.push(idx+'. ['+abc+'] '+cod+' — '+prod+
+      '\n   Vta 2m: '+vta+' | Min: '+minAct+' | Repos: '+repAct+
+      ' | Tránsito: '+trans+' | Stock: '+stAct+' | OC: '+ocPend+
+      ' | Min.sol: '+minSol+' | Repos.sol: '+repSol);
   });
-  var body = encodeURIComponent(lineas.join('\n'));
-  window.location.href = 'mailto:?subject='+encodeURIComponent('Solicitud Stock Las Cabras '+hasta)+'&body='+body;
+
+  var htmlEmail =
+    '<table width="780" cellpadding="0" cellspacing="0" style="font-family:Calibri,Arial,sans-serif;font-size:13px;color:#1f2937;border-collapse:collapse">'+
+    '<tr><td style="background:#1e3a5f;color:white;padding:16px 22px;border-radius:6px 6px 0 0">'+
+      '<div style="font-size:16px;font-weight:700;letter-spacing:.3px">Ferretería Oviedo — Las Cabras</div>'+
+      '<div style="font-size:11px;opacity:.75;margin-top:3px">Solicitud de Stock · '+hoy+'</div>'+
+    '</td></tr>'+
+    '<tr><td style="padding:18px 22px 22px;background:#f9fafb;border:1px solid #e5e7eb;border-top:none">'+
+      '<p style="margin:0 0 8px;font-size:13px">Estimado/a,</p>'+
+      '<p style="margin:0 0 18px;font-size:13px">Le envío el listado de solicitud de stock para sucursal <strong>Las Cabras</strong>, correspondiente al '+diaHoy+' <strong>'+hoy+'</strong>.</p>'+
+      '<table width="734" cellpadding="0" cellspacing="0" style="background:#374151;color:white;font-weight:700;font-size:11px;letter-spacing:.6px;margin-bottom:0"><tr><td style="padding:7px 12px">'+
+        'DETALLE DE PRODUCTOS — TOP '+nItems+' ALTA ROTACIÓN'+
+      '</td></tr></table>'+
+      '<table style="border-collapse:collapse;width:734px;table-layout:fixed;margin-bottom:14px">'+
+        '<thead><tr>'+
+          '<th style="'+sTh+'left;width:70px">Código</th>'+
+          '<th style="'+sTh+'left;width:200px">Producto</th>'+
+          '<th style="'+sTh+'right;width:58px">Vta<br>2 meses</th>'+
+          '<th style="'+sTh+'right;width:62px">Mínimo<br>actual</th>'+
+          '<th style="'+sTh+'right;width:68px;background:#92400e">Repos.<br>actual</th>'+
+          '<th style="'+sTh+'right;width:58px">Tránsito</th>'+
+          '<th style="'+sTh+'right;width:58px">Stock<br>actual</th>'+
+          '<th style="'+sTh+'right;width:58px">OC<br>Pend</th>'+
+          '<th style="'+sTh+'right;width:68px">Mínimo<br>solicitado</th>'+
+          '<th style="'+sTh+'right;width:72px;background:#065f46">Repos.<br>solicitado</th>'+
+        '</tr></thead>'+
+        '<tbody>'+rowsHtml+'</tbody>'+
+      '</table>'+
+      '<div style="background:#eff6ff;border-left:3px solid #3b82f6;padding:8px 12px;font-size:11px;color:#1e40af;margin-bottom:14px;width:710px">'+
+        '&#9679; Período analizado: <strong>'+desde+'</strong> al <strong>'+hasta+'</strong>'+
+      '</div>'+
+      '<hr style="border:none;border-top:1px solid #e5e7eb;margin:14px 0">'+
+      '<p style="margin:0;font-size:12px">Saludos cordiales,<br>'+
+        '<strong style="font-size:13px">Sandra Pavez</strong><br>'+
+        '<span style="color:#6b7280">Ferretería Oviedo — Las Cabras</span>'+
+      '</p>'+
+    '</td></tr>'+
+    '</table>';
+
+  _slcEmailPlain =
+    'Solicitud de Stock — Las Cabras\n'+
+    'Período: '+desde+' al '+hasta+'\n\n'+
+    'TOP '+nItems+' ALTA ROTACIÓN\n'+
+    '─'.repeat(60)+'\n'+
+    plainLineas.join('\n\n')+
+    '\n\n'+'─'.repeat(60)+'\n'+
+    'Saludos,\nSandra Pavez\nFerretería Oviedo — Las Cabras';
+
+  _slcEmailMailto = 'mailto:'+
+    '?subject='+encodeURIComponent('Solicitud Stock Las Cabras '+hasta);
+
+  document.getElementById('slcEmailPreview').innerHTML = htmlEmail;
+  document.getElementById('slcEmailFeedback').textContent = '';
+  document.getElementById('slcEmailModal').style.display = 'block';
+  slcEmailCopiarHtml();
+}
+
+function slcEmailCopiarHtml(){
+  var html  = document.getElementById('slcEmailPreview').innerHTML;
+  var blob  = new Blob([html], {type:'text/html'});
+  var blobT = new Blob([_slcEmailPlain], {type:'text/plain'});
+  var fb = document.getElementById('slcEmailFeedback');
+  try{
+    navigator.clipboard.write([
+      new ClipboardItem({'text/html': blob, 'text/plain': blobT})
+    ]).then(function(){
+      fb.textContent = '✅ HTML copiado — pega con Ctrl+V en Outlook o Gmail';
+      document.getElementById('slcEmailBtnCopiar').textContent = '✅ Copiado';
+      setTimeout(function(){ document.getElementById('slcEmailBtnCopiar').textContent = '📋 Copiar HTML (para Outlook / Gmail)'; }, 3000);
+    }).catch(function(){
+      navigator.clipboard.writeText(_slcEmailPlain).then(function(){
+        fb.textContent = '📋 Texto plano copiado (HTML no disponible en este navegador)';
+      });
+    });
+  }catch(e){
+    fb.textContent = 'Usa el botón derecho → Copiar en el preview.';
+  }
+}
+
+function slcEmailAbrirCliente(){
+  window.open(_slcEmailMailto);
+  document.getElementById('slcEmailFeedback').textContent = '📬 Cliente de correo abierto — pega el HTML en el cuerpo (Ctrl+V)';
+}
+
+function slcEmailCerrar(){
+  document.getElementById('slcEmailModal').style.display = 'none';
 }
 
 function slcDescargarExcel(){
@@ -1273,31 +1395,62 @@ function slcDescargarExcel(){
   if(!filas.length || filas[0].querySelector('td[colspan]')){
     alert('Pre-llena la tabla primero.'); return;
   }
-  var desde = document.getElementById('slc_reqDesde').value || '';
-  var hasta  = document.getElementById('slc_reqHasta').value || '';
-  var rows = [['#','Código','Mínimo','Reposición','Crítico','Stock actual','OC Pend','Mín. solicitado','Repo. solicitado']];
-  filas.forEach(function(tr, i){
+  if(typeof XLSX === 'undefined'){ if(window.toast) toast('Librería XLSX no disponible','err'); return; }
+  var hasta = document.getElementById('slc_reqHasta').value || new Date().toISOString().slice(0,10);
+  var rows = [['#','Cat','Código','Producto','Vta 2 meses','Mínimo actual','Reposición actual','Tránsito','Stock actual','OC Pend','Mín. solicitado','Repo. solicitado']];
+  var idx = 0;
+  filas.forEach(function(tr){
+    var inps = tr.querySelectorAll('input');
+    if(!inps.length) return;
+    idx++;
+    var abc  = tr.getAttribute('data-abc') || 'C';
     var cods = tr.querySelectorAll('td');
-    if(cods.length < 10) return;
     rows.push([
-      i+1,
-      cods[1].textContent.trim(),
+      idx, abc,
+      cods[2].textContent.trim(),
       cods[3].textContent.trim(),
-      cods[4].textContent.trim(),
-      cods[5].textContent.trim(),
-      cods[6].textContent.trim(),
-      cods[7].textContent.trim(),
-      tr.querySelector('.slc-minsol')  ? tr.querySelector('.slc-minsol').value  : '',
-      tr.querySelector('.slc-repossol') ? tr.querySelector('.slc-repossol').value : '',
+      parseFloat(cods[4].textContent.trim()) || 0,
+      parseFloat(cods[5].textContent.trim()) || 0,
+      parseFloat(cods[6].textContent.trim()) || 0,
+      parseFloat(cods[7].textContent.trim()) || 0,
+      parseFloat(cods[8].textContent.trim()) || 0,
+      cods[9].textContent.trim(),
+      parseFloat(inps[0].value) || 0,
+      parseFloat(inps[1].value) || 0,
     ]);
   });
-  var tsv = rows.map(function(r){ return r.join('\t'); }).join('\n');
-  var blob = new Blob(['﻿'+tsv], {type:'text/tab-separated-values;charset=utf-8'});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url; a.download = 'solicitud-stock-lc-'+hasta+'.xls'; a.click();
-  URL.revokeObjectURL(url);
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:4},{wch:5},{wch:12},{wch:48},{wch:12},{wch:13},{wch:16},{wch:10},{wch:12},{wch:9},{wch:16},{wch:17}];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Solicitud Stock LC');
+  XLSX.writeFile(wb, 'solicitud-stock-lc-'+hasta+'.xlsx');
+  if(window.toast) toast('📊 Excel descargado — '+idx+' productos','ok');
 }
 </script>
+
+<!-- MODAL EMAIL SOLICITUD STOCK LC -->
+<div id="slcEmailModal" onclick="if(event.target===this)slcEmailCerrar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;overflow-y:auto;padding:32px 16px">
+  <div style="background:#fff;border-radius:10px;max-width:840px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden">
+    <div style="background:#1e3a5f;color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-weight:700;font-size:15px">📧 Correo listo para enviar</div>
+        <div style="font-size:12px;opacity:.8;margin-top:2px">Copia el contenido y pégalo en Outlook o Gmail (Ctrl+V)</div>
+      </div>
+      <button onclick="slcEmailCerrar()" style="background:rgba(255,255,255,.15);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="padding:12px 20px;background:#f8fafc;border-bottom:1px solid #e5e7eb;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button onclick="slcEmailCopiarHtml()" id="slcEmailBtnCopiar"
+        style="background:#059669;color:white;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">
+        📋 Copiar HTML (para Outlook / Gmail)
+      </button>
+      <button onclick="slcEmailAbrirCliente()"
+        style="background:#1e3a5f;color:white;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">
+        ✉️ Abrir cliente de correo
+      </button>
+      <span id="slcEmailFeedback" style="font-size:12px;color:#059669;font-weight:600"></span>
+    </div>
+    <div id="slcEmailPreview" style="padding:24px 28px;background:white;overflow-x:auto"></div>
+  </div>
+</div>
 </body>
 </html>
