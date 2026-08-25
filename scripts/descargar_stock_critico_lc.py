@@ -79,6 +79,9 @@ def conectar():
     return pyodbc.connect(conn_str, timeout=30)
 
 
+# IDBODEGA tránsito Las Cabras
+IDBODEGA_TLC = 16
+
 SQL_PARAMS = """
 SELECT
     R.CODIGO_TECNICO,
@@ -98,18 +101,45 @@ WHERE R.IDBODEGA IN ({ph})
         OR ISNULL(R.ST_CRITICO,0) > 0 OR ISNULL(R.ST_REPOSICION,0) > 0 )
 """
 
+SQL_TRANSITO = """
+SELECT
+    R.CODIGO_TECNICO,
+    CAST(ISNULL(R.ST_DISPONIBLE, 0) AS DECIMAL(18,2)) AS TRANSITO
+FROM Foviedo.dbo.R_STOCK_PRODUCTOS R
+WHERE R.IDBODEGA = ?
+  AND ISNULL(R.ST_DISPONIBLE, 0) <> 0
+"""
+
+# Ventas últimos 90 días en bodegas comerciales LC
+# IDDOCUMENTO verificados en IDS_REFERENCIA.md:
+#   1=FCV, 2=BVN, 35=FVE-exenta, 301=FVE-elect, 316=BVE-elect,
+#   335=FVE-exenta-elect, 401=FVP-POS, 405=BVP-POS, 601=FVE-WEB, 605=BVE-WEB
+SQL_VENTAS = """
+SELECT
+    E.CODIGO_TECNICO,
+    SUM(ABS(ISNULL(E.CANTIDAD, 0))) AS VTA_TOTAL
+FROM Foviedo.dbo.M_DOCUMENTOS_DETALLE E
+WHERE E.IDBODEGA IN ({ph})
+  AND E.IDDOCUMENTO IN (1, 2, 35, 301, 316, 335, 401, 405, 601, 605)
+  AND E.FECHA_EMISION >= DATEADD(day, -90, GETDATE())
+GROUP BY E.CODIGO_TECNICO
+"""
+
 
 def generar(cursor):
     ids = list(BODEGAS_LC.keys())
     ph  = ','.join(['?'] * len(ids))
-    cursor.execute(SQL_PARAMS.format(ph=ph), *ids)
 
+    # 1. Parámetros ERP (ST_MIN, ST_MAX, ST_CRITICO, ST_REPO, ST_DISP, DESCRIPCION, MARCA)
+    cursor.execute(SQL_PARAMS.format(ph=ph), *ids)
     prods = {}
     for cod, idbod, smin, smax, scrit, srepo, sdisp, desc, marca in cursor.fetchall():
         cod = str(cod or '').strip().upper()
         if not cod:
             continue
-        p = prods.setdefault(cod, {'min': 0, 'max': 0, 'critico': 0, 'repo': 0, 'disp': 0, 'desc': '', 'marca': ''})
+        p = prods.setdefault(cod, {'min': 0, 'max': 0, 'critico': 0, 'repo': 0,
+                                    'disp': 0, 'transito': 0, 'vta90': 0,
+                                    'desc': '', 'marca': ''})
         p['min']     += int(smin or 0)
         p['max']     += int(smax or 0)
         p['critico'] += int(scrit or 0)
@@ -119,8 +149,30 @@ def generar(cursor):
             p['desc'] = str(desc).strip()
         if not p['marca'] and marca:
             p['marca'] = str(marca).strip()
-
     log(f'[stats] productos con parametros configurados: {len(prods)}')
+
+    # 2. Tránsito (bodega TLC = IDBODEGA {IDBODEGA_TLC})
+    try:
+        cursor.execute(SQL_TRANSITO, IDBODEGA_TLC)
+        for cod, trans in cursor.fetchall():
+            cod = str(cod or '').strip().upper()
+            if cod in prods:
+                prods[cod]['transito'] += int(trans or 0)
+        log(f'[stats] tránsito cargado (TLC={IDBODEGA_TLC})')
+    except Exception as e:
+        log(f'[WARN] tránsito no disponible: {e}')
+
+    # 3. Ventas últimos 90 días (bodegas comerciales SLC/PLC/CLC/GLC)
+    try:
+        cursor.execute(SQL_VENTAS.format(ph=ph), *ids)
+        for cod, vta in cursor.fetchall():
+            cod = str(cod or '').strip().upper()
+            if cod in prods:
+                prods[cod]['vta90'] = int(vta or 0)
+        log(f'[stats] ventas 90d cargadas')
+    except Exception as e:
+        log(f'[WARN] ventas 90d no disponibles: {e}')
+
     return prods
 
 
@@ -154,8 +206,10 @@ def main():
         with open(out, 'w', encoding='utf-8') as f:
             json.dump({
                 'generado': datetime.datetime.now().isoformat(timespec='seconds'),
-                'fuente':   'R_STOCK_PRODUCTOS (SQL) — Las Cabras comerciales SLC/PLC/CLC/GLC',
+                'fuente':   'R_STOCK_PRODUCTOS + M_DOCUMENTOS_DETALLE (SQL) — LC comerciales SLC/PLC/CLC/GLC + tránsito TLC',
                 'bodegas':  list(BODEGAS_LC.values()),
+                'transito': 'TLC',
+                'vta90_dias': 90,
                 'productos': prods,
             }, f, ensure_ascii=False, separators=(',', ':'))
     except Exception as e:
