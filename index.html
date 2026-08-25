@@ -12,7 +12,6 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <style>
   /* ── LOGIN SCREEN (ferresystem design) ─────────────────────────── */
   #loginScreen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#070b14}
@@ -172,7 +171,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.16</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.17</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -607,7 +606,6 @@ var firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 var auth = firebase.auth();
-var db = firebase.firestore();
 var LOGIN_DOMAIN = "oviedo.cl"; // usuario "saliaga" -> saliaga@oviedo.cl, "rrojas" -> rrojas@oviedo.cl
 
 function doLogin(){
@@ -650,7 +648,7 @@ auth.onAuthStateChanged(function(user){
     MODO_LC = !!(user.email && user.email.toLowerCase() === 'spavez@oviedo.cl');
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appRoot').style.display = 'block';
-    cargarDatosFirestore();
+    cargarDatos();
   } else {
     MODO_SV = false;
     MODO_LC = false;
@@ -659,71 +657,31 @@ auth.onAuthStateChanged(function(user){
   }
 });
 
-function snapshotToRegistros(snap){
-  var out = [];
-  snap.forEach(function(doc){ out.push(doc.data()); });
-  return out;
-}
-
-// Bodegas en JSON cifrado (AES-256-CBC). La clave vive en Firestore (1 read/sesion).
-// Flujo: login → fetch key de bodegas_clave/actual → fetch .enc → descifrar → render.
-// Cifrado via _cifrar_y_subir_clave.py tras cada descargar_bodegas_sql.py.
 function vistaDeSucursal(idSucursal){
   return {"04":"elmanzano","05":"sanvicente","06":"lascabras","11":"litueche"}[idSucursal];
 }
 
-function _b64ToBytes(b64){
-  var bin=atob(b64), out=new Uint8Array(bin.length);
-  for(var i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
-  return out;
-}
-
-function _fetchDescifrar(url, cryptoKey){
-  return fetch(url,{cache:'no-store'}).then(function(r){ return r.arrayBuffer(); })
-    .then(function(buf){
-      var bytes=new Uint8Array(buf);
-      var iv=bytes.slice(0,16), data=bytes.slice(16);
-      return crypto.subtle.decrypt({name:'AES-CBC',iv:iv}, cryptoKey, data);
-    }).then(function(plain){
-      return JSON.parse(new TextDecoder().decode(plain));
-    });
-}
-
-function cargarDatosFirestore(){
+function cargarDatos(){
   Promise.all([
-    db.collection('merma_meta').doc('info').get(),
-    db.collection('merma').get(),
-    db.collection('bodegas_clave').doc('actual').get(),
+    fetch('merma_isabel_riquelme.json',{cache:'no-store'}).then(function(r){return r.json();}),
+    fetch('bodegas_gestion.json',{cache:'no-store'}).then(function(r){return r.json();}),
+    fetch('bodegas_ir_otras.json',{cache:'no-store'}).then(function(r){return r.json();}),
   ]).then(function(res){
-    var metaMerma = res[0].exists ? res[0].data() : {};
-    var regMerma  = snapshotToRegistros(res[1]);
-    var claveDoc  = res[2];
+    var dataMerma   = res[0];
+    var dataGestion = res[1];
+    var dataIr      = res[2];
 
-    VISTAS.merma.DATA = Object.assign({registros: regMerma}, metaMerma);
+    VISTAS.merma.DATA = dataMerma;
 
-    if(!claveDoc.exists){ throw new Error('Clave de bodegas no disponible'); }
-    var claveB64    = claveDoc.data().key;
-    var generadoBod = claveDoc.data().generado || '';
+    VISTAS.bodegas.DATA = { registros: dataIr.registros || [], generado: dataIr.generado || '', bodegasIncluidas: dataIr.bodegasIncluidas || [] };
 
-    return crypto.subtle.importKey('raw', _b64ToBytes(claveB64), {name:'AES-CBC'}, false, ['decrypt'])
-      .then(function(cryptoKey){
-        return Promise.all([
-          _fetchDescifrar('bodegas_gestion.enc', cryptoKey),
-          _fetchDescifrar('bodegas_ir_otras.enc', cryptoKey),
-        ]);
-      }).then(function(jsons){
-        var dataGestion = jsons[0];
-        var dataIr      = jsons[1];
+    (dataGestion.sucursales || []).forEach(function(s){
+      var v = vistaDeSucursal(s.idSucursal);
+      if(v) VISTAS[v].DATA = { registros: s.registros || [], generado: dataGestion.generado || '', bodegasIncluidas: s.bodegasIncluidas || [] };
+    });
+    var comp = dataGestion.compartidas || {};
+    VISTAS.cd.DATA = { registros: comp.registros || [], generado: dataGestion.generado || '', bodegasIncluidas: comp.bodegasIncluidas || [] };
 
-        VISTAS.bodegas.DATA = { registros: dataIr.registros || [], generado: generadoBod, bodegasIncluidas: dataIr.bodegasIncluidas || [] };
-
-        (dataGestion.sucursales || []).forEach(function(s){
-          var v = vistaDeSucursal(s.idSucursal);
-          if(v) VISTAS[v].DATA = { registros: s.registros || [], generado: generadoBod, bodegasIncluidas: s.bodegasIncluidas || [] };
-        });
-        var comp = dataGestion.compartidas || {};
-        VISTAS.cd.DATA = { registros: comp.registros || [], generado: generadoBod, bodegasIncluidas: comp.bodegasIncluidas || [] };
-      });
   }).then(function(){
     var HOY_MS = Date.now();
     Object.keys(VISTAS).filter(function(v){ return v!=='solicitud_lc'; }).forEach(function(v){
@@ -745,7 +703,7 @@ function cargarDatosFirestore(){
   });
 }
 
-// ── Datasets (uno por pestaña) — se llenan via Firestore tras login ─────────
+// ── Datasets (uno por pestaña) — se llenan via fetch JSON tras login ─────────
 var VISTAS_GESTION = ["elmanzano", "sanvicente", "lascabras", "litueche", "cd"];
 var VISTAS = {
   merma:   { DATA: {registros:[]}, conBodega:false, label:'Merma IR' },
@@ -819,7 +777,7 @@ function cambiarTab(v){
   });
 }
 
-// Se llama una vez por vista, despues de que cargarDatosFirestore() llena VISTAS[v].DATA.
+// Se llama una vez por vista, despues de que cargarDatos() llena VISTAS[v].DATA.
 function initVista(v){
   var cfg = VISTAS[v];
   var REG = cfg.DATA.registros || [];
@@ -995,7 +953,7 @@ function enviarCorreo(v){
   window.open(mailto,'_self');
 }
 // render('merma')/render('bodegas') ya no se llaman aqui — los dispara
-// cargarDatosFirestore() (via onAuthStateChanged) una vez el usuario inicia sesion.
+// cargarDatos() (via onAuthStateChanged) una vez el usuario inicia sesion.
 
 // ── PARTÍCULAS LOGIN (constellation azul) ──────────────────────────
 (function(){
