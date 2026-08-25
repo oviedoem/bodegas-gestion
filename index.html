@@ -171,7 +171,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.21</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.22</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -477,17 +477,17 @@
   <div style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse;font-size:12px" id="slc_reqTable">
       <thead>
-        <tr style="background:#f3f4f6">
-          <th style="padding:8px 6px;text-align:left;border-bottom:2px solid #e5e7eb;width:28px;color:#9ca3af">#</th>
-          <th style="padding:8px 6px;text-align:left;border-bottom:2px solid #e5e7eb;min-width:85px">Código</th>
-          <th style="padding:8px 6px;text-align:left;border-bottom:2px solid #e5e7eb;min-width:180px">Producto</th>
-          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:68px">Mínimo<br>actual</th>
-          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:78px">Reposición<br>actual</th>
-          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:68px">Crítico<br>ERP</th>
-          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:68px">Stock<br>actual</th>
-          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:64px;background:#ede9fe;color:#4c1d95" title="Unidades en OC vigente aún no recibidas (SQL, sync 22:00)">OC<br>Pend</th>
-          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:82px">Mínimo<br>solicitado</th>
-          <th style="padding:8px 6px;text-align:right;border-bottom:2px solid #e5e7eb;min-width:88px">Reposición<br>solicitado</th>
+        <tr style="background:#1f2937;color:white">
+          <th style="padding:9px 6px;text-align:right;width:28px;color:#9ca3af;font-weight:400">#</th>
+          <th style="padding:9px 8px;text-align:left;min-width:90px;font-weight:600">Código</th>
+          <th style="padding:9px 8px;text-align:left;min-width:260px;font-weight:600">Producto</th>
+          <th style="padding:9px 8px;text-align:right;min-width:68px;font-weight:600">Mínimo<br>actual</th>
+          <th style="padding:9px 8px;text-align:right;min-width:80px;font-weight:600">Reposición<br>actual</th>
+          <th style="padding:9px 8px;text-align:right;min-width:68px;font-weight:600">Crítico<br>ERP</th>
+          <th style="padding:9px 8px;text-align:right;min-width:68px;font-weight:600">Stock<br>actual</th>
+          <th style="padding:9px 8px;text-align:right;min-width:64px;background:#4c1d95;color:#e9d5ff;font-weight:600" title="Unidades en OC vigente aún no recibidas (SQL, sync 22:00)">OC<br>Pend</th>
+          <th style="padding:9px 8px;text-align:right;min-width:82px;font-weight:600;background:#1e3a5f;color:#bfdbfe">Mínimo<br>solicitado</th>
+          <th style="padding:9px 8px;text-align:right;min-width:90px;font-weight:600;background:#1e3a5f;color:#bfdbfe">Reposición<br>solicitado</th>
         </tr>
       </thead>
       <tbody id="slc_reqBody">
@@ -1164,14 +1164,14 @@ function slcPrellenar(){
     return '<tr style="'+rowBg+';border-bottom:1px solid #f0f0f0" onmouseover="this.style.filter=\'brightness(0.96)\'" onmouseout="this.style.filter=\'\'">'+
       '<td style="color:#9ca3af;font-size:11px;padding:7px 6px;text-align:right">'+(i+1)+'</td>'+
       '<td style="font-family:monospace;font-size:12px;white-space:nowrap;padding:7px 6px;font-weight:600">'+esc(p.cod)+'</td>'+
-      '<td style="font-size:11px;padding:7px 6px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(p.desc||p.cod)+'">'+esc(p.desc||p.cod)+'</td>'+
+      '<td style="font-size:11px;padding:7px 8px;min-width:260px;max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(p.desc||p.cod)+'">'+esc(p.desc||p.cod)+'</td>'+
       '<td class="right" style="font-size:12px;padding:7px 6px">'+p.min+'</td>'+
       '<td class="right" style="font-size:12px;padding:7px 6px;'+reposSty+'">'+p.repo+'</td>'+
       '<td class="right" style="font-size:12px;padding:7px 6px">'+p.critico+'</td>'+
       '<td class="right" style="font-size:12px;padding:7px 6px;'+stockSty+'">'+p.stockActual+'</td>'+
       '<td class="right" style="font-size:12px;padding:7px 6px;'+ocSty+';'+ocCellBg+'">'+(p.ocPend||'—')+'</td>'+
-      '<td class="right" style="padding:5px 6px"><input type="number" '+inp+' class="slc-minsol" data-cod="'+esc(p.cod)+'" value="'+p.min+'"></td>'+
-      '<td class="right" style="padding:5px 6px"><input type="number" '+inp+' class="slc-repossol" data-cod="'+esc(p.cod)+'" value="'+p.repo+'"></td>'+
+      '<td class="right" style="padding:5px 6px"><input type="number" '+inp+' class="slc-minsol" data-cod="'+esc(p.cod)+'" value="0"></td>'+
+      '<td class="right" style="padding:5px 6px"><input type="number" '+inp+' class="slc-repossol" data-cod="'+esc(p.cod)+'" value="0"></td>'+
     '</tr>';
   }).join('');
   document.getElementById('slc_reqBody').innerHTML = rows;
