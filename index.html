@@ -171,7 +171,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.26</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.27</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -503,7 +503,7 @@
           <th style="padding:9px 6px;text-align:center;width:24px;font-weight:600">Cat</th>
           <th style="padding:9px 8px;text-align:left;min-width:90px;font-weight:600">Código</th>
           <th style="padding:9px 8px;text-align:left;min-width:260px;font-weight:600">Producto</th>
-          <th style="padding:9px 8px;text-align:right;min-width:68px;font-weight:600" title="Ventas facturadas/boleteadas en los últimos 90 días (SLC/PLC/CLC/GLC)">Vta<br>90d</th>
+          <th style="padding:9px 8px;text-align:right;min-width:80px;font-weight:600" title="Ventas facturadas/boleteadas en los últimos 2 meses (SLC/PLC/CLC/GLC)">Vta últimos<br>2 meses</th>
           <th style="padding:9px 8px;text-align:right;min-width:68px;font-weight:600">Mínimo<br>actual</th>
           <th style="padding:9px 8px;text-align:right;min-width:80px;font-weight:600">Reposición<br>actual</th>
           <th style="padding:9px 8px;text-align:right;min-width:68px;font-weight:600">Crítico<br>ERP</th>
@@ -1150,11 +1150,8 @@ function slcPrellenar(){
   if(catC) catsOk.push('C');
   if(!catsOk.length) catsOk = ['A','B','C'];
 
-  // Obtener stock actual de Las Cabras y descripción de TODOS los vistas cargados
-  var stockMap = {};
-  var descMap  = {};
-  // 1. Construir descMap desde todos los vistas (el mismo codigo puede tener 0 stock en LC
-  //    pero existir en EM/SV/merma con su descripcion completa)
+  // descMap: descripcion de producto desde cualquier vista cargada
+  var descMap = {};
   Object.keys(VISTAS).forEach(function(v){
     var regs = VISTAS[v].DATA && VISTAS[v].DATA.registros;
     if(!regs) return;
@@ -1163,18 +1160,6 @@ function slcPrellenar(){
       if(c && !descMap[c] && r.descripcion) descMap[c] = r.descripcion;
     });
   });
-  // 2. Construir stockMap solo con bodegas de Las Cabras
-  var vistaLC  = VISTAS['lascabras'] && VISTAS['lascabras'].DATA && VISTAS['lascabras'].DATA.registros;
-  if(vistaLC){
-    vistaLC.forEach(function(r){
-      var c = (r.codigoTecnico || r.codigo || '').trim().toUpperCase();
-      if(!c) return;
-      if(!stockMap[c]) stockMap[c] = {slc:0, plc:0, clc:0, glc:0};
-      var bod = (r.bodegaCorta || r.bodega || '').toUpperCase();
-      if(stockMap[c][bod.toLowerCase()] !== undefined)
-        stockMap[c][bod.toLowerCase()] += Number(r.cantidadDisponible || r.disponible || 0);
-    });
-  }
 
   // Función ABC: A=ambos configurados, B=uno, C=ninguno
   function _slcCat(p){ return (p.min>0 && p.repo>0) ? 'A' : (p.min>0 || p.repo>0) ? 'B' : 'C'; }
@@ -1190,21 +1175,18 @@ function slcPrellenar(){
     return true;
   }).map(function(cod){
     var p  = _slcParams[cod];
-    var st = stockMap[cod] || {};
-    var stockActual = (st.slc||0) + (st.plc||0) + (st.clc||0) + (st.glc||0);
     return {
       cod:         cod,
       desc:        p.desc || descMap[cod] || '',
       marca:       p.marca || '',
       cat:         _slcCat(p),
-      vta90:       p.vta90  || 0,
-      min:         p.min    || 0,
-      max:         p.max    || 0,
-      critico:     p.critico|| 0,
-      repo:        p.repo   || 0,
-      disp:        p.disp   || 0,
-      transito:    p.transito || 0,
-      stockActual: stockActual,
+      vta90:       p.vta90     || 0,
+      min:         p.min       || 0,
+      max:         p.max       || 0,
+      critico:     p.critico   || 0,
+      repo:        p.repo      || 0,
+      transito:    p.transito  || 0,
+      stockActual: p.disp      || 0,  // ST_DISPONIBLE de R_STOCK_PRODUCTOS (SLC+PLC+CLC+GLC)
       ocPend:      Number(_slcOcResumen[cod] || 0),
     };
   }).sort(function(a,b){
