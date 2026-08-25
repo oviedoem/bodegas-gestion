@@ -171,7 +171,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.27</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.28</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -506,7 +506,6 @@
           <th style="padding:9px 8px;text-align:right;min-width:80px;font-weight:600" title="Ventas facturadas/boleteadas en los últimos 2 meses (SLC/PLC/CLC/GLC)">Vta últimos<br>2 meses</th>
           <th style="padding:9px 8px;text-align:right;min-width:68px;font-weight:600">Mínimo<br>actual</th>
           <th style="padding:9px 8px;text-align:right;min-width:80px;font-weight:600">Reposición<br>actual</th>
-          <th style="padding:9px 8px;text-align:right;min-width:68px;font-weight:600">Crítico<br>ERP</th>
           <th style="padding:9px 8px;text-align:right;min-width:68px;font-weight:600" title="Stock en bodega Tránsito Las Cabras (TLC)">Tránsito</th>
           <th style="padding:9px 8px;text-align:right;min-width:68px;font-weight:600">Stock<br>actual</th>
           <th style="padding:9px 8px;text-align:right;min-width:64px;background:#4c1d95;color:#e9d5ff;font-weight:600" title="Unidades en OC vigente aún no recibidas (SQL, sync 22:00)">OC<br>Pend</th>
@@ -515,7 +514,7 @@
         </tr>
       </thead>
       <tbody id="slc_reqBody">
-        <tr><td colspan="13" style="text-align:center;color:#9ca3af;padding:24px;font-size:13px">
+        <tr><td colspan="12" style="text-align:center;color:#9ca3af;padding:24px;font-size:13px">
           Selecciona rango de fechas y presiona "Pre-llenar"
         </td></tr>
       </tbody>
@@ -1133,7 +1132,7 @@ function slcPrellenar(){
   var hasta  = document.getElementById('slc_reqHasta').value;
   if(!desde || !hasta){
     document.getElementById('slc_reqBody').innerHTML =
-      '<tr><td colspan="13" style="text-align:center;color:#9ca3af;padding:24px">Selecciona el rango de fechas.</td></tr>';
+      '<tr><td colspan="12" style="text-align:center;color:#9ca3af;padding:24px">Selecciona el rango de fechas.</td></tr>';
     return;
   }
   var conMin      = document.getElementById('slc_reqConMin').checked;
@@ -1199,7 +1198,7 @@ function slcPrellenar(){
 
   if(!lista.length){
     document.getElementById('slc_reqBody').innerHTML =
-      '<tr><td colspan="13" style="text-align:center;color:#9ca3af;padding:24px">Sin productos para los filtros seleccionados.</td></tr>';
+      '<tr><td colspan="12" style="text-align:center;color:#9ca3af;padding:24px">Sin productos para los filtros seleccionados.</td></tr>';
     return;
   }
 
@@ -1220,7 +1219,6 @@ function slcPrellenar(){
       '<td class="right" style="font-size:12px;padding:7px 6px;color:'+(p.vta90>0?'#374151':'#9ca3af')+'">'+(p.vta90||'—')+'</td>'+
       '<td class="right" style="font-size:12px;padding:7px 6px">'+p.min+'</td>'+
       '<td class="right" style="font-size:12px;padding:7px 6px;'+reposSty+'">'+p.repo+'</td>'+
-      '<td class="right" style="font-size:12px;padding:7px 6px">'+p.critico+'</td>'+
       '<td class="right" style="font-size:12px;padding:7px 6px;color:'+(p.transito>0?'#0369a1':'#9ca3af')+'">'+(p.transito||'—')+'</td>'+
       '<td class="right" style="font-size:12px;padding:7px 6px;'+stockSty+'">'+p.stockActual+'</td>'+
       '<td class="right" style="font-size:12px;padding:7px 6px;'+ocSty+';'+ocCellBg+'">'+(p.ocPend||'—')+'</td>'+
