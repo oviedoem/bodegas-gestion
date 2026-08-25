@@ -172,7 +172,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.15</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.16</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -715,14 +715,14 @@ function cargarDatosFirestore(){
         var dataGestion = jsons[0];
         var dataIr      = jsons[1];
 
-        VISTAS.bodegas.DATA = { registros: dataIr.registros || [], generado: generadoBod };
+        VISTAS.bodegas.DATA = { registros: dataIr.registros || [], generado: generadoBod, bodegasIncluidas: dataIr.bodegasIncluidas || [] };
 
         (dataGestion.sucursales || []).forEach(function(s){
           var v = vistaDeSucursal(s.idSucursal);
-          if(v) VISTAS[v].DATA = { registros: s.registros || [], generado: generadoBod };
+          if(v) VISTAS[v].DATA = { registros: s.registros || [], generado: generadoBod, bodegasIncluidas: s.bodegasIncluidas || [] };
         });
         var comp = dataGestion.compartidas || {};
-        VISTAS.cd.DATA = { registros: comp.registros || [], generado: generadoBod };
+        VISTAS.cd.DATA = { registros: comp.registros || [], generado: generadoBod, bodegasIncluidas: comp.bodegasIncluidas || [] };
       });
   }).then(function(){
     var HOY_MS = Date.now();
@@ -865,7 +865,7 @@ function filtrar(v){
   var bodSel = cfg.conBodega ? bodegasSeleccionadas(v) : null;
 
   return cfg.REG.filter(function(r){
-    if(bodSel && bodSel.indexOf(r.bodegaNombre)<0) return false;
+    if(bodSel && bodSel.length && bodSel.indexOf(r.bodegaNombre)<0) return false;
     if(tipoDoc && r.tipoDocNombre!==tipoDoc) return false;
     if(usuario && r.usuario!==usuario) return false;
     if(familia && r.familia!==familia) return false;
