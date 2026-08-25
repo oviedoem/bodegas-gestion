@@ -171,7 +171,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.23</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.24</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">24-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -791,12 +791,23 @@ function aplicarModoLC(){
 function cambiarTab(v){
   Object.keys(VISTAS).forEach(function(k){
     var btn=document.getElementById('tabBtn_'+k);
-    if(MODO_SV && k!=='sanvicente') return; // no revelar tabs ocultos en modo SV
+    if(MODO_SV && k!=='sanvicente') return;
     var LC_TABS=['lascabras','solicitud_lc'];
-    if(MODO_LC && LC_TABS.indexOf(k)<0) return; // no revelar tabs ocultos en modo LC
+    if(MODO_LC && LC_TABS.indexOf(k)<0) return;
     document.getElementById('panel_'+k).classList.toggle('active', k===v);
     if(btn) btn.classList.toggle('active', k===v);
   });
+  // Inicializar fechas por defecto en Solicitud LC la primera vez que se abre
+  if(v === 'solicitud_lc'){
+    var elDesde = document.getElementById('slc_reqDesde');
+    var elHasta = document.getElementById('slc_reqHasta');
+    if(elDesde && !elDesde.value){
+      var hoy   = new Date();
+      var desde = new Date(hoy); desde.setDate(hoy.getDate() - 90);
+      elHasta.value = hoy.toISOString().slice(0,10);
+      elDesde.value = desde.toISOString().slice(0,10);
+    }
+  }
 }
 
 // Se llama una vez por vista, despues de que cargarDatos() llena VISTAS[v].DATA.
