@@ -87,8 +87,10 @@ SELECT
     CAST(ISNULL(R.ST_MAX,        0) AS DECIMAL(18,2)) AS ST_MAX,
     CAST(ISNULL(R.ST_CRITICO,    0) AS DECIMAL(18,2)) AS ST_CRITICO,
     CAST(ISNULL(R.ST_REPOSICION, 0) AS DECIMAL(18,2)) AS ST_REPOSICION,
-    CAST(ISNULL(R.ST_DISPONIBLE, 0) AS DECIMAL(18,2)) AS ST_DISPONIBLE
+    CAST(ISNULL(R.ST_DISPONIBLE, 0) AS DECIMAL(18,2)) AS ST_DISPONIBLE,
+    ISNULL(P.NOMBRE, '') AS DESCRIPCION
 FROM Foviedo.dbo.R_STOCK_PRODUCTOS R
+LEFT JOIN Foviedo.dbo.P_PRODUCTO P ON P.CODIGO_TECNICO = R.CODIGO_TECNICO
 WHERE R.IDBODEGA IN ({ph})
   AND ( ISNULL(R.ST_MIN,0) > 0 OR ISNULL(R.ST_MAX,0) > 0
         OR ISNULL(R.ST_CRITICO,0) > 0 OR ISNULL(R.ST_REPOSICION,0) > 0 )
@@ -101,16 +103,18 @@ def generar(cursor):
     cursor.execute(SQL_PARAMS.format(ph=ph), *ids)
 
     prods = {}
-    for cod, idbod, smin, smax, scrit, srepo, sdisp in cursor.fetchall():
-        cod = str(cod or '').strip().upper()  # fix: upper() evita mismatch de claves
+    for cod, idbod, smin, smax, scrit, srepo, sdisp, desc in cursor.fetchall():
+        cod = str(cod or '').strip().upper()
         if not cod:
             continue
-        p = prods.setdefault(cod, {'min': 0, 'max': 0, 'critico': 0, 'repo': 0, 'disp': 0})
+        p = prods.setdefault(cod, {'min': 0, 'max': 0, 'critico': 0, 'repo': 0, 'disp': 0, 'desc': ''})
         p['min']     += int(smin or 0)
         p['max']     += int(smax or 0)
         p['critico'] += int(scrit or 0)
         p['repo']    += int(srepo or 0)
         p['disp']    += int(sdisp or 0)
+        if not p['desc'] and desc:
+            p['desc'] = str(desc).strip()
 
     log(f'[stats] productos con parametros configurados: {len(prods)}')
     return prods
