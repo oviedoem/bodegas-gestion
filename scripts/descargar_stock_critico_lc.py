@@ -110,7 +110,7 @@ WHERE R.IDBODEGA = ?
   AND ISNULL(R.ST_DISPONIBLE, 0) <> 0
 """
 
-# Ventas últimos 90 días en bodegas comerciales LC
+# Ventas últimos 2 meses (~60 días) en bodegas comerciales LC
 # IDDOCUMENTO verificados en IDS_REFERENCIA.md:
 #   1=FCV, 2=BVN, 35=FVE-exenta, 301=FVE-elect, 316=BVE-elect,
 #   335=FVE-exenta-elect, 401=FVP-POS, 405=BVP-POS, 601=FVE-WEB, 605=BVE-WEB
@@ -121,7 +121,7 @@ SELECT
 FROM Foviedo.dbo.M_DOCUMENTOS_DETALLE E
 WHERE E.IDBODEGA IN ({ph})
   AND E.IDDOCUMENTO IN (1, 2, 35, 301, 316, 335, 401, 405, 601, 605)
-  AND E.FECHA_EMISION >= DATEADD(day, -90, GETDATE())
+  AND E.FECHA_EMISION >= DATEADD(day, -60, GETDATE())
 GROUP BY E.CODIGO_TECNICO
 """
 
@@ -209,7 +209,7 @@ def main():
                 'fuente':   'R_STOCK_PRODUCTOS + M_DOCUMENTOS_DETALLE (SQL) — LC comerciales SLC/PLC/CLC/GLC + tránsito TLC',
                 'bodegas':  list(BODEGAS_LC.values()),
                 'transito': 'TLC',
-                'vta90_dias': 90,
+                'vta_dias': 60,
                 'productos': prods,
             }, f, ensure_ascii=False, separators=(',', ':'))
     except Exception as e:
