@@ -1,0 +1,111 @@
+[1/3] Conectando a SQL Server (solo lectura)...
+      Conexion OK
+[2/3] Descargando 41 bodegas en lotes de 2 (evita timeouts/conflictos en la bajada)...
+      Lote 1/21: GEM, MEM
+        [OK] GEM (Gestion El Manzano) [suc=04]: 324 codigos (5904 filas crudas antes de deduplicar)
+        [OK] MEM (Mermas El Manzano) [suc=04]: 5 codigos (20 filas crudas antes de deduplicar)
+      Lote 2/21: RCE, IEM
+        [OK] RCE (Recepcion El Manzano) [suc=04]: 48 codigos (9060 filas crudas antes de deduplicar)
+        [OK] IEM (Ingreso El Manzano) [suc=04]: 22 codigos (10226 filas crudas antes de deduplicar)
+      Lote 3/21: TEM, EEM
+        [OK] TEM (Transito El Manzano) [suc=04]: 46 codigos (8538 filas crudas antes de deduplicar)
+        [OK] EEM (Exhibicion El Manzano) [suc=04]: 1817 codigos (103239 filas crudas antes de deduplicar)
+      Lote 4/21: GSV, MSV
+        [OK] GSV (Gestion San Vicente) [suc=05]: 487 codigos (53109 filas crudas antes de deduplicar)
+        [OK] MSV (Mermas San Vicente) [suc=05]: 143 codigos (13268 filas crudas antes de deduplicar)
+      Lote 5/21: RSV, ISV
+        [OK] RSV (Recepcion San Vicente) [suc=05]: 0 codigos (0 filas crudas antes de deduplicar)
+        [OK] ISV (Ingreso San Vicente) [suc=05]: 15 codigos (6368 filas crudas antes de deduplicar)
+      Lote 6/21: TSV, CSV
+        [OK] TSV (Transito San Vicente) [suc=05]: 47 codigos (6133 filas crudas antes de deduplicar)
+        [OK] CSV (Calzada San Vicente) [suc=05]: 4 codigos (879 filas crudas antes de deduplicar)
+      Lote 7/21: DSV, ESV
+        [OK] DSV (Distribucion San Vicente) [suc=14]: 0 codigos (0 filas crudas antes de deduplicar)
+        [OK] ESV (Exhibicion San Vicente) [suc=05]: 1826 codigos (49705 filas crudas antes de deduplicar)
+      Lote 8/21: CSV, GLC
+        [OK] CSV (Consumo San Vicente) [suc=05]: 34 codigos (752 filas crudas antes de deduplicar)
+        [OK] GLC (Gestion Las Cabras) [suc=06]: 401 codigos (28623 filas crudas antes de deduplicar)
+      Lote 9/21: MLC, RLC
+        [OK] MLC (Mermas Las Cabras) [suc=06]: 262 codigos (28201 filas crudas antes de deduplicar)
+        [OK] RLC (Recepcion Las Cabras) [suc=06]: 48 codigos (34944 filas crudas antes de deduplicar)
+      Lote 10/21: ILC, TLC
+        [OK] ILC (Ingreso Las Cabras) [suc=06]: 19 codigos (5328 filas crudas antes de deduplicar)
+        [OK] TLC (Transito Las Cabras) [suc=06]: 35 codigos (5470 filas crudas antes de deduplicar)
+      Lote 11/21: CLC, GFL
+        [OK] CLC (Calzada Las Cabras) [suc=06]: 23 codigos (859 filas crudas antes de deduplicar)
+        [OK] GFL (Garantia Las Cabras) [suc=06]: 7 codigos (130 filas crudas antes de deduplicar)
+      Lote 12/21: ELC, VLC
+        [OK] ELC (Exhibicion Las Cabras) [suc=06]: 1403 codigos (37532 filas crudas antes de deduplicar)
+        [OK] VLC (Volumen Las Cabras) [suc=06]: 85 codigos (11049 filas crudas antes de deduplicar)
+      Lote 13/21: GLE, MLE
+        [OK] GLE (Gestion Litueche) [suc=11]: 208 codigos (11402 filas crudas antes de deduplicar)
+        [OK] MLE (Mermas Litueche) [suc=11]: 178 codigos (19302 filas crudas antes de deduplicar)
+      Lote 14/21: ILE, TLE
+        [OK] ILE (Ingreso Litueche) [suc=11]: 77 codigos (42790 filas crudas antes de deduplicar)
+        [OK] TLE (Transito Litueche) [suc=11]: 65 codigos (10495 filas crudas antes de deduplicar)
+      Lote 15/21: CLT, DLT
+        [OK] CLT (Calzada Litueche) [suc=11]: 10 codigos (886 filas crudas antes de deduplicar)
+        [OK] DLT (Distribucion Litueche) [suc=09]: 0 codigos (0 filas crudas antes de deduplicar)
+      Lote 16/21: ELE, CD
+        [OK] ELE (Exhibicion Litueche) [suc=11]: 1516 codigos (81110 filas crudas antes de deduplicar)
+        [OK] CD (Centro de Distribucion) [suc=08]: 93 codigos (25821 filas crudas antes de deduplicar)
+      Lote 17/21: XCD, GCD
+        [OK] XCD (CrossDock Centro Distribucion) [suc=08]: 0 codigos (0 filas crudas antes de deduplicar)
+        [OK] GCD (Gestion CD) [suc=08]: 45 codigos (2605 filas crudas antes de deduplicar)
+      Lote 18/21: ICD, MCD
+        [OK] ICD (Ingreso Centro Distribucion) [suc=08]: 4 codigos (156 filas crudas antes de deduplicar)
+        [OK] MCD (Mermas CD) [suc=08]: 27 codigos (1054 filas crudas antes de deduplicar)
+      Lote 19/21: RCD, TCD
+        [OK] RCD (Recepcion Centro Distribucion) [suc=08]: 0 codigos (0 filas crudas antes de deduplicar)
+        [OK] TCD (Transito Centro Distribucion) [suc=08]: 0 codigos (0 filas crudas antes de deduplicar)
+      Lote 20/21: BDP, REM
+        [OK] BDP (Despacho Proveedor) [suc=09]: 92 codigos (42366 filas crudas antes de deduplicar)
+        [OK] REM (Remate) [suc=01]: 0 codigos (0 filas crudas antes de deduplicar)
+      Lote 21/21: MKT
+        [OK] MKT (Marketing) [suc=01]: 0 codigos (0 filas crudas antes de deduplicar)
+[3/3] Generando JSON y verificando consistencia...
+
+=== RESUMEN / CONSISTENCIA POR BODEGA ===
+  [04] GEM   Gestion El Manzano           codigos= 324  filas_crudas=5904
+  [04] MEM   Mermas El Manzano            codigos=   5  filas_crudas=  20
+  [04] RCE   Recepcion El Manzano         codigos=  48  filas_crudas=9060
+  [04] IEM   Ingreso El Manzano           codigos=  22  filas_crudas=10226
+  [04] TEM   Transito El Manzano          codigos=  46  filas_crudas=8538
+  [04] EEM   Exhibicion El Manzano        codigos=1817  filas_crudas=103239
+  [05] GSV   Gestion San Vicente          codigos= 487  filas_crudas=53109
+  [05] MSV   Mermas San Vicente           codigos= 143  filas_crudas=13268
+  [05] RSV   Recepcion San Vicente        codigos=   0  filas_crudas=   0
+  [05] ISV   Ingreso San Vicente          codigos=  15  filas_crudas=6368
+  [05] TSV   Transito San Vicente         codigos=  47  filas_crudas=6133
+  [05] CSV   Calzada San Vicente          codigos=   4  filas_crudas= 879
+  [05] DSV   Distribucion San Vicente     codigos=   0  filas_crudas=   0
+  [05] ESV   Exhibicion San Vicente       codigos=1826  filas_crudas=49705
+  [05] CSV   Consumo San Vicente          codigos=  34  filas_crudas= 752
+  [06] GLC   Gestion Las Cabras           codigos= 401  filas_crudas=28623
+  [06] MLC   Mermas Las Cabras            codigos= 262  filas_crudas=28201
+  [06] RLC   Recepcion Las Cabras         codigos=  48  filas_crudas=34944
+  [06] ILC   Ingreso Las Cabras           codigos=  19  filas_crudas=5328
+  [06] TLC   Transito Las Cabras          codigos=  35  filas_crudas=5470
+  [06] CLC   Calzada Las Cabras           codigos=  23  filas_crudas= 859
+  [06] GFL   Garantia Las Cabras          codigos=   7  filas_crudas= 130
+  [06] ELC   Exhibicion Las Cabras        codigos=1403  filas_crudas=37532
+  [06] VLC   Volumen Las Cabras           codigos=  85  filas_crudas=11049
+  [11] GLE   Gestion Litueche             codigos= 208  filas_crudas=11402
+  [11] MLE   Mermas Litueche              codigos= 178  filas_crudas=19302
+  [11] ILE   Ingreso Litueche             codigos=  77  filas_crudas=42790
+  [11] TLE   Transito Litueche            codigos=  65  filas_crudas=10495
+  [11] CLT   Calzada Litueche             codigos=  10  filas_crudas= 886
+  [11] DLT   Distribucion Litueche        codigos=   0  filas_crudas=   0
+  [11] ELE   Exhibicion Litueche          codigos=1516  filas_crudas=81110
+  [COMPARTIDAS] CD    Centro de Distribucion       codigos=  93  filas_crudas=25821
+  [COMPARTIDAS] XCD   CrossDock Centro Distribucion codigos=   0  filas_crudas=   0
+  [COMPARTIDAS] GCD   Gestion CD                   codigos=  45  filas_crudas=2605
+  [COMPARTIDAS] ICD   Ingreso Centro Distribucion  codigos=   4  filas_crudas= 156
+  [COMPARTIDAS] MCD   Mermas CD                    codigos=  27  filas_crudas=1054
+  [COMPARTIDAS] RCD   Recepcion Centro Distribucion codigos=   0  filas_crudas=   0
+  [COMPARTIDAS] TCD   Transito Centro Distribucion codigos=   0  filas_crudas=   0
+  [COMPARTIDAS] BDP   Despacho Proveedor           codigos=  92  filas_crudas=42366
+  [COMPARTIDAS] REM   Remate                       codigos=   0  filas_crudas=   0
+  [COMPARTIDAS] MKT   Marketing                    codigos=   0  filas_crudas=   0
+  TOTAL codigos (todas las sucursales + CD): 9416
+[OK] bodegas_gestion.json

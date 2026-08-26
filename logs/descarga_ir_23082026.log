@@ -1,0 +1,33 @@
+[1/3] Conectando a SQL Server (solo lectura)...
+      Conexion OK
+[2/3] Descargando 10 bodegas en lotes de 2 (evita timeouts/conflictos en la bajada)...
+      Lote 1/5: CAL, SER
+        [OK] CAL (Calzada): 1677 codigos (242096 filas crudas antes de deduplicar)
+        [OK] SER (Servicio Tecnico): 11 codigos (192 filas crudas antes de deduplicar)
+      Lote 2/5: WEB, GO
+        [OK] WEB (Retiro Web Santiago): 45 codigos (5179 filas crudas antes de deduplicar)
+        [OK] GO (Gestion Isabel Riquelme): 220 codigos (4981 filas crudas antes de deduplicar)
+      Lote 3/5: GAR, IIR
+        [OK] GAR (Garantia Santiago): 29 codigos (573 filas crudas antes de deduplicar)
+        [OK] IIR (Ingreso Isabel Riquelme): 65 codigos (15062 filas crudas antes de deduplicar)
+      Lote 4/5: BMC, RST
+        [OK] BMC (Marticorena Stgo): 79 codigos (12107 filas crudas antes de deduplicar)
+        [OK] RST (Recepcion Santiago): 0 codigos (0 filas crudas antes de deduplicar)
+      Lote 5/5: HEL, EIR
+        [OK] HEL (Herramientas Electricas): 247 codigos (15934 filas crudas antes de deduplicar)
+        [OK] EIR (Exhibicion Isabel Riquelme): 2084 codigos (51971 filas crudas antes de deduplicar)
+[3/3] Generando JSON y verificando consistencia...
+
+=== RESUMEN / CONSISTENCIA POR BODEGA ===
+  CAL   Calzada                      codigos=1677  filas_crudas=242096
+  SER   Servicio Tecnico             codigos=  11  filas_crudas= 192
+  WEB   Retiro Web Santiago          codigos=  45  filas_crudas=5179
+  GO    Gestion Isabel Riquelme      codigos= 220  filas_crudas=4981
+  GAR   Garantia Santiago            codigos=  29  filas_crudas= 573
+  IIR   Ingreso Isabel Riquelme      codigos=  65  filas_crudas=15062
+  BMC   Marticorena Stgo             codigos=  79  filas_crudas=12107
+  RST   Recepcion Santiago           codigos=   0  filas_crudas=   0
+  HEL   Herramientas Electricas      codigos= 247  filas_crudas=15934
+  EIR   Exhibicion Isabel Riquelme   codigos=2084  filas_crudas=51971
+  TOTAL codigos (todas las bodegas): 4457
+[OK] bodegas_ir_otras.json
