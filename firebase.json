@@ -1,5 +1,50 @@
 {
   "firestore": {
     "rules": "firestore.rules"
+  },
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "firestore.rules",
+      "**/.*",
+      "**/.firebase/**",
+      "**/node_modules/**",
+      "scripts/**",
+      "historico/**",
+      "_ARCHIVO_HISTORICO/**",
+      "ABCD/**",
+      "memory/**",
+      "logs/**",
+      "__pycache__/**",
+      "**/scripts/**",
+      "**/__pycache__/**",
+      "**/*.py",
+      "**/*.pyc",
+      "**/*.enc",
+      "**/*.ini",
+      "**/*.xlsm",
+      "**/*.xlsx",
+      "**/*.exe",
+      "**/*.bat",
+      "**/*.cmd",
+      "**/*.ps1",
+      "**/*.sh",
+      "**/*.vbs",
+      "**/*.bas",
+      "**/*.log",
+      "**/*.cache",
+      "**/*.md",
+      "**/*.jsonl",
+      "**/*.txt",
+      "**/*.rules",
+      "_service_account.json"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
   }
 }
