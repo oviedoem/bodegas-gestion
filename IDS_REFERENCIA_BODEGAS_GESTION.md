@@ -103,6 +103,8 @@ sucursales sí la incluye).
 | 45 | TSV | Transito San Vicente | Tránsito |
 | 44 | CSV | Calzada San Vicente | Calzada |
 | 88 | DSV | Distribucion San Vicente | Distribución (ver nota) |
+| **39** | **SSV** | **Sala San Vicente** | Facturación (verificado SQL 2026-08-27) |
+| **40** | **PSV** | **Patio San Vicente** | Facturación (verificado SQL 2026-08-27) |
 
 ### 06 — Las Cabras
 | IDBODEGA | Símbolo | Nombre | Categoría |
