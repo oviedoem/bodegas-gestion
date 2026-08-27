@@ -173,7 +173,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.42</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.43</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -1676,15 +1676,17 @@ function difSvRenderTabla(){
 function _difSvKey(p){ return p.bodega+'_'+p.codigo; }
 
 // Tipos de doc que explican cada tipo de diferencia
-var _DOCS_COMPROMISO = ['NVM','VMP','VMN','GME','GCE','GDF','GDV','GDC','OC','OCL','OCE','FCN','GRC','GRS'];
-var _DOCS_ANOMALIA   = ['GRT','GIB','GET','GTS','GST'];
+// Docs que REDUCEN Disp directamente → explican Dif>0
+var _DOCS_VENTA    = ['NVM','VMP','VMN'];          // Disp-1 al emitir NVM
+var _DOCS_DVEN     = ['GME','GCE','GDF','GDV','GDC']; // DVen (despacho físico)
+var _DOCS_DCOM     = ['OC','OCL','OCE','FCN','GRC','GRS']; // solo DCom, NO afectan Dif
+var _DOCS_ANOMALIA = ['GRT','GIB','GET','GTS','GST'];
 
 function _difSvTipoCateg(tipo){
   if(['NVM','VMP','VMN'].indexOf(tipo)>=0) return 'ped';
   if(['GME','GCE','GDF','GDV','GDC'].indexOf(tipo)>=0) return 'dvta';
-  if(['OC','OCL','OCE','FCN','GRC','GRS'].indexOf(tipo)>=0) return 'dcom';
   if(['GRT','GIB','GET','GTS','GST'].indexOf(tipo)>=0) return 'jt';
-  return 'otro';
+  return 'otro'; // GRC/OC/FCN = DCom, no afectan Dif
 }
 
 function difSvAbrirDocs(clave){
@@ -1693,8 +1695,10 @@ function difSvAbrirDocs(clave){
   document.getElementById('difSvDetalle').style.display = 'none';
   var modal = document.getElementById('difSvModal');
   var tipoLabel = prod.tipo==='anomalia_jt'
-    ? '⚠️ Anomalía JT — traslados sin 2° paso en JustWeb'
-    : '📋 Compromiso — docs que retienen stock';
+    ? '⚠️ Anomalía JT — traslados sin 2° paso en JustWeb (GRT/GIB)'
+    : prod.ped>0
+      ? '📋 NVM/VMN pendiente de despacho (Ped abierto)'
+      : '📋 Venta facturada sin GME — Disp reducido, Fis aún sin bajar (Ped=0 por BVE/FVE)';
   document.getElementById('difSvModalTitle').innerHTML =
     '<span style="color:#a5b4fc">['+esc(prod.bodega)+']</span> '+esc(prod.codigo)+' — '+esc(prod.desc)
     +'<br><span style="font-size:11px;font-weight:400;color:#94a3b8">'+tipoLabel+' · Click en una fila para ver detalle completo</span>';
@@ -1708,11 +1712,27 @@ function difSvAbrirDocs(clave){
     kpiBox('D.Vta', prod.dvta, prod.dvta>0?'#60a5fa':'') +
     kpiBox('D.Com', prod.dcom, prod.dcom>0?'#4ade80':'');
 
-  // Determinar qué categoría es la "causa" de la dif
+  // La causa del Dif>0 siempre es NVM/VMN (reducen Disp).
+  // GRC/OC/FCN son DCom y NO afectan Dif — nunca marcarlos como causa.
   var causaCateg = prod.tipo==='anomalia_jt' ? 'jt'
-    : prod.ped>0 ? 'ped' : prod.dvta>0 ? 'dvta' : prod.dcom>0 ? 'dcom' : '';
+    : prod.dif>0 ? 'ped'   // NVM/VMN redujeron Disp (con o sin GME pendiente)
+    : prod.dif<0 ? 'jt'    // anomalia: Disp > Fis
+    : '';
 
-  var tiposFiltro = prod.tipo === 'anomalia_jt' ? _DOCS_ANOMALIA : _DOCS_COMPROMISO;
+  // Filtro: mostrar SOLO docs que explican el Dif
+  // Para normal: primero VMN. Si no hay, GME (despacho activo).
+  // Para anomalia_jt: traslados.
+  // DCom (GRC/OC) se excluye siempre del panel de causa.
+  var tiposFiltro;
+  if(prod.tipo === 'anomalia_jt'){
+    tiposFiltro = _DOCS_ANOMALIA;
+  } else if(prod.dif > 0){
+    // Prioridad: VMN → si no hay, DVen → nunca DCom
+    var hayVenta = (prod.docs||[]).some(function(d){ return _DOCS_VENTA.indexOf(d.tipo)>=0; });
+    tiposFiltro = hayVenta ? _DOCS_VENTA : _DOCS_DVEN;
+  } else {
+    tiposFiltro = _DOCS_VENTA.concat(_DOCS_DVEN);
+  }
   var docs = (prod.docs || []).filter(function(d){ return tiposFiltro.indexOf(d.tipo) >= 0; });
   var rows = '';
   if(!docs.length){
