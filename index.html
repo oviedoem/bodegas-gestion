@@ -173,7 +173,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.40</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.41</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -203,7 +203,7 @@
 </div>
 <div class="wrap">
 
-<div class="card tab-panel active" id="panel_merma">
+<div class="card tab-panel" id="panel_merma">
   <div class="sub" id="meta_merma"></div>
   <div class="bar">
     <input type="text" id="merma_qBuscar" placeholder="Código o descripción" oninput="render('merma')" style="width:200px">
@@ -900,6 +900,9 @@ function aplicarModoLC(){
 }
 
 function cambiarTab(v){
+  // Desactivar TODOS los paneles primero (evita doble panel)
+  document.querySelectorAll('.tab-panel').forEach(function(el){ el.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(el){ el.classList.remove('active'); });
   // Paneles fuera de VISTAS (dif_sv)
   var EXTRA_TABS = ['dif_sv'];
   EXTRA_TABS.forEach(function(k){
@@ -1623,7 +1626,7 @@ function difSvRenderTabla(){
     return;
   }
   var html = '';
-  _difSvFiltro.forEach(function(p){
+  _difSvFiltro.forEach(function(p, i){
     var difColor = p.dif < 0 ? '#dc2626' : (p.dif > 0 ? '#f59e0b' : '#16a34a');
     var tipoBadge = p.tipo === 'anomalia_jt'
       ? '<span style="background:rgba(220,38,38,.15);color:#dc2626;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700">Anomalía JT</span>'
