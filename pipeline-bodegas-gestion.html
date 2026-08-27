@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pipeline — Bodegas Gestión</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* ── Tokens ─────────────────────────────────────────────── */
+:root {
+  --bg:      #0f1117;
+  --s1:      #191c26;
+  --s2:      #21242f;
+  --border:  #2c2f3e;
+  --text:    #dde3f0;
+  --muted:   #7a8399;
+  --accent:  #f59e0b;
+  --acc2:    #fbbf24;
+  --green:   #4ade80;
+  --blue:    #60a5fa;
+  --red:     #f87171;
+  --orange:  #fb923c;
+  --purple:  #c084fc;
+  --teal:    #2dd4bf;
+  --pink:    #f472b6;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:      #f7f5f0;
+    --s1:      #ffffff;
+    --s2:      #edeae3;
+    --border:  #d5d1c8;
+    --text:    #1a1c26;
+    --muted:   #6b7082;
+    --accent:  #c87e05;
+    --acc2:    #d9920a;
+    --green:   #16a34a;
+    --blue:    #2563eb;
+    --red:     #dc2626;
+    --orange:  #ea580c;
+    --purple:  #9333ea;
+    --teal:    #0d9488;
+    --pink:    #db2777;
+  }
+}
+:root[data-theme="light"] {
+  --bg:      #f7f5f0;
+  --s1:      #ffffff;
+  --s2:      #edeae3;
+  --border:  #d5d1c8;
+  --text:    #1a1c26;
+  --muted:   #6b7082;
+  --accent:  #c87e05;
+  --acc2:    #d9920a;
+  --green:   #16a34a;
+  --blue:    #2563eb;
+  --red:     #dc2626;
+  --orange:  #ea580c;
+  --purple:  #9333ea;
+  --teal:    #0d9488;
+  --pink:    #db2777;
+}
+:root[data-theme="dark"] {
+  --bg:#0f1117; --s1:#191c26; --s2:#21242f; --border:#2c2f3e;
+  --text:#dde3f0; --muted:#7a8399; --accent:#f59e0b; --acc2:#fbbf24;
+  --green:#4ade80; --blue:#60a5fa; --red:#f87171; --orange:#fb923c;
+  --purple:#c084fc; --teal:#2dd4bf; --pink:#f472b6;
+}
+
+/* ── Base ───────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;
+     font-size:13px;padding:24px;max-width:1520px;margin:0 auto;line-height:1.5}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ── Header ─────────────────────────────────────────────── */
+.header{margin-bottom:20px}
+.header h1{font-size:20px;font-weight:800;letter-spacing:-.3px;margin-bottom:3px}
+.header h1 span{color:var(--accent)}
+.subtitle{font-size:11px;color:var(--muted)}
+.subtitle b{color:var(--text)}
+
+/* ── Theme toggle ───────────────────────────────────────── */
+.theme-btn{position:fixed;top:16px;right:16px;background:var(--s1);border:1px solid var(--border);
+  border-radius:6px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer;z-index:100}
+.theme-btn:hover{color:var(--text)}
+
+/* ── Tabs ───────────────────────────────────────────────── */
+.tabs{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;position:sticky;top:0;
+      background:var(--bg);padding:10px 0 10px;z-index:10;border-bottom:1px solid var(--border)}
+.tab-btn{padding:7px 14px;border-radius:6px;border:1px solid var(--border);
+  background:var(--s1);color:var(--muted);cursor:pointer;font-size:12px;font-family:inherit;
+  transition:all .15s}
+.tab-btn.active{background:var(--accent);color:#0f1117;border-color:var(--accent);font-weight:700}
+.tab-btn:hover:not(.active){border-color:var(--accent);color:var(--text)}
+.view{display:none}
+.view.active{display:block;animation:fade .2s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* ── Typography ─────────────────────────────────────────── */
+h2.sec{font-size:14px;font-weight:700;margin:24px 0 12px;padding-bottom:6px;
+       border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+h3.sub{font-size:12px;font-weight:700;color:var(--accent);margin:16px 0 8px}
+p.lead{font-size:12px;color:var(--muted);line-height:1.75;margin-bottom:14px;max-width:960px;
+       text-wrap:balance}
+
+/* ── Legend ─────────────────────────────────────────────── */
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:11px;color:var(--muted)}
+.leg-item{display:flex;align-items:center;gap:6px}
+.leg-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+
+/* ── Flow columns ───────────────────────────────────────── */
+.col-headers{display:grid;grid-template-columns:1fr 24px 1fr 24px 1fr 24px 1.2fr;margin-bottom:6px}
+.col-h{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+       color:var(--muted);padding:0 12px 4px}
+
+.flow-row{display:grid;grid-template-columns:1fr 24px 1fr 24px 1fr 24px 1.2fr;
+          align-items:start;margin-bottom:10px;font-size:11.5px}
+.fr-src,.fr-script,.fr-json,.fr-tabs{background:var(--s1);border:1px solid var(--border);
+  border-radius:8px;padding:10px 13px;line-height:1.6;overflow:hidden}
+.fr-src{border-left:4px solid var(--green)}
+.fr-src.sql{border-left-color:var(--accent)}
+.fr-src.mix{border-left-color:var(--orange)}
+.fr-script{border-left:4px solid var(--blue)}
+.fr-json{border-left:4px solid var(--orange)}
+.fr-tabs{border-left:4px solid var(--muted)}
+.arr{display:flex;align-items:center;justify-content:center;color:var(--border);
+     font-size:20px;padding-top:14px}
+.fw{font-weight:700}
+.sm{font-size:10.5px;color:var(--muted);margin-top:2px}
+.mono{font-family:ui-monospace,monospace;color:var(--accent);font-size:10.5px}
+
+/* ── Tags ───────────────────────────────────────────────── */
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;
+     background:rgba(245,158,11,.12);color:var(--accent);margin:2px 2px 0 0}
+.tag.g{background:rgba(74,222,128,.12);color:var(--green)}
+.tag.b{background:rgba(96,165,250,.12);color:var(--blue)}
+.tag.p{background:rgba(192,132,252,.12);color:var(--purple)}
+.tag.t{background:rgba(45,212,191,.12);color:var(--teal)}
+.tag.r{background:rgba(248,113,113,.12);color:var(--red)}
+.tag.pk{background:rgba(244,114,182,.12);color:var(--pink)}
+.tag.o{background:rgba(251,146,60,.12);color:var(--orange)}
+
+/* ── Badges ─────────────────────────────────────────────── */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap;margin:1px 2px 1px 0}
+.b-ok  {background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.25)}
+.b-sql {background:rgba(245,158,11,.12);color:var(--accent);border:1px solid rgba(245,158,11,.25)}
+.b-git {background:rgba(96,165,250,.12);color:var(--blue);border:1px solid rgba(96,165,250,.25)}
+.b-fb  {background:rgba(244,114,182,.12);color:var(--pink);border:1px solid rgba(244,114,182,.25)}
+.b-loc {background:rgba(192,132,252,.12);color:var(--purple);border:1px solid rgba(192,132,252,.25)}
+.b-warn{background:rgba(251,146,60,.12);color:var(--orange);border:1px solid rgba(251,146,60,.25)}
+
+/* ── Tables ─────────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}
+th{background:var(--s2);color:var(--muted);text-align:left;padding:8px 12px;
+   border-bottom:2px solid var(--border);font-weight:600;white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55}
+tr:hover td{background:rgba(245,158,11,.04)}
+td.c,th.c{text-align:center}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accent)}
+
+/* ── Info boxes ─────────────────────────────────────────── */
+.info-box{margin-top:14px;padding:13px 16px;background:var(--s1);border-radius:8px;
+          border:1px solid var(--border);font-size:12px;line-height:1.85}
+.info-box .title{font-weight:700;margin-bottom:6px;font-size:13px;color:var(--text)}
+.note{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);border-radius:6px;
+      padding:8px 12px;margin-top:8px;font-size:11px;line-height:1.65;color:var(--text)}
+.note-y{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2)}
+.note-g{background:rgba(74,222,128,.06);border-color:rgba(74,222,128,.2)}
+.note-b{background:rgba(96,165,250,.06);border-color:rgba(96,165,250,.2)}
+
+/* ── User cards ─────────────────────────────────────────── */
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:16px}
+.ucard{background:var(--s1);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ucard-head{padding:12px 14px 8px;border-bottom:1px solid var(--border)}
+.ucard-head .role{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+                  color:var(--accent);margin-bottom:4px}
+.ucard-head .email{font-family:ui-monospace,monospace;font-size:12px;font-weight:700;color:var(--text)}
+.ucard-body{padding:10px 14px;font-size:11.5px;line-height:1.7;color:var(--muted)}
+.ucard-body b{color:var(--text)}
+
+/* ── Step cards ─────────────────────────────────────────── */
+.step-grid{display:flex;flex-direction:column;gap:8px;max-width:860px}
+.step{display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#0f1117;
+          font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:3px}
+.step-body{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 14px}
+.step-body .cmd{font-family:ui-monospace,monospace;font-size:11px;background:var(--s2);
+                border-radius:4px;padding:4px 8px;display:block;margin-top:6px;color:var(--acc2);overflow-x:auto}
+
+/* ── Bodega ID grid ─────────────────────────────────────── */
+.suc-section{margin-bottom:24px}
+.suc-title{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.suc-id{font-size:10px;font-weight:600;background:var(--s2);border:1px solid var(--border);
+        border-radius:4px;padding:2px 8px;color:var(--muted);font-family:ui-monospace,monospace}
+
+/* ── KPI strip ──────────────────────────────────────────── */
+.kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.kpi{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:140px}
+.kpi .kl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.kpi .kn{font-size:20px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.kpi .ks{font-size:10px;color:var(--muted);margin-top:1px}
+.kpi.acc .kn{color:var(--accent)}
+.kpi.g   .kn{color:var(--green)}
+.kpi.b   .kn{color:var(--blue)}
+
+@media(max-width:900px){
+  .flow-row,.col-headers{grid-template-columns:1fr}
+  .arr{display:none}
+  .col-h:not(:first-child){display:none}
+  .fr-src,.fr-script,.fr-json,.fr-tabs{margin-bottom:4px}
+  .user-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<button class="theme-btn" onclick="toggleTheme()">☀︎ / ☾</button>
+
+<div class="header">
+  <h1>📦 Pipeline de datos — <span>Bodegas Gestión</span></h1>
+  <div class="subtitle">
+    SQL Server → Python → JSON → GitHub Pages · <b>V.35 / SW v41</b> · Actualizado 2026-08-27 · Ferretería Oviedo
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="show('flow',this)">1 · Flujo actual</button>
+  <button class="tab-btn" onclick="show('scripts',this)">2 · Scripts y comandos</button>
+  <button class="tab-btn" onclick="show('bodegas',this)">3 · Bodegas e IDs SQL</button>
+  <button class="tab-btn" onclick="show('usuarios',this)">4 · Usuarios y accesos</button>
+  <button class="tab-btn" onclick="show('deploy',this)">5 · Deploy y frecuencia</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     VISTA 1 — FLUJO ACTUAL
+═══════════════════════════════════════════════════════ -->
+<div id="view-flow" class="view active">
+
+  <div class="kpi-row">
+    <div class="kpi acc"><div class="kl">Códigos bodegas</div><div class="kn">13.972</div><div class="ks">gestion + IR otras</div></div>
+    <div class="kpi g"><div class="kl">Sucursales</div><div class="kn">5</div><div class="ks">EM · SV · LC · LT · IR</div></div>
+    <div class="kpi b"><div class="kl">Merma IR</div><div class="kn">427</div><div class="ks">códigos MERMA.xlsx</div></div>
+    <div class="kpi"><div class="kl">Stock crítico LC</div><div class="kn">1.465</div><div class="ks">productos con parámetros</div></div>
+    <div class="kpi"><div class="kl">OC pendientes LC</div><div class="kn">476</div><div class="ks">códigos con qty pendiente</div></div>
+    <div class="kpi"><div class="kl">Versión app</div><div class="kn">V.35</div><div class="ks">SW v41 · 2026-08-27</div></div>
+  </div>
+
+  <p class="lead">Cada fila es un dato que viaja de su <b>fuente</b> → <b>script Python</b> que lo descarga y procesa → <b>JSON</b> que genera → <b>tab de la app</b> que lo consume. Los JSON se sirven directamente desde <b>GitHub Pages</b> (no hay backend). La merma IR genera además un HTML standalone autónomo.</p>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>SQL Server 200.6.118.110 (requiere VPN)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--orange)"></div>SQL + archivo local</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Script Python portable</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--muted)"></div>Output: JSON en repo</div>
+  </div>
+
+  <div class="col-headers">
+    <div class="col-h">Fuente</div><div></div>
+    <div class="col-h">Script</div><div></div>
+    <div class="col-h">JSON generado</div><div></div>
+    <div class="col-h">Tab de la app</div>
+  </div>
+
+  <!-- FILA 1 — Bodegas gestion (todas las sucursales) -->
+  <div class="flow-row">
+    <div class="fr-src sql">
+      <div class="fw">SQL Server <span class="badge b-sql">200.6.118.110</span></div>
+      <div class="sm">Foviedo.dbo — 5 sucursales + CD</div>
+      <div style="margin-top:6px">
+        <span class="tag">M_DOCUMENTOS_DETALLE</span>
+        <span class="tag">M_DOCUMENTOS</span>
+        <span class="tag">R_STOCK_PRODUCTOS</span>
+        <span class="tag">M_DOCUMENTOS_ENCABEZADO</span>
+        <span class="tag">P_ARTICULOS</span>
+        <span class="tag">P_MARCAS</span>
+        <span class="tag">P_FAMILIAS</span>
+      </div>
+      <div class="sm" style="margin-top:6px">ORDER BY FECHA_EMISION DESC — TOP 1 doc por código/bodega</div>
+      <div class="sm">Dedup GIB/GRT: excluir GIB si misma fecha que GRT (fix bug POLI0024 GSV)</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-script">
+      <div class="fw"><span class="mono">scripts/descargar_bodegas_sql.py</span></div>
+      <div class="sm">23 KB · lotes de bodega por sucursal</div>
+      <div class="sm" style="margin-top:4px">Acumula por: IDBODEGA + IDSUCURSAL → dedup → JSON</div>
+      <div class="sm">ST_FISICO ≠ 0 (excluye saldo cero)</div>
+      <div class="sm" style="margin-top:4px">Campos: bodega, código, descripción, marca, familia,<br>tipoDoc, folio, disp, físico, costo, fechaRegistro, diasAntiguedad,<br>usuario, estación, observación</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-json">
+      <div class="fw"><span class="mono">bodegas_gestion.json</span></div>
+      <div class="sm">8.5 MB · 9,505 códigos · EM+SV+LC+LT+CD</div>
+      <div style="margin-top:6px" class="fw"><span class="mono">bodegas_ir_otras.json</span></div>
+      <div class="sm">3.5 MB · 4,467 códigos · 10 bodegas IR</div>
+      <div class="sm" style="margin-top:4px"><span class="badge b-git">trackeados en repo</span> servidos por GitHub Pages</div>
+      <div class="sm">Días antigüedad: recalculados en JS al abrir (Date.now − fechaRegistroIso)</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-tabs">
+      <b>Tabs:</b>
+      <span class="tag g">El Manzano</span>
+      <span class="tag g">San Vicente</span>
+      <span class="tag g">Las Cabras</span>
+      <span class="tag g">Litueche</span>
+      <span class="tag t">Bodegas CD</span>
+      <span class="tag b">Otras Bodegas IR</span>
+      <div class="sm" style="margin-top:6px">Filtros: Bodega, TipoDoc, Usuario, Familia, Marca, Días ≥/≤, Fecha Desde/Hasta, Buscar</div>
+      <div class="sm">KPIs: Códigos · Valorizado · Sin movimiento · Stock negativo · Máx. días</div>
+      <div class="sm">Export: <span class="badge b-ok">Excel (.xlsx)</span></div>
+    </div>
+  </div>
+
+  <!-- FILA 2 — Merma Isabel Riquelme -->
+  <div class="flow-row">
+    <div class="fr-src mix">
+      <div class="fw">SQL Server <span class="badge b-sql">IDBODEGA=75</span> + <span class="badge b-loc">MERMA.xlsx</span></div>
+      <div class="sm">IDSUCURSAL=02 (Isabel Riquelme)</div>
+      <div class="sm" style="margin-top:4px"><span class="mono">MERMA.xlsx</span> → 427 códigos de merma configurados (local, no en repo)</div>
+      <div class="sm">SQL: M_DOCUMENTOS_DETALLE + ENCABEZADO → 13,335 movimientos bodega MIR</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-script">
+      <div class="fw"><span class="mono">generar_merma_ir.py</span></div>
+      <div class="sm">51 KB · 5 pasos internos</div>
+      <div class="sm" style="margin-top:4px">1. Lee MERMA.xlsx (openpyxl, hoja "Sheet 1")<br>2. Conecta SQL (credenciales_db.ini de ferreteria-oviedo)<br>3. Consulta movimientos MIR<br>4. Genera merma_isabel_riquelme.json<br>5. Genera MERMA_ISABEL_RIQUELME.html (standalone)</div>
+      <div class="sm" style="margin-top:4px">Orquestador: <span class="mono">ACTUALIZAR_MERMA_IR.bat</span></div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-json">
+      <div class="fw"><span class="mono">merma_isabel_riquelme.json</span></div>
+      <div class="sm">367 KB · bodega MIR=75 · suc=02</div>
+      <div style="margin-top:6px" class="fw"><span class="mono">MERMA_ISABEL_RIQUELME.html</span></div>
+      <div class="sm">136 KB · reporte HTML autónomo (sin login)</div>
+      <div class="sm" style="margin-top:4px"><span class="badge b-git">ambos en repo</span> GitHub Pages</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-tabs">
+      <b>Tab:</b> <span class="tag r">Merma IR</span>
+      <div class="sm" style="margin-top:6px">Filtros: TipoDoc, Usuario, Familia, Marca, Días ≥/≤, Fecha Desde/Hasta</div>
+      <div class="sm">Columnas: Código · Descripción · Marca · Familia · TipoDoc · Folio · Disp · Físico · Costo · Fecha · Días · Valorizado · Usuario · Estación · Observación</div>
+      <div class="sm" style="margin-top:4px"><b>MERMA_ISABEL_RIQUELME.html:</b> reporte independiente, acceso sin login, mismo formato</div>
+    </div>
+  </div>
+
+  <!-- FILA 3 — Stock crítico LC -->
+  <div class="flow-row">
+    <div class="fr-src sql">
+      <div class="fw">SQL Server <span class="badge b-sql">Las Cabras</span></div>
+      <div class="sm">R_STOCK_PRODUCTOS · IDSUCURSAL=06</div>
+      <div style="margin-top:6px">
+        <span class="tag">SLC=33</span><span class="tag">PLC=34</span>
+        <span class="tag">CLC=35</span><span class="tag">GLC=37</span>
+        <span class="tag t">TLC=16 (tránsito)</span>
+      </div>
+      <div class="sm" style="margin-top:4px">JOIN M_PRODUCTOS + P_MARCAS</div>
+      <div class="sm">Ventas: M_DOCUMENTOS_DETALLE · tipos (1,2,35,301,316,335,401,405,601,605) · últimos <b>60 días</b></div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-script">
+      <div class="fw"><span class="mono">scripts/descargar_stock_critico_lc.py</span></div>
+      <div class="sm">8 KB · SQL_PARAMS + SQL_TRANSITO + SQL_VENTAS</div>
+      <div class="sm" style="margin-top:4px">Campos por producto: min, max, critico, repo, disp, transito, vta90 (=60d), desc, marca</div>
+      <div class="sm">Cat A: min>0 Y repo>0 · Cat B: uno solo · Cat C: ninguno</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-json">
+      <div class="fw"><span class="mono">data/stock-critico-lc.json</span></div>
+      <div class="sm">245 KB · 1,465 productos con parámetros</div>
+      <div class="sm" style="margin-top:4px"><span class="badge b-git">en repo</span> GitHub Pages</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-tabs">
+      <b>Tab:</b> <span class="tag pk">Solicitud Stock LC</span>
+      <div class="sm" style="margin-top:6px">spavez@oviedo.cl (MODO_LC) — acceso exclusivo</div>
+      <div class="sm">Pre-llenar: rango fechas ventas · filtro Marca · Cat A/B/C · top N</div>
+      <div class="sm">Columnas: Cat · Código · Producto · Vta 2m · Mín.act · Repo.act · Tránsito · Stock.act · OC.Pend · Mín.sol · Repo.sol</div>
+      <div class="sm" style="margin-top:4px">Export: <span class="badge b-ok">Excel</span> · Envío: <span class="badge b-ok">Modal email HTML</span></div>
+    </div>
+  </div>
+
+  <!-- FILA 4 — OC Pendientes LC -->
+  <div class="flow-row">
+    <div class="fr-src sql">
+      <div class="fw">SQL Server <span class="badge b-sql">OC activas LC</span></div>
+      <div class="sm">M_DOCUMENTOS_DETALLE · últimos 6 meses</div>
+      <div style="margin-top:6px">
+        <span class="tag">SLC=33</span><span class="tag">PLC=34</span>
+        <span class="tag">CLC=35</span><span class="tag">GLC=37</span>
+        <span class="tag">RLC=57</span><span class="tag">ILC=71</span>
+      </div>
+      <div class="sm" style="margin-top:4px">Tipos OC: (8, 26, 104, 108, 800, 801, 802, 803, 804)</div>
+      <div class="sm">Cantidad pendiente = CANTIDAD − ENTREGADO</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-script">
+      <div class="fw"><span class="mono">scripts/descargar_oc_pendientes_lc.py</span></div>
+      <div class="sm">8 KB · agrega por código → resumen</div>
+      <div class="sm" style="margin-top:4px">Output doble: resumen (repo) + detalle (local, gitignored)</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-json">
+      <div class="fw"><span class="mono">data/oc-pend-resumen-lc.json</span></div>
+      <div class="sm">6 KB · 476 códigos · {cod: qty}</div>
+      <div style="margin-top:6px" class="fw"><span class="mono">data/oc-pendientes-lc.json</span></div>
+      <div class="sm">134 KB · 286 OCs · <span class="badge b-loc">solo local (gitignored)</span></div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-tabs">
+      <b>Tab:</b> <span class="tag pk">Solicitud Stock LC</span>
+      <div class="sm" style="margin-top:6px">Columna <b>OC Pend</b> en la tabla de solicitud</div>
+      <div class="sm">Lazy-load junto con stock-critico-lc.json al abrir el tab</div>
+      <div class="sm" style="margin-top:4px">Var JS: <span class="mono">_slcOcResumen</span> · cache módulo</div>
+    </div>
+  </div>
+
+  <!-- FILA 5 — Bump version (hook automático) -->
+  <div class="flow-row">
+    <div class="fr-src" style="border-left-color:var(--purple)">
+      <div class="fw">Hook git pre-commit <span class="badge b-loc">automático</span></div>
+      <div class="sm">Se dispara en cada <span class="mono">git commit</span></div>
+      <div class="sm" style="margin-top:4px">Lee versión actual de index.html → incrementa → reescribe</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-script" style="border-left-color:var(--purple)">
+      <div class="fw"><span class="mono">scripts/bump_version.py</span></div>
+      <div class="sm">2 KB · regex sobre index.html + sw.js</div>
+      <div class="sm" style="margin-top:4px">Patrón: <span class="mono">V.N (DD-MM-YYYY)</span> + <span class="mono">SW vN</span></div>
+      <div class="sm">Registrado en <span class="mono">.git/hooks/pre-commit</span></div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-json" style="border-left-color:var(--purple)">
+      <div class="fw"><span class="mono">index.html</span> + <span class="mono">sw.js</span></div>
+      <div class="sm">Versión bumpeada automáticamente</div>
+      <div class="sm" style="margin-top:4px">Último: <b>V.35 / SW v41</b> · 27-08-2026</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-tabs" style="border-left-color:var(--purple)">
+      <div class="sm">SW v41 fuerza cache-bust en todos los browsers abiertos</div>
+      <div class="sm" style="margin-top:4px">Banner "Actualizar" aparece automáticamente (polling 5 min)</div>
+    </div>
+  </div>
+
+</div><!-- /view-flow -->
+
+<!-- ═══════════════════════════════════════════════════════
+     VISTA 2 — SCRIPTS Y COMANDOS
+═══════════════════════════════════════════════════════ -->
+<div id="view-scripts" class="view">
+
+  <h2 class="sec">🛠 Scripts activos (flujo 2026-08-27+)</h2>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Script</th><th>Tamaño</th><th>Rol</th><th>Output</th><th>Requiere</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono-cell">scripts/descargar_bodegas_sql.py</td>
+        <td class="r">23 KB</td>
+        <td>Descarga todas las bodegas de las 5 sucursales + CD desde SQL Server. Dedup GIB/GRT. Genera los 2 JSON principales.</td>
+        <td class="mono-cell">bodegas_gestion.json<br>bodegas_ir_otras.json</td>
+        <td><span class="badge b-sql">VPN + SQL</span></td>
+      </tr>
+      <tr>
+        <td class="mono-cell">generar_merma_ir.py</td>
+        <td class="r">51 KB</td>
+        <td>Lee códigos de MERMA.xlsx, consulta movimientos bodega MIR=75 en SQL, genera JSON y HTML autónomo de merma.</td>
+        <td class="mono-cell">merma_isabel_riquelme.json<br>MERMA_ISABEL_RIQUELME.html</td>
+        <td><span class="badge b-sql">VPN + SQL</span> <span class="badge b-loc">MERMA.xlsx</span></td>
+      </tr>
+      <tr>
+        <td class="mono-cell">scripts/descargar_stock_critico_lc.py</td>
+        <td class="r">8 KB</td>
+        <td>Stock disponible bodegas LC, tránsito TLC y ventas 60d para la Solicitud Stock. Clasifica Cat A/B/C.</td>
+        <td class="mono-cell">data/stock-critico-lc.json</td>
+        <td><span class="badge b-sql">VPN + SQL</span></td>
+      </tr>
+      <tr>
+        <td class="mono-cell">scripts/descargar_oc_pendientes_lc.py</td>
+        <td class="r">8 KB</td>
+        <td>OCs activas de Las Cabras (últimos 6 meses). Resumen por código para la columna OC Pend.</td>
+        <td class="mono-cell">data/oc-pend-resumen-lc.json<br>data/oc-pendientes-lc.json*</td>
+        <td><span class="badge b-sql">VPN + SQL</span></td>
+      </tr>
+      <tr>
+        <td class="mono-cell">scripts/bump_version.py</td>
+        <td class="r">2 KB</td>
+        <td>Hook pre-commit. Incrementa versión V.N y SW vN en index.html y sw.js automáticamente en cada commit.</td>
+        <td class="mono-cell">index.html · sw.js</td>
+        <td><span class="badge b-git">pre-commit hook</span></td>
+      </tr>
+      <tr>
+        <td class="mono-cell">verificar_bodegas_gestion.py</td>
+        <td class="r">3 KB</td>
+        <td>Utilidad: consulta P_BODEGAS en vivo para re-verificar IDs si cambia el ERP. No descarga movimientos.</td>
+        <td class="mono-cell">— (solo consola)</td>
+        <td><span class="badge b-sql">VPN + SQL</span></td>
+      </tr>
+      <tr>
+        <td class="mono-cell">ACTUALIZAR_MERMA_IR.bat</td>
+        <td class="r">2.2 KB</td>
+        <td>Orquestador de merma IR. Verifica Python, MERMA.xlsx y generar_merma_ir.py antes de correr. Abre el HTML al terminar.</td>
+        <td class="mono-cell">— (orquestador)</td>
+        <td><span class="badge b-loc">MERMA.xlsx en raíz</span></td>
+      </tr>
+      <tr>
+        <td class="mono-cell">DEPLOY_APP.bat</td>
+        <td class="r">0.3 KB</td>
+        <td>Firebase Hosting deploy manual. Corre firebase-tools desde Node portable.</td>
+        <td class="mono-cell">— (deploy)</td>
+        <td><span class="badge b-fb">Firebase auth</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="sm" style="margin-bottom:16px">* <span class="mono">oc-pendientes-lc.json</span> está en .gitignore (detalle completo, solo local)</div>
+
+  <h2 class="sec">⚡ Secuencia completa de actualización</h2>
+  <p class="lead">Correr en orden. Requiere VPN activa y MERMA.xlsx en la raíz del proyecto.</p>
+
+  <div class="step-grid">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <b>Bodegas todas las sucursales</b> — descarga desde SQL, genera los 2 JSON principales
+        <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_bodegas_sql.py"</code>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <b>Merma Isabel Riquelme</b> — requiere MERMA.xlsx en la raíz
+        <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\generar_merma_ir.py"</code>
+        <div class="sm" style="margin-top:6px">O doble clic en <span class="mono">ACTUALIZAR_MERMA_IR.bat</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <b>Stock crítico LC</b>
+        <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_stock_critico_lc.py"</code>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <b>OC pendientes LC</b>
+        <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_oc_pendientes_lc.py"</code>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <b>Commit y push</b> — bump_version.py corre automáticamente como hook pre-commit
+        <code class="cmd">git add bodegas_gestion.json bodegas_ir_otras.json merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html data/stock-critico-lc.json data/oc-pend-resumen-lc.json</code>
+        <code class="cmd">git commit -m "data: actualizacion completa YYYY-MM-DD"</code>
+        <code class="cmd">cd /d "E:\BODEGAS GESTION" && git push origin main</code>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <b>(Opcional) Firebase Hosting</b> — solo si hubo cambios en index.html / sw.js
+        <code class="cmd">DEPLOY_APP.bat</code>
+        <div class="sm" style="margin-top:4px">GitHub Pages se actualiza solo con el push. Firebase Hosting requiere deploy manual.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note note-y" style="max-width:860px;margin-top:16px">
+    ⚠ <b>Archivo MERMA.xlsx:</b> está en la raíz localmente pero <b>no está en el repo</b> (nunca commiteado). Si se pierde, recuperar de <span class="mono">_ARCHIVO_HISTORICO/MERMA.xlsx</span> (versión 27-06-2026). Considerar agregar al .gitignore explícitamente o trackearlo.
+  </div>
+
+</div><!-- /view-scripts -->
+
+<!-- ═══════════════════════════════════════════════════════
+     VISTA 3 — BODEGAS E IDs SQL
+═══════════════════════════════════════════════════════ -->
+<div id="view-bodegas" class="view">
+
+  <h2 class="sec">🗄 IDs verificados en SQL Server · Foviedo.dbo</h2>
+  <p class="lead">Fuentes canónicas: <span class="mono">IDS_REFERENCIA_IR.md</span> e <span class="mono">IDS_REFERENCIA_BODEGAS_GESTION.md</span>. Para re-verificar si cambia el ERP: <span class="mono">verificar_bodegas_gestion.py</span>.</p>
+
+  <!-- EM -->
+  <div class="suc-section">
+    <div class="suc-title">El Manzano <span class="suc-id">IDSUCURSAL=04</span> <span class="badge b-ok">2,253 códigos</span></div>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Símbolo</th><th>Nombre</th><th>IDBODEGA</th><th>IDSUCURSAL</th><th>Códigos</th></tr></thead>
+      <tbody>
+        <tr><td>GEM</td><td>Gestión El Manzano</td><td class="mono-cell c">28</td><td class="c">04</td><td class="r">333</td></tr>
+        <tr><td>MEM</td><td>Mermas El Manzano</td><td class="mono-cell c">29</td><td class="c">04</td><td class="r">8</td></tr>
+        <tr><td>RCE</td><td>Recepción El Manzano</td><td class="mono-cell c">55</td><td class="c">04</td><td class="r">0</td></tr>
+        <tr><td>IEM</td><td>Ingreso El Manzano</td><td class="mono-cell c">72</td><td class="c">04</td><td class="r">54</td></tr>
+        <tr><td>TEM</td><td>Tránsito El Manzano</td><td class="mono-cell c">46</td><td class="c">04</td><td class="r">43</td></tr>
+        <tr><td>EEM</td><td>Exhibición El Manzano</td><td class="mono-cell c">83</td><td class="c">04</td><td class="r">1,815</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- SV -->
+  <div class="suc-section">
+    <div class="suc-title">San Vicente <span class="suc-id">IDSUCURSAL=05</span> <span class="badge b-ok">2,626 códigos</span></div>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Símbolo</th><th>Nombre</th><th>IDBODEGA</th><th>IDSUCURSAL</th><th>Códigos</th></tr></thead>
+      <tbody>
+        <tr><td>GSV</td><td>Gestión San Vicente</td><td class="mono-cell c">41</td><td class="c">05</td><td class="r">510</td></tr>
+        <tr><td>MSV</td><td>Mermas San Vicente</td><td class="mono-cell c">42</td><td class="c">05</td><td class="r">148</td></tr>
+        <tr><td>RSV</td><td>Recepción San Vicente</td><td class="mono-cell c">56</td><td class="c">05</td><td class="r">0</td></tr>
+        <tr><td>ISV</td><td>Ingreso San Vicente</td><td class="mono-cell c">70</td><td class="c">05</td><td class="r">51</td></tr>
+        <tr><td>TSV</td><td>Tránsito San Vicente</td><td class="mono-cell c">45</td><td class="c">05</td><td class="r">37</td></tr>
+        <tr><td>CSV</td><td>Calzada San Vicente</td><td class="mono-cell c">44</td><td class="c">05</td><td class="r">4</td></tr>
+        <tr><td>DSV</td><td>Distribución San Vicente</td><td class="mono-cell c">88</td><td class="c">14</td><td class="r">0</td></tr>
+        <tr><td>ESV</td><td>Exhibición San Vicente</td><td class="mono-cell c">95</td><td class="c">05</td><td class="r">1,842</td></tr>
+        <tr><td>CONSV</td><td>Consumo San Vicente</td><td class="mono-cell c">43</td><td class="c">05</td><td class="r">34</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- LC -->
+  <div class="suc-section">
+    <div class="suc-title">Las Cabras <span class="suc-id">IDSUCURSAL=06</span> <span class="badge b-ok">2,286 códigos</span></div>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Símbolo</th><th>Nombre</th><th>IDBODEGA</th><th>IDSUCURSAL</th><th>Códigos</th></tr></thead>
+      <tbody>
+        <tr><td>GLC</td><td>Gestión Las Cabras</td><td class="mono-cell c">37</td><td class="c">06</td><td class="r">405</td></tr>
+        <tr><td>MLC</td><td>Mermas Las Cabras</td><td class="mono-cell c">38</td><td class="c">06</td><td class="r">261</td></tr>
+        <tr><td>RLC</td><td>Recepción Las Cabras</td><td class="mono-cell c">57</td><td class="c">06</td><td class="r">58</td></tr>
+        <tr><td>ILC</td><td>Ingreso Las Cabras</td><td class="mono-cell c">71</td><td class="c">06</td><td class="r">9</td></tr>
+        <tr><td>TLC</td><td>Tránsito Las Cabras</td><td class="mono-cell c">16</td><td class="c">06</td><td class="r">27</td></tr>
+        <tr><td>CLC</td><td>Calzada Las Cabras</td><td class="mono-cell c">35</td><td class="c">06</td><td class="r">18</td></tr>
+        <tr><td>GFL</td><td>Garantía Las Cabras</td><td class="mono-cell c">91</td><td class="c">06</td><td class="r">7</td></tr>
+        <tr><td>ELC</td><td>Exhibición Las Cabras</td><td class="mono-cell c">96</td><td class="c">06</td><td class="r">1,400</td></tr>
+        <tr><td>VLC</td><td>Volumen Las Cabras</td><td class="mono-cell c">97</td><td class="c">06</td><td class="r">101</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- LT -->
+  <div class="suc-section">
+    <div class="suc-title">Litueche <span class="suc-id">IDSUCURSAL=11</span> <span class="badge b-ok">2,078 códigos</span></div>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Símbolo</th><th>Nombre</th><th>IDBODEGA</th><th>IDSUCURSAL</th><th>Códigos</th></tr></thead>
+      <tbody>
+        <tr><td>GLE</td><td>Gestión Litueche</td><td class="mono-cell c">63</td><td class="c">11</td><td class="r">208</td></tr>
+        <tr><td>MLE</td><td>Mermas Litueche</td><td class="mono-cell c">76</td><td class="c">11</td><td class="r">178</td></tr>
+        <tr><td>ILE</td><td>Ingreso Litueche</td><td class="mono-cell c">74</td><td class="c">11</td><td class="r">139</td></tr>
+        <tr><td>TLE</td><td>Tránsito Litueche</td><td class="mono-cell c">59</td><td class="c">11</td><td class="r">44</td></tr>
+        <tr><td>CLT</td><td>Calzada Litueche</td><td class="mono-cell c">78</td><td class="c">11</td><td class="r">0</td></tr>
+        <tr><td>DLT</td><td>Distribución Litueche</td><td class="mono-cell c">79</td><td class="c">09</td><td class="r">0</td></tr>
+        <tr><td>ELE</td><td>Exhibición Litueche</td><td class="mono-cell c">64</td><td class="c">11</td><td class="r">1,509</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- IR otras -->
+  <div class="suc-section">
+    <div class="suc-title">Isabel Riquelme — Otras Bodegas <span class="suc-id">IDSUCURSAL=02</span> <span class="badge b-ok">4,467 códigos</span></div>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Símbolo</th><th>Nombre</th><th>IDBODEGA</th><th>IDSUCURSAL</th><th>Códigos</th></tr></thead>
+      <tbody>
+        <tr><td>CAL</td><td>Calzada</td><td class="mono-cell c">5</td><td class="c">02</td><td class="r">1,680</td></tr>
+        <tr><td>SER</td><td>Servicio Técnico</td><td class="mono-cell c">6</td><td class="c">02</td><td class="r">11</td></tr>
+        <tr><td>WEB</td><td>Retiro Web Santiago</td><td class="mono-cell c">25</td><td class="c">02</td><td class="r">54</td></tr>
+        <tr><td>GO</td><td>Gestión Isabel Riquelme</td><td class="mono-cell c">30</td><td class="c">02</td><td class="r">221</td></tr>
+        <tr><td>GAR</td><td>Garantía Santiago</td><td class="mono-cell c">53</td><td class="c">02</td><td class="r">29</td></tr>
+        <tr><td>IIR</td><td>Ingreso Isabel Riquelme</td><td class="mono-cell c">69</td><td class="c">02</td><td class="r">65</td></tr>
+        <tr><td>BMC</td><td>Marticorena Stgo</td><td class="mono-cell c">77</td><td class="c">02</td><td class="r">82</td></tr>
+        <tr><td>RST</td><td>Recepción Santiago</td><td class="mono-cell c">92</td><td class="c">02</td><td class="r">0</td></tr>
+        <tr><td>HEL</td><td>Herramientas Eléctricas</td><td class="mono-cell c">99</td><td class="c">02</td><td class="r">239</td></tr>
+        <tr><td>EIR</td><td>Exhibición Isabel Riquelme</td><td class="mono-cell c">85</td><td class="c">02</td><td class="r">2,086</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Merma IR -->
+  <div class="suc-section">
+    <div class="suc-title">Merma Isabel Riquelme <span class="suc-id">IDBODEGA=75 · IDSUCURSAL=02</span> <span class="badge b-warn">flujo independiente</span></div>
+    <div class="info-box" style="max-width:600px">
+      <div class="title">Bodega MIR</div>
+      Solo se descarga a través de <span class="mono">generar_merma_ir.py</span>, que cruza los movimientos de la bodega con los códigos listados en <span class="mono">MERMA.xlsx</span>. No entra en <span class="mono">bodegas_gestion.json</span> ni en <span class="mono">bodegas_ir_otras.json</span>.
+    </div>
+  </div>
+
+  <!-- CD -->
+  <div class="suc-section">
+    <div class="suc-title">Bodegas Compartidas / Centro de Distribución <span class="suc-id">IDSUCURSAL=08/09/01</span> <span class="badge b-ok">262 códigos</span></div>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Símbolo</th><th>Nombre</th><th>IDBODEGA</th><th>IDSUCURSAL</th><th>Códigos</th></tr></thead>
+      <tbody>
+        <tr><td>CD</td><td>Centro de Distribución</td><td class="mono-cell c">23</td><td class="c">08</td><td class="r">91</td></tr>
+        <tr><td>XCD</td><td>CrossDock Centro Distribución</td><td class="mono-cell c">7</td><td class="c">08</td><td class="r">0</td></tr>
+        <tr><td>GCD</td><td>Gestión CD</td><td class="mono-cell c">27</td><td class="c">08</td><td class="r">45</td></tr>
+        <tr><td>ICD</td><td>Ingreso Centro Distribución</td><td class="mono-cell c">73</td><td class="c">08</td><td class="r">5</td></tr>
+        <tr><td>MCD</td><td>Mermas CD</td><td class="mono-cell c">26</td><td class="c">08</td><td class="r">27</td></tr>
+        <tr><td>RCD</td><td>Recepción Centro Distribución</td><td class="mono-cell c">54</td><td class="c">08</td><td class="r">0</td></tr>
+        <tr><td>TCD</td><td>Tránsito Centro Distribución</td><td class="mono-cell c">67</td><td class="c">08</td><td class="r">0</td></tr>
+        <tr><td>BDP</td><td>Despacho Proveedor</td><td class="mono-cell c">98</td><td class="c">09</td><td class="r">94</td></tr>
+        <tr><td>REM</td><td>Remate</td><td class="mono-cell c">84</td><td class="c">01</td><td class="r">0</td></tr>
+        <tr><td>MKT</td><td>Marketing</td><td class="mono-cell c">36</td><td class="c">01</td><td class="r">0</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+</div><!-- /view-bodegas -->
+
+<!-- ═══════════════════════════════════════════════════════
+     VISTA 4 — USUARIOS Y ACCESOS
+═══════════════════════════════════════════════════════ -->
+<div id="view-usuarios" class="view">
+
+  <h2 class="sec">👤 Usuarios activos · Firebase Auth · 2026-08-24</h2>
+  <p class="lead">Login domain: <b>oviedo.cl</b>. Autenticación vía Firebase Auth. El email determina el modo de acceso en el JS del cliente (<span class="mono">aplicarModoSV()</span> / <span class="mono">aplicarModoLC()</span>).</p>
+
+  <div class="user-grid">
+    <div class="ucard" style="border-top:3px solid var(--accent)">
+      <div class="ucard-head">
+        <div class="role">👑 Administrador — acceso completo</div>
+        <div class="email">rrojas@oviedo.cl</div>
+      </div>
+      <div class="ucard-body">
+        <b>Todos los tabs:</b><br>
+        Merma IR · Otras Bodegas IR · El Manzano · San Vicente · Las Cabras · Litueche · Bodegas CD · Solicitud Stock LC<br>
+        <div style="margin-top:6px"><span class="tag g">sin restricción de modo</span></div>
+        <div class="sm" style="margin-top:6px">Única cuenta que ve todos los datos de todas las sucursales simultáneamente.</div>
+      </div>
+    </div>
+    <div class="ucard" style="border-top:3px solid var(--blue)">
+      <div class="ucard-head">
+        <div class="role">🏪 Solo San Vicente</div>
+        <div class="email">saliaga@oviedo.cl</div>
+      </div>
+      <div class="ucard-body">
+        <b>1 tab visible:</b><br>
+        <span class="tag b">Bodegas San Vicente</span>
+        <div class="sm" style="margin-top:6px">Todas las bodegas de San Vicente (GSV, MSV, RSV, ISV, TSV, CSV, DSV, ESV, CONSV). No ve Solicitud Stock ni ninguna otra sucursal.</div>
+        <div style="margin-top:6px; font-size:11px">JS: <span class="mono">aplicarModoSV()</span> · <span class="mono">MODO_SV = true</span></div>
+      </div>
+    </div>
+    <div class="ucard" style="border-top:3px solid var(--pink)">
+      <div class="ucard-head">
+        <div class="role">🏬 Las Cabras + Solicitud Stock</div>
+        <div class="email">spavez@oviedo.cl</div>
+      </div>
+      <div class="ucard-body">
+        <b>2 tabs visibles:</b><br>
+        <span class="tag g">Bodegas Las Cabras</span> <span class="tag pk">Solicitud Stock LC</span>
+        <div class="sm" style="margin-top:6px">Puede: ver bodegas LC (GLC, MLC, RLC, ILC, TLC, CLC, ELC, VLC), pre-llenar solicitud de stock, descargar Excel, enviar correo HTML (modal).</div>
+        <div style="margin-top:6px; font-size:11px">JS: <span class="mono">aplicarModoLC()</span> · <span class="mono">MODO_LC = true</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">🔐 Firebase — Proyecto isabel-riquelme-merma</h2>
+
+  <div class="tbl-wrap">
+  <table style="max-width:800px">
+    <thead><tr><th>Recurso</th><th>Tipo</th><th>Detalle</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Firebase Auth</td>
+        <td><span class="badge b-fb">Auth</span></td>
+        <td>3 usuarios activos · dominio oviedo.cl · email/password</td>
+      </tr>
+      <tr>
+        <td>Firestore <span class="mono">merma</span></td>
+        <td><span class="badge b-fb">Firestore</span></td>
+        <td>Colección merma — sin cambios en flujo actual</td>
+      </tr>
+      <tr>
+        <td><span class="mono">_service_account.json</span></td>
+        <td><span class="badge b-loc">Local</span></td>
+        <td>Clave privada Firebase Admin SDK · gitignored · NUNCA al repo</td>
+      </tr>
+      <tr>
+        <td>GitHub Pages</td>
+        <td><span class="badge b-git">Pages</span></td>
+        <td>https://oviedoem.github.io/bodegas-gestion/ · auto-deploy en push a main</td>
+      </tr>
+      <tr>
+        <td>Firebase Hosting</td>
+        <td><span class="badge b-fb">Hosting</span></td>
+        <td>isabel-riquelme-merma · deploy manual con DEPLOY_APP.bat</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note note-b" style="max-width:800px">
+    💡 <b>Arquitectura de datos actual (desde V.10+):</b> Los JSON de bodegas se sirven en <b>texto plano desde GitHub Pages</b>. Los archivos <span class="mono">.enc</span> (AES-256) fueron movidos a <span class="mono">_ARCHIVO_HISTORICO/</span> el 2026-08-27 — ya no se usan. El <span class="mono">index.html</span> fetchea <span class="mono">.json</span> directamente.
+  </div>
+
+</div><!-- /view-usuarios -->
+
+<!-- ═══════════════════════════════════════════════════════
+     VISTA 5 — DEPLOY Y FRECUENCIA
+═══════════════════════════════════════════════════════ -->
+<div id="view-deploy" class="view">
+
+  <h2 class="sec">🚀 Deploy y publicación</h2>
+
+  <div class="tbl-wrap">
+  <table style="max-width:900px">
+    <thead>
+      <tr><th>Canal</th><th>Cómo se actualiza</th><th>URL</th><th>Requiere</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>GitHub Pages</b></td>
+        <td>Automático al hacer <span class="mono">git push origin main</span></td>
+        <td class="mono-cell">oviedoem.github.io/bodegas-gestion/</td>
+        <td><span class="badge b-git">push</span></td>
+      </tr>
+      <tr>
+        <td><b>Firebase Hosting</b></td>
+        <td>Manual con <span class="mono">DEPLOY_APP.bat</span> (firebase-tools)</td>
+        <td class="mono-cell">isabel-riquelme-merma.web.app</td>
+        <td><span class="badge b-fb">firebase auth</span></td>
+      </tr>
+      <tr>
+        <td><b>Caché browsers</b></td>
+        <td>Service Worker bump automático (pre-commit hook → SW vN)</td>
+        <td>—</td>
+        <td><span class="badge b-git">pre-commit</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 class="sec">📅 Frecuencia de actualización de datos</h2>
+
+  <div class="tbl-wrap">
+  <table style="max-width:900px">
+    <thead>
+      <tr><th>Dato</th><th>Frecuencia recomendada</th><th>Script</th><th>Notas</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Bodegas todas las sucursales</b></td>
+        <td>Semanal o al detectar anomalías</td>
+        <td class="mono-cell">descargar_bodegas_sql.py</td>
+        <td>Datos históricos — no cambian a cada hora</td>
+      </tr>
+      <tr>
+        <td><b>Merma Isabel Riquelme</b></td>
+        <td>Semanal o al actualizar MERMA.xlsx</td>
+        <td class="mono-cell">generar_merma_ir.py</td>
+        <td>Depende de que MERMA.xlsx esté actualizado primero</td>
+      </tr>
+      <tr>
+        <td><b>Stock crítico LC</b></td>
+        <td>Semanal (antes de cada solicitud)</td>
+        <td class="mono-cell">descargar_stock_critico_lc.py</td>
+        <td>Ventas 60d · stock en tiempo real al correr</td>
+      </tr>
+      <tr>
+        <td><b>OC pendientes LC</b></td>
+        <td>Semanal (junto con stock crítico)</td>
+        <td class="mono-cell">descargar_oc_pendientes_lc.py</td>
+        <td>6 meses de OCs · ~286 OCs activas</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 class="sec">📁 Estructura de archivos activos en raíz (post limpieza 2026-08-27)</h2>
+
+  <div class="tbl-wrap">
+  <table style="max-width:900px">
+    <thead><tr><th>Archivo</th><th>Tipo</th><th>En repo</th><th>Rol</th></tr></thead>
+    <tbody>
+      <tr><td class="mono-cell">index.html</td><td>App</td><td><span class="badge b-git">sí</span></td><td>App PWA · todos los tabs · autenticación Firebase · V.35</td></tr>
+      <tr><td class="mono-cell">sw.js</td><td>Service Worker</td><td><span class="badge b-git">sí</span></td><td>Cache bust · SW v41 · polling 5min para updates</td></tr>
+      <tr><td class="mono-cell">manifest.json</td><td>PWA</td><td><span class="badge b-git">sí</span></td><td>Metadatos instalación PWA</td></tr>
+      <tr><td class="mono-cell">firebase.json + firestore.rules</td><td>Config</td><td><span class="badge b-git">sí</span></td><td>Deploy Firebase Hosting + reglas Firestore</td></tr>
+      <tr><td class="mono-cell">bodegas_gestion.json</td><td>Datos</td><td><span class="badge b-git">sí</span></td><td>8.5 MB · 9,505 códigos · EM+SV+LC+LT+CD</td></tr>
+      <tr><td class="mono-cell">bodegas_ir_otras.json</td><td>Datos</td><td><span class="badge b-git">sí</span></td><td>3.5 MB · 4,467 códigos · 10 bodegas IR</td></tr>
+      <tr><td class="mono-cell">merma_isabel_riquelme.json</td><td>Datos</td><td><span class="badge b-git">sí</span></td><td>367 KB · bodega MIR · tab Merma IR</td></tr>
+      <tr><td class="mono-cell">MERMA_ISABEL_RIQUELME.html</td><td>Reporte</td><td><span class="badge b-git">sí</span></td><td>136 KB · reporte autónomo sin login</td></tr>
+      <tr><td class="mono-cell">data/stock-critico-lc.json</td><td>Datos</td><td><span class="badge b-git">sí</span></td><td>245 KB · Solicitud Stock LC</td></tr>
+      <tr><td class="mono-cell">data/oc-pend-resumen-lc.json</td><td>Datos</td><td><span class="badge b-git">sí</span></td><td>6 KB · OC pendientes LC resumido</td></tr>
+      <tr><td class="mono-cell">generar_merma_ir.py</td><td>Script</td><td><span class="badge b-git">sí</span></td><td>51 KB · descarga + genera merma IR</td></tr>
+      <tr><td class="mono-cell">ACTUALIZAR_MERMA_IR.bat</td><td>Bat</td><td><span class="badge b-git">sí</span></td><td>Orquestador merma IR con validaciones</td></tr>
+      <tr><td class="mono-cell">DEPLOY_APP.bat</td><td>Bat</td><td><span class="badge b-git">sí</span></td><td>Firebase Hosting deploy manual</td></tr>
+      <tr><td class="mono-cell">MERMA.xlsx</td><td>Input</td><td><span class="badge b-loc">no (local)</span></td><td>427 códigos · fuente para generar_merma_ir.py</td></tr>
+      <tr><td class="mono-cell">_service_account.json</td><td>Cred.</td><td><span class="badge b-loc">no (gitignored)</span></td><td>Firebase Admin SDK · nunca al repo</td></tr>
+      <tr><td class="mono-cell">_logo_oviedo_b64.txt</td><td>Asset</td><td><span class="badge b-git">sí</span></td><td>Logo base64 incrustado en HTML merma</td></tr>
+      <tr><td class="mono-cell">IDS_REFERENCIA_IR.md</td><td>Ref.</td><td><span class="badge b-git">sí</span></td><td>IDs SQL verificados Isabel Riquelme</td></tr>
+      <tr><td class="mono-cell">IDS_REFERENCIA_BODEGAS_GESTION.md</td><td>Ref.</td><td><span class="badge b-git">sí</span></td><td>IDs SQL verificados todas las sucursales</td></tr>
+      <tr><td class="mono-cell">CLAUDE.md / AGENTS.md / CRITERIO.md</td><td>Docs</td><td><span class="badge b-git">sí</span></td><td>Instrucciones de proyecto para Claude</td></tr>
+      <tr><td class="mono-cell">pipeline-bodegas-gestion.html</td><td>Docs</td><td><span class="badge b-git">sí</span></td><td>Este documento</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note note-y" style="max-width:900px;margin-top:8px">
+    📦 <b>_ARCHIVO_HISTORICO/</b> contiene el pipeline antiguo (XLSM + .enc): DESCARGAR_BODEGAS.bat, modBodegas.bas, CREAR_BODEGAS_XLSM.vbs, datos-bodegas.xlsm, bodegas_gestion.enc, bodegas_ir_otras.enc, _subir_firestore_chunked.py, _cifrar_y_subir_clave.py, _CLAVE_FIRESTORE_MANUAL.json. Todos recuperables.
+  </div>
+
+</div><!-- /view-deploy -->
+
+<script>
+function show(id, btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+function toggleTheme(){
+  var r=document.documentElement;
+  var cur=r.getAttribute('data-theme');
+  if(!cur){
+    var dark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+    r.setAttribute('data-theme', dark ? 'light' : 'dark');
+  } else {
+    r.setAttribute('data-theme', cur==='dark' ? 'light' : 'dark');
+  }
+}
+</script>
+</body>
+</html>
