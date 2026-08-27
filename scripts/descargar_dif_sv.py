@@ -127,11 +127,12 @@ ORDER BY A.CODIGO_TECNICO
 SQL_DOCS = """
 SELECT TOP 50
     MD.DOC,
-    N.NUMERO,
-    CONVERT(VARCHAR(10), N.FECHA_EMISION, 120)  AS FECHA,
-    CAST(ISNULL(N.CANTIDAD, 0) AS DECIMAL(18,2)) AS CANTIDAD,
+    ISNULL(NULLIF(CAST(N.NUMERO AS VARCHAR(20)),''), CAST(N.IDNUMERO AS VARCHAR(20))) AS FOLIO,
+    CAST(N.IDNUMERO AS VARCHAR(20))                AS IDNUMERO,
+    CONVERT(VARCHAR(19), N.FECHA_EMISION, 120)     AS FECHA,
+    CAST(ISNULL(N.CANTIDAD, 0) AS DECIMAL(18,2))   AS CANTIDAD,
     ISNULL(ENC.IDRESPONZABLE, ISNULL(ENC.IDVENDEDOR, '')) AS USUARIO,
-    ISNULL(OBS.OBSERVACION_IMPRESA, '')           AS OBS
+    ISNULL(OBS.OBSERVACION_IMPRESA, '')            AS OBS
 FROM Foviedo.dbo.M_DOCUMENTOS_DETALLE N
 INNER JOIN Foviedo.dbo.M_DOCUMENTOS MD
     ON MD.IDDOCUMENTO = N.IDDOCUMENTO
@@ -150,14 +151,14 @@ OUTER APPLY (
 WHERE N.IDBODEGA       = ?
   AND N.CODIGO_TECNICO = ?
   AND MD.DOC IN (
-    'NVM','VMP','VMN',          -- notas venta / pedido
-    'GME','GDF','GCE','GDV','GDC',-- guias despacho venta
-    'OC','OCL','OCE','FCN',     -- ordenes compra / facturas compra
-    'GRC','GRS',                -- guias recepcion compra
-    'GET','GRT','GIB','GTS','GST', -- traslados / ingresos entre bodegas
-    'GII','GEI',                -- inventario (ingreso/egreso)
-    'Gdc','NCE',                -- devoluciones cliente
-    'GBR','GRP','GRI','GRN','GIN','GRE' -- otros movimientos bodega
+    'NVM','VMP','VMN',
+    'GME','GDF','GCE','GDV','GDC',
+    'OC','OCL','OCE','FCN',
+    'GRC','GRS',
+    'GET','GRT','GIB','GTS','GST',
+    'GII','GEI',
+    'Gdc','NCE',
+    'GBR','GRP','GRI','GRN','GIN','GRE'
   )
 ORDER BY N.FECHA_EMISION DESC
 """
@@ -250,10 +251,11 @@ def main():
                         prod['docs'].append({
                             'tipo':    str(dr[0] or '').strip(),
                             'folio':   str(dr[1] or '').strip(),
-                            'fecha':   str(dr[2] or '').strip(),
-                            'cant':    float(dr[3]),
-                            'usuario': str(dr[4] or '').strip(),
-                            'obs':     str(dr[5] or '').strip(),
+                            'idnum':   str(dr[2] or '').strip(),
+                            'fecha':   str(dr[3] or '').strip(),
+                            'cant':    float(dr[4]),
+                            'usuario': str(dr[5] or '').strip(),
+                            'obs':     str(dr[6] or '').strip(),
                         })
                 except Exception as e:
                     print(f'\n  [WARN] docs {codigo}: {e}')
