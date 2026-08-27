@@ -173,7 +173,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.38</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.39</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -1671,12 +1671,20 @@ function difSvRenderTabla(){
 // Mapa clave → producto para drill-down
 function _difSvKey(p){ return p.bodega+'_'+p.codigo; }
 
+// Tipos de doc que explican cada tipo de diferencia
+var _DOCS_COMPROMISO = ['NVM','VMP','VMN','GME','GCE','GDF','GDV','GDC','OC','OCL','OCE','FCN','GRC','GRS'];
+var _DOCS_ANOMALIA   = ['GRT','GIB','GET','GTS','GST'];
+
 function difSvAbrirDocs(clave){
   var prod = (_difSvData.productos||[]).find(function(p){ return _difSvKey(p)===clave; });
   if(!prod) return;
   var modal = document.getElementById('difSvModal');
-  document.getElementById('difSvModalTitle').textContent =
-    '['+prod.bodega+'] '+prod.codigo+' — '+prod.desc;
+  var tipoLabel = prod.tipo==='anomalia_jt'
+    ? '⚠️ Anomalía JT — mostrando traslados sin 2° paso (GRT/GIB)'
+    : '📋 Compromiso — mostrando docs que retienen stock (Ped/D.Vta/D.Com)';
+  document.getElementById('difSvModalTitle').innerHTML =
+    '<span style="color:#a5b4fc">['+esc(prod.bodega)+']</span> '+esc(prod.codigo)+' — '+esc(prod.desc)
+    +'<br><span style="font-size:11px;font-weight:400;color:#94a3b8">'+tipoLabel+'</span>';
 
   var difColor = prod.dif < 0 ? '#dc2626' : '#f59e0b';
   document.getElementById('difSvModalKpis').innerHTML =
@@ -1687,10 +1695,12 @@ function difSvAbrirDocs(clave){
     kpiBox('D.Vta', prod.dvta, '') +
     kpiBox('D.Com', prod.dcom, '');
 
-  var docs = prod.docs || [];
+  // Filtrar solo docs que explican la diferencia
+  var tiposFiltro = prod.tipo === 'anomalia_jt' ? _DOCS_ANOMALIA : _DOCS_COMPROMISO;
+  var docs = (prod.docs || []).filter(function(d){ return tiposFiltro.indexOf(d.tipo) >= 0; });
   var rows = '';
   if(!docs.length){
-    rows = '<tr><td colspan="6" style="padding:16px;text-align:center;color:var(--muted)">Sin documentos registrados para este código en estas bodegas.</td></tr>';
+    rows = '<tr><td colspan="6" style="padding:16px;text-align:center;color:#94a3b8">Sin documentos que expliquen la diferencia de '+fmt(prod.dif)+' unidades.</td></tr>';
   } else {
     docs.forEach(function(doc, ii){
       var tipoColor = (doc.tipo==='GRT'||doc.tipo==='GIB'||doc.tipo==='GET'||doc.tipo==='GTS'||doc.tipo==='GST') ? '#f59e0b'
