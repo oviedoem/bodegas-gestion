@@ -173,7 +173,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.43</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.44</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -1734,13 +1734,31 @@ function difSvAbrirDocs(clave){
     tiposFiltro = _DOCS_VENTA.concat(_DOCS_DVEN);
   }
   var docs = (prod.docs || []).filter(function(d){ return tiposFiltro.indexOf(d.tipo) >= 0; });
+
+  // Determinar qué doc(s) son el match exacto de la diferencia
+  var absDif = Math.abs(prod.dif);
+  // 1. Buscar doc con cant exactamente igual al dif
+  var exacto = docs.find(function(d){ return Math.abs(d.cant - absDif) < 0.001; });
+  // 2. Si no hay exacto, buscar suma acumulada que llegue al dif (greedy por fecha desc)
+  var docsCausa = {};
+  if(exacto){
+    docsCausa[docs.indexOf(exacto)] = true;
+  } else {
+    var acum = 0;
+    for(var _i=0; _i<docs.length; _i++){
+      if(acum >= absDif) break;
+      acum = Math.round((acum + Math.abs(docs[_i].cant))*100)/100;
+      docsCausa[_i] = true;
+    }
+  }
+
   var rows = '';
   if(!docs.length){
-    rows = '<tr><td colspan="8" style="padding:16px;text-align:center;color:#94a3b8">Sin documentos que expliquen la diferencia de '+fmt(prod.dif)+' unidades.</td></tr>';
+    rows = '<tr><td colspan="7" style="padding:16px;text-align:center;color:#94a3b8">Sin documentos VMN/NVM que expliquen la diferencia de '+fmt(prod.dif)+' unidades.</td></tr>';
   } else {
     docs.forEach(function(doc, ii){
       var categDoc = _difSvTipoCateg(doc.tipo);
-      var esCausa  = causaCateg && categDoc === causaCateg;
+      var esCausa  = !!docsCausa[ii];
       var tipoColor = categDoc==='jt' ? '#f59e0b'
         : categDoc==='ped'  ? '#60a5fa'
         : categDoc==='dcom' ? '#4ade80' : '#e2e8f0';
