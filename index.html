@@ -185,7 +185,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.49</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.50</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">28-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -1727,13 +1727,15 @@ var _DOCS_BVE      = ['BVE','FVE','BVN','BEL','FEL']; // Boleta/Factura — cier
 var _DOCS_VENTA    = ['NVM','VMP','VMN'];          // Disp-1 al emitir NVM
 var _DOCS_DVEN     = ['GME','GCE','GDF','GDV','GDC']; // DVen (despacho físico)
 var _DOCS_DCOM     = ['OC','OCL','OCE','FCN','GRC','GRS']; // solo DCom, NO afectan Dif
-var _DOCS_ANOMALIA = ['GRT','GIB','GET','GTS','GST'];
+var _DOCS_JT       = ['GRT','GIB','GET','GTS','GST']; // Traslados — anomalia JT
+var _DOCS_DEV      = ['Gdc','NCE'];                   // Devolución pendiente NCE
 
 function _difSvTipoCateg(tipo){
   if(['NVM','VMP','VMN'].indexOf(tipo)>=0) return 'ped';
   if(['GME','GCE','GDF','GDV','GDC'].indexOf(tipo)>=0) return 'dvta';
-  if(['GRT','GIB','GET','GTS','GST'].indexOf(tipo)>=0) return 'jt';
-  return 'otro'; // GRC/OC/FCN = DCom, no afectan Dif
+  if(_DOCS_JT.indexOf(tipo)>=0) return 'jt';
+  if(_DOCS_DEV.indexOf(tipo)>=0) return 'dev';
+  return 'otro';
 }
 
 function difSvAbrirDocs(clave){
@@ -1744,9 +1746,14 @@ function difSvAbrirDocs(clave){
   detPanel.classList.remove('visible');
   detPanel.style.display = 'none';
   var modal = document.getElementById('difSvModal');
-  // Label descriptivo según el tipo de documento causante
+  // Detectar si Dif<0 es por devolución (Gdc) o por traslado (GRT/GIB)
+  var tieneGdc = (prod.docs||[]).some(function(d){ return _DOCS_DEV.indexOf(d.tipo)>=0; });
+  var tipoEfectivo = (prod.tipo==='anomalia_jt' && tieneGdc) ? 'devolucion' : prod.tipo;
+
   var tipoLabel;
-  if(prod.tipo==='anomalia_jt'){
+  if(tipoEfectivo==='devolucion'){
+    tipoLabel = '↩️ Devolución pendiente de Nota de Crédito (GDC sin NCE)';
+  } else if(tipoEfectivo==='anomalia_jt'){
     tipoLabel = '⚠️ Anomalía JT — traslados sin 2° paso en JustWeb (GRT/GIB)';
   } else {
     var allDocs = prod.docs||[];
@@ -1777,15 +1784,11 @@ function difSvAbrirDocs(clave){
     kpiBox('D.Vta', prod.dvta, prod.dvta>0?'#60a5fa':'') +
     kpiBox('D.Com', prod.dcom, prod.dcom>0?'#4ade80':'');
 
-  // Filtro: mostrar SOLO docs que explican el Dif
-  // Para normal: primero VMN. Si no hay, GME (despacho activo).
-  // Para anomalia_jt: traslados.
-  // DCom (GRC/OC) se excluye siempre del panel de causa.
-  // Mostrar TODOS los docs descargados — la diferencia puede venir de cualquier tipo
-  // Para anomalia_jt filtrar solo traslados (GRT/GIB); para el resto: todo
-  var docs = prod.tipo === 'anomalia_jt'
-    ? (prod.docs||[]).filter(function(d){ return _DOCS_ANOMALIA.indexOf(d.tipo)>=0; })
-    : (prod.docs||[]).slice();
+  var docs = tipoEfectivo==='devolucion'
+    ? (prod.docs||[]).filter(function(d){ return _DOCS_DEV.indexOf(d.tipo)>=0; })
+    : tipoEfectivo==='anomalia_jt'
+      ? (prod.docs||[]).filter(function(d){ return _DOCS_JT.indexOf(d.tipo)>=0; })
+      : (prod.docs||[]).slice();
 
   // Determinar qué doc(s) son el match exacto de la diferencia
   var absDif = Math.abs(prod.dif);
@@ -1832,7 +1835,8 @@ function difSvAbrirDocs(clave){
     docs.forEach(function(doc, ii){
       var categDoc = _difSvTipoCateg(doc.tipo);
       var esCausa  = !!docsCausa[ii];
-      var tipoColor = categDoc==='jt' ? '#f59e0b'
+      var tipoColor = categDoc==='jt'  ? '#f59e0b'
+        : categDoc==='dev'  ? '#a78bfa'
         : categDoc==='ped'  ? '#60a5fa'
         : categDoc==='dcom' ? '#4ade80' : '#e2e8f0';
       // Fila causa → fondo resaltado dorado; resto → alternado oscuro

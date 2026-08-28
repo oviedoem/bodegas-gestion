@@ -1,0 +1,698 @@
+<title>Flujo de Stock JustTime</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+
+<style>
+  :root {
+    --bg:        #f1f5f9;
+    --surface:   #ffffff;
+    --surface2:  #f8fafc;
+    --border:    #e2e8f0;
+    --text:      #0f172a;
+    --muted:     #64748b;
+    --disp:      #2563eb;
+    --disp-bg:   #dbeafe;
+    --fis:       #16a34a;
+    --fis-bg:    #dcfce7;
+    --ped:       #d97706;
+    --ped-bg:    #fef3c7;
+    --red:       #dc2626;
+    --red-bg:    #fee2e2;
+    --purple:    #7c3aed;
+    --purple-bg: #ede9fe;
+    --slate:     #475569;
+    --arrow:     #94a3b8;
+    --step-num:  #e2e8f0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --surface2:  #162032;
+      --border:    #334155;
+      --text:      #e2e8f0;
+      --muted:     #94a3b8;
+      --disp:      #60a5fa;
+      --disp-bg:   #1e3a5f;
+      --fis:       #4ade80;
+      --fis-bg:    #14532d;
+      --ped:       #fbbf24;
+      --ped-bg:    #451a03;
+      --red:       #f87171;
+      --red-bg:    #450a0a;
+      --purple:    #a78bfa;
+      --purple-bg: #2e1065;
+      --slate:     #94a3b8;
+      --arrow:     #475569;
+      --step-num:  #1e293b;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #0f172a;
+    --surface:   #1e293b;
+    --surface2:  #162032;
+    --border:    #334155;
+    --text:      #e2e8f0;
+    --muted:     #94a3b8;
+    --disp:      #60a5fa;
+    --disp-bg:   #1e3a5f;
+    --fis:       #4ade80;
+    --fis-bg:    #14532d;
+    --ped:       #fbbf24;
+    --ped-bg:    #451a03;
+    --red:       #f87171;
+    --red-bg:    #450a0a;
+    --purple:    #a78bfa;
+    --purple-bg: #2e1065;
+    --slate:     #94a3b8;
+    --arrow:     #475569;
+    --step-num:  #1e293b;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 40px 20px 80px;
+  }
+
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ── */
+  .header {
+    margin-bottom: 48px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 24px;
+  }
+  .header-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .header-sub {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ── Pilares ── */
+  .pilares {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+  @media (max-width: 580px) { .pilares { grid-template-columns: 1fr; } }
+
+  .pilar {
+    border-radius: 8px;
+    padding: 16px 18px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+  }
+  .pilar-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .pilar-name {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .pilar-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .pilar-formula {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    margin-top: 8px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+
+  .pilar--disp  { border-color: var(--disp);   }
+  .pilar--fis   { border-color: var(--fis);    }
+  .pilar--ped   { border-color: var(--ped);    }
+  .pilar--disp  .pilar-label  { color: var(--disp);  }
+  .pilar--fis   .pilar-label  { color: var(--fis);   }
+  .pilar--ped   .pilar-label  { color: var(--ped);   }
+  .pilar--disp  .pilar-name   { color: var(--disp);  }
+  .pilar--fis   .pilar-name   { color: var(--fis);   }
+  .pilar--ped   .pilar-name   { color: var(--ped);   }
+  .pilar--disp  .pilar-formula { background: var(--disp-bg); color: var(--disp); }
+  .pilar--fis   .pilar-formula { background: var(--fis-bg);  color: var(--fis);  }
+  .pilar--ped   .pilar-formula { background: var(--ped-bg);  color: var(--ped);  }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 16px;
+    margin-top: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Ciclo card ── */
+  .ciclo {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .ciclo-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .ciclo-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--step-num);
+    color: var(--muted);
+    border-radius: 4px;
+    padding: 3px 7px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .ciclo-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    text-wrap: balance;
+  }
+  .ciclo-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ── Flujo de pasos ── */
+  .flujo {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .paso {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 16px;
+    align-items: start;
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  .paso:first-child { border-top: none; padding-top: 0; }
+
+  .paso-doc {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .doc-chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+  }
+  .doc-nombre {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .doc-actor {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* doc chip colors */
+  .chip--venta   { background: var(--disp-bg);   color: var(--disp);   }
+  .chip--boleta  { background: var(--purple-bg);  color: var(--purple); }
+  .chip--desp    { background: var(--fis-bg);     color: var(--fis);    }
+  .chip--dev     { background: var(--ped-bg);     color: var(--ped);    }
+  .chip--nc      { background: var(--fis-bg);     color: var(--fis);    }
+  .chip--trasl   { background: var(--red-bg);     color: var(--red);    }
+  .chip--anular  { background: var(--red-bg);     color: var(--red);    }
+
+  /* ── Estado de stock por paso ── */
+  .paso-estado {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .paso-desc {
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+  .stock-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .stock-chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid transparent;
+  }
+  .stock-chip .arrow { font-size: 10px; }
+
+  .sc--disp-up   { background: var(--disp-bg); color: var(--disp); border-color: var(--disp); }
+  .sc--disp-dn   { background: var(--red-bg);  color: var(--red);  border-color: var(--red);  }
+  .sc--disp-ok   { background: var(--surface2);color: var(--muted);border-color: var(--border);}
+  .sc--fis-up    { background: var(--fis-bg);  color: var(--fis);  border-color: var(--fis);  }
+  .sc--fis-dn    { background: var(--red-bg);  color: var(--red);  border-color: var(--red);  }
+  .sc--fis-ok    { background: var(--surface2);color: var(--muted);border-color: var(--border);}
+  .sc--ped-up    { background: var(--ped-bg);  color: var(--ped);  border-color: var(--ped);  }
+  .sc--ped-dn    { background: var(--fis-bg);  color: var(--fis);  border-color: var(--fis);  }
+  .sc--ped-ok    { background: var(--surface2);color: var(--muted);border-color: var(--border);}
+
+  .estado-nota {
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  /* ── Alerta / pendiente ── */
+  .alert {
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.5;
+    margin-top: 8px;
+    border-left: 3px solid;
+  }
+  .alert--warn  { background: var(--ped-bg);  color: var(--ped);  border-color: var(--ped);  }
+  .alert--ok    { background: var(--fis-bg);  color: var(--fis);  border-color: var(--fis);  }
+  .alert--red   { background: var(--red-bg);  color: var(--red);  border-color: var(--red);  }
+  .alert--info  { background: var(--disp-bg); color: var(--disp); border-color: var(--disp); }
+  .alert strong { font-weight: 700; }
+
+  /* ── Ciclo completo badge ── */
+  .completo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fis);
+    background: var(--fis-bg);
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin-top: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── Permisos section ── */
+  .permisos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  @media (max-width: 540px) { .permisos-grid { grid-template-columns: 1fr; } }
+
+  .permiso-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    background: var(--surface2);
+  }
+  .permiso-card h4 {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-wrap: balance;
+  }
+  .permiso-card p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── Leyenda global ── */
+  .leyenda {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 48px;
+  }
+  .leyenda h3 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .leyenda-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 500px) {
+    .paso { grid-template-columns: 1fr; }
+    .ciclo-header { flex-direction: column; gap: 6px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-eyebrow">Ferretería Oviedo · JustTime ERP</div>
+    <h1>Flujo de Stock — Guía Operativa</h1>
+    <div class="header-sub">Cómo se mueven Disponible, Físico y Pedido en cada ciclo de documento</div>
+  </div>
+
+  <!-- Pilares -->
+  <div class="pilares">
+    <div class="pilar pilar--disp">
+      <div class="pilar-label">Columna</div>
+      <div class="pilar-name">Disponible</div>
+      <div class="pilar-desc">Stock neto real. Lo que se puede vender ahora mismo.</div>
+      <div class="pilar-formula">Físico − Compromisos</div>
+    </div>
+    <div class="pilar pilar--fis">
+      <div class="pilar-label">Columna</div>
+      <div class="pilar-name">Físico</div>
+      <div class="pilar-desc">Cantidad real presente en la bodega. Solo cambia con despacho o recepción física.</div>
+    </div>
+    <div class="pilar pilar--ped">
+      <div class="pilar-label">Columna</div>
+      <div class="pilar-name">Pedido</div>
+      <div class="pilar-desc">Suma de ventas comprometidas pendientes de despacho o boleta.</div>
+    </div>
+  </div>
+
+  <!-- CICLO 1 -->
+  <div class="section-title">Ciclo 1 — Venta con boleta o factura</div>
+  <div class="ciclo">
+    <div class="ciclo-header">
+      <div class="ciclo-num">C1</div>
+      <div>
+        <div class="ciclo-title">Venta Mesón / Nota de Venta → Boleta o Factura → Guía de Despacho</div>
+        <div class="ciclo-sub">Ciclo completo de una venta regular. Tres pasos, tres actores.</div>
+      </div>
+    </div>
+    <div class="flujo">
+
+      <div class="paso">
+        <div class="paso-doc">
+          <div class="doc-chip chip--venta">VMN / NVM</div>
+          <div class="doc-nombre">Venta Mesón / Nota de Venta</div>
+          <div class="doc-actor">👤 Vendedor</div>
+        </div>
+        <div class="paso-estado">
+          <div class="paso-desc">El vendedor registra la venta. El sistema compromete el stock al instante.</div>
+          <div class="stock-chips">
+            <span class="stock-chip sc--disp-dn">Disp <span class="arrow">↓</span></span>
+            <span class="stock-chip sc--fis-ok">Fís sin cambio</span>
+            <span class="stock-chip sc--ped-up">Ped <span class="arrow">↑</span></span>
+          </div>
+          <div class="estado-nota">Documento <strong>hijo</strong> — no se puede anular mientras tenga padre. La diferencia Dif = Fís − Disp queda abierta aquí.</div>
+        </div>
+      </div>
+
+      <div class="paso">
+        <div class="paso-doc">
+          <div class="doc-chip chip--boleta">BVE / FVE</div>
+          <div class="doc-nombre">Boleta / Factura de Venta</div>
+          <div class="doc-actor">💳 Cajera</div>
+        </div>
+        <div class="paso-estado">
+          <div class="paso-desc">El cliente pasa por caja. La cajera emite el documento tributario. El VMN pasa a ser documento <strong>hijo</strong> de esta BVE/FVE.</div>
+          <div class="stock-chips">
+            <span class="stock-chip sc--disp-ok">Disp sin cambio</span>
+            <span class="stock-chip sc--fis-ok">Fís sin cambio</span>
+            <span class="stock-chip sc--ped-dn">Ped <span class="arrow">↓</span></span>
+          </div>
+          <div class="alert alert--warn">
+            <strong>Dif aún abierta.</strong> El stock físico no bajó todavía — la guía de despacho está pendiente. El panel Dif SV marca ⭐ a <em>este</em> documento.
+          </div>
+        </div>
+      </div>
+
+      <div class="paso">
+        <div class="paso-doc">
+          <div class="doc-chip chip--desp">GME / GDV</div>
+          <div class="doc-nombre">Guía de Despacho / Egreso</div>
+          <div class="doc-actor">📦 Bodega</div>
+        </div>
+        <div class="paso-estado">
+          <div class="paso-desc">El producto sale físicamente de la bodega. Recién aquí el Físico baja y la diferencia desaparece.</div>
+          <div class="stock-chips">
+            <span class="stock-chip sc--disp-ok">Disp sin cambio</span>
+            <span class="stock-chip sc--fis-dn">Fís <span class="arrow">↓</span></span>
+            <span class="stock-chip sc--ped-ok">Ped sin cambio</span>
+          </div>
+          <span class="completo">✓ Ciclo completo — Dif = 0</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CICLO 2 -->
+  <div class="section-title">Ciclo 2 — Cliente no pasa por caja</div>
+  <div class="ciclo">
+    <div class="ciclo-header">
+      <div class="ciclo-num">C2</div>
+      <div>
+        <div class="ciclo-title">Venta Mesón sin boleta → Anulación del VMN</div>
+        <div class="ciclo-sub">El cliente se va sin pagar. No hay documento tributario — el VMN es padre y se puede anular directamente.</div>
+      </div>
+    </div>
+    <div class="flujo">
+
+      <div class="paso">
+        <div class="paso-doc">
+          <div class="doc-chip chip--venta">VMN / NVM</div>
+          <div class="doc-nombre">Venta Mesón / Nota de Venta</div>
+          <div class="doc-actor">👤 Vendedor</div>
+        </div>
+        <div class="paso-estado">
+          <div class="paso-desc">El vendedor registra la venta. El stock queda comprometido.</div>
+          <div class="stock-chips">
+            <span class="stock-chip sc--disp-dn">Disp <span class="arrow">↓</span></span>
+            <span class="stock-chip sc--fis-ok">Fís sin cambio</span>
+            <span class="stock-chip sc--ped-up">Ped <span class="arrow">↑</span></span>
+          </div>
+          <div class="estado-nota">Aquí el VMN es <strong>padre</strong> — sin BVE/FVE creada todavía.</div>
+        </div>
+      </div>
+
+      <div class="paso">
+        <div class="paso-doc">
+          <div class="doc-chip chip--anular">ANULAR VMN</div>
+          <div class="doc-nombre">Anulación de Venta Mesón</div>
+          <div class="doc-actor">👤 Vendedor / Supervisor</div>
+        </div>
+        <div class="paso-estado">
+          <div class="paso-desc">Al no ser documento tributario, el VMN se puede anular directamente. Libera el stock comprometido.</div>
+          <div class="stock-chips">
+            <span class="stock-chip sc--disp-up">Disp <span class="arrow">↑</span></span>
+            <span class="stock-chip sc--fis-ok">Fís sin cambio</span>
+            <span class="stock-chip sc--ped-dn">Ped <span class="arrow">↓</span></span>
+          </div>
+          <span class="completo">✓ Ciclo completo — Dif = 0</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CICLO 3 -->
+  <div class="section-title">Ciclo 3 — Devolución de cliente</div>
+  <div class="ciclo">
+    <div class="ciclo-header">
+      <div class="ciclo-num">C3</div>
+      <div>
+        <div class="ciclo-title">Guía de Devolución → Nota de Crédito</div>
+        <div class="ciclo-sub">El cliente devuelve o cambia un producto. Flujo inverso a la venta.</div>
+      </div>
+    </div>
+    <div class="flujo">
+
+      <div class="paso">
+        <div class="paso-doc">
+          <div class="doc-chip chip--dev">GDC</div>
+          <div class="doc-nombre">Guía Devolución Cliente</div>
+          <div class="doc-actor">👤 Vendedor</div>
+        </div>
+        <div class="paso-estado">
+          <div class="paso-desc">El vendedor registra la devolución. El stock disponible sube anticipadamente, pero el físico no — el producto aún no fue recepcionado en bodega.</div>
+          <div class="stock-chips">
+            <span class="stock-chip sc--disp-up">Disp <span class="arrow">↑</span></span>
+            <span class="stock-chip sc--fis-ok">Fís sin cambio</span>
+            <span class="stock-chip sc--ped-ok">Ped sin cambio</span>
+          </div>
+          <div class="alert alert--red">
+            <strong>Dif negativa (Disp &gt; Fís).</strong> Mismo síntoma visual que Anomalía JT — pero la causa y la acción son distintas. El panel muestra fila roja. La acción correcta es emitir la Nota de Crédito en caja, <em>no</em> ir a JustWeb a Editar+Grabar.
+          </div>
+        </div>
+      </div>
+
+      <div class="paso">
+        <div class="paso-doc">
+          <div class="doc-chip chip--nc">NCE</div>
+          <div class="doc-nombre">Nota de Crédito</div>
+          <div class="doc-actor">💳 Cajera</div>
+        </div>
+        <div class="paso-estado">
+          <div class="paso-desc">La cajera emite la nota de crédito. El sistema baja automáticamente la GDC del menú "Por Recepcionar" y suma el físico.</div>
+          <div class="stock-chips">
+            <span class="stock-chip sc--disp-ok">Disp sin cambio</span>
+            <span class="stock-chip sc--fis-up">Fís <span class="arrow">↑</span></span>
+            <span class="stock-chip sc--ped-ok">Ped sin cambio</span>
+          </div>
+          <span class="completo">✓ Ciclo completo — Dif = 0</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CICLO 4 -->
+  <div class="section-title">Ciclo 4 — Traslado entre bodegas / sucursales (Anomalía JT)</div>
+  <div class="ciclo">
+    <div class="ciclo-header">
+      <div class="ciclo-num">C4</div>
+      <div>
+        <div class="ciclo-title">GRT / GIB — Guía de Traslado sin segundo paso</div>
+        <div class="ciclo-sub">La guía se emite en origen pero no se confirma en destino. El sistema queda a medias.</div>
+      </div>
+    </div>
+    <div class="flujo">
+
+      <div class="paso">
+        <div class="paso-doc">
+          <div class="doc-chip chip--trasl">GRT / GIB</div>
+          <div class="doc-nombre">Guía Recepción Traslado / Ingreso Entre Bodegas</div>
+          <div class="doc-actor">👤 Usuario Origen</div>
+        </div>
+        <div class="paso-estado">
+          <div class="paso-desc">Se emite la guía en la bodega de origen. Disp baja en origen. En destino el producto aparece "Por recepcionar".</div>
+          <div class="stock-chips">
+            <span class="stock-chip sc--disp-dn">Disp origen <span class="arrow">↓</span></span>
+            <span class="stock-chip sc--fis-ok">Fís destino sin cambio</span>
+          </div>
+          <div class="alert alert--red">
+            <strong>Anomalía JT activa.</strong> Disp &gt; Fís en destino hasta que se complete el segundo paso.
+          </div>
+        </div>
+      </div>
+
+      <div class="paso">
+        <div class="paso-doc">
+          <div class="doc-chip chip--desp">Editar + Grabar</div>
+          <div class="doc-nombre">Confirmación en JustWeb</div>
+          <div class="doc-actor">👤 Usuario Destino</div>
+        </div>
+        <div class="paso-estado">
+          <div class="paso-desc">El usuario de destino va a "Mantención de Despachos", abre la guía, presiona Editar y luego Grabar. Eso confirma que el producto llegó físicamente.</div>
+          <div class="stock-chips">
+            <span class="stock-chip sc--fis-up">Fís destino <span class="arrow">↑</span></span>
+          </div>
+          <span class="completo">✓ Ciclo completo — Dif = 0</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Permisos -->
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-family:'IBM Plex Mono',monospace;margin-bottom:10px">Comportamiento según permisos de usuario</div>
+      <div class="permisos-grid">
+        <div class="permiso-card">
+          <h4 style="color:var(--ped)">⚠️ Permisos limitados de bodega</h4>
+          <p>La guía emitida queda en estado "Por recepcionar". El usuario de destino debe entrar al menú, abrir el documento, presionar <strong>Editar</strong> y luego <strong>Grabar</strong> para que el físico suba en la bodega de destino.</p>
+        </div>
+        <div class="permiso-card">
+          <h4 style="color:var(--fis)">✓ Permisos completos</h4>
+          <p>Al emitir la guía, el sistema suma Disponible y Físico al mismo tiempo en ambas bodegas. No requiere el paso Editar+Grabar — el ciclo se completa solo.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leyenda -->
+  <div class="leyenda">
+    <h3>Leyenda de chips de stock</h3>
+    <div class="leyenda-grid">
+      <span class="stock-chip sc--disp-dn">Disp ↓ &nbsp;baja</span>
+      <span class="stock-chip sc--disp-up">Disp ↑ &nbsp;sube</span>
+      <span class="stock-chip sc--fis-dn">Fís ↓ &nbsp;baja</span>
+      <span class="stock-chip sc--fis-up">Fís ↑ &nbsp;sube</span>
+      <span class="stock-chip sc--ped-up">Ped ↑ &nbsp;sube</span>
+      <span class="stock-chip sc--ped-dn">Ped ↓ &nbsp;baja</span>
+      <span class="stock-chip sc--disp-ok">sin cambio</span>
+    </div>
+    <div style="margin-top:14px;font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:12px">
+      <strong style="color:var(--text)">Dif = Físico − Disponible.</strong>
+      Dif &gt; 0 (normal): hay compromiso abierto — venta emitida sin despacho físico.
+      Dif &lt; 0 (anomalía): Disp superó al Fís — puede ser GRT sin 2° paso <em>o</em> GDC sin Nota de Crédito. Verificar el tipo de documento antes de actuar.
+    </div>
+  </div>
+
+</div>
