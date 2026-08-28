@@ -152,6 +152,7 @@ WHERE N.IDBODEGA       = ?
   AND N.CODIGO_TECNICO = ?
   AND MD.DOC IN (
     'NVM','VMP','VMN',
+    'BVE','FVE','BVN','BEL','FEL',
     'GME','GDF','GCE','GDV','GDC',
     'OC','OCL','OCE','FCN',
     'GRC','GRS',
@@ -160,6 +161,21 @@ WHERE N.IDBODEGA       = ?
     'Gdc','NCE',
     'GBR','GRP','GRI','GRN','GIN','GRE'
   )
+ORDER BY N.FECHA_EMISION DESC
+"""
+
+# BVE/FVE asociada al IDNUMERO de la VMN — sin filtro IDBODEGA (son docs de sucursal)
+SQL_BVE = """
+SELECT TOP 5
+    MD.DOC,
+    ISNULL(NULLIF(CAST(N.NUMERO AS VARCHAR(20)),''), CAST(N.IDNUMERO AS VARCHAR(20))) AS FOLIO,
+    CONVERT(VARCHAR(19), N.FECHA_EMISION, 120) AS FECHA,
+    CAST(ISNULL(N.CANTIDAD, 0) AS DECIMAL(18,2)) AS CANTIDAD
+FROM Foviedo.dbo.M_DOCUMENTOS_DETALLE N
+INNER JOIN Foviedo.dbo.M_DOCUMENTOS MD ON MD.IDDOCUMENTO = N.IDDOCUMENTO
+WHERE N.CODIGO_TECNICO = ?
+  AND N.IDNUMERO IN ({placeholders})
+  AND MD.DOC IN ('BVE','FVE','BVN','BEL','FEL')
 ORDER BY N.FECHA_EMISION DESC
 """
 
@@ -256,9 +272,42 @@ def main():
                             'cant':    float(dr[4]),
                             'usuario': str(dr[5] or '').strip(),
                             'obs':     str(dr[6] or '').strip(),
+                            'bve':     [],
                         })
                 except Exception as e:
                     print(f'\n  [WARN] docs {codigo}: {e}')
+
+                # Buscar BVE/FVE asociada a cada VMN por IDNUMERO
+                vmn_docs = [d for d in prod['docs'] if d['tipo'] in ('NVM','VMN','VMP') and d['idnum']]
+                if vmn_docs:
+                    idnums = [d['idnum'] for d in vmn_docs]
+                    ph = ','.join(['?']*len(idnums))
+                    try:
+                        cur.execute(SQL_BVE.format(placeholders=ph), codigo, *idnums)
+                        bve_rows = cur.fetchall()
+                        # Asociar cada BVE al VMN con mismo idnum
+                        bve_by_idnum = defaultdict(list)
+                        # BVE no filtra por idnum exacto — asociar al VMN de cant similar
+                        for br in bve_rows:
+                            bve_entry = {
+                                'tipo':  str(br[0] or '').strip(),
+                                'folio': str(br[1] or '').strip(),
+                                'fecha': str(br[2] or '').strip(),
+                                'cant':  float(br[3]),
+                            }
+                            # Agregar al primer VMN con misma cant
+                            for d in vmn_docs:
+                                if abs(d['cant'] - bve_entry['cant']) < 0.001 and not d['bve']:
+                                    d['bve'].append(bve_entry)
+                                    break
+                            else:
+                                # Si no coincide cant, agregar al primero sin BVE
+                                for d in vmn_docs:
+                                    if not d['bve']:
+                                        d['bve'].append(bve_entry)
+                                        break
+                    except Exception as e:
+                        print(f'\n  [WARN] bve {codigo}: {e}')
 
             productos.append(prod)
             n += 1
