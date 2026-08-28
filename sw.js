@@ -1,9 +1,9 @@
 /* Service Worker — Bodegas Gestión */
-/* VERSIÓN: cambiar este string en cada deploy para forzar refresh en todos los dispositivos */
-const CACHE_VERSION = 'bodegas-gestion-v64';
+const CACHE_VERSION = 'bodegas-gestion-v65';
 
 self.addEventListener('install', e => {
-  /* No llamar skipWaiting() aqui — el banner en index.html controla cuando activar */
+  /* Activar inmediatamente — sin esperar clic del usuario */
+  self.skipWaiting();
 });
 
 self.addEventListener('message', e => {
@@ -11,7 +11,6 @@ self.addEventListener('message', e => {
 });
 
 self.addEventListener('activate', e => {
-  /* Borrar todos los caches de versiones anteriores */
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
@@ -19,14 +18,13 @@ self.addEventListener('activate', e => {
           .filter(k => k !== CACHE_VERSION)
           .map(k => caches.delete(k))
       )
-    ).then(() => self.clients.claim()) /* tomar control de todas las tabs abiertas */
+    ).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  /* Solo manejar mismo origen */
   if (url.origin !== self.location.origin) return;
 
   /* HTML (navegación): siempre red primero, sin caché */
@@ -37,8 +35,8 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* JSON de datos: red primero (para tener datos frescos), cache como fallback */
-  if (url.pathname.endsWith('.json')) {
+  /* JSON de datos: red primero (datos frescos), cache como fallback */
+  if (url.pathname.endsWith('.json') || url.pathname.endsWith('.enc')) {
     e.respondWith(
       fetch(e.request)
         .then(res => {
