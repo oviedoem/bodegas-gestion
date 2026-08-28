@@ -130,14 +130,23 @@ SELECT TOP 50
     ISNULL(NULLIF(CAST(N.NUMERO AS VARCHAR(20)),''), CAST(N.IDNUMERO AS VARCHAR(20))) AS FOLIO,
     CAST(N.IDNUMERO AS VARCHAR(20))                AS IDNUMERO,
     CONVERT(VARCHAR(19), N.FECHA_EMISION, 120)     AS FECHA,
+    CONVERT(VARCHAR(19), ENC.FECHA_REGISTRO, 120)  AS FECHA_REG,
     CAST(ISNULL(N.CANTIDAD, 0) AS DECIMAL(18,2))   AS CANTIDAD,
     ISNULL(ENC.IDRESPONZABLE, ISNULL(ENC.IDVENDEDOR, '')) AS USUARIO,
+    ISNULL(N.IDESTACION, '')                       AS PC,
+    ISNULL(N.UNIDAD_MEDIDA, '')                    AS UNIDAD,
+    CAST(ISNULL(N.VALOR_LISTA, 0) AS DECIMAL(18,2))          AS VALOR_LISTA,
+    CAST(ISNULL(N.VALOR_DESCUENTO_PORCENTAJE, 0) AS DECIMAL(18,4)) AS DESC_PCT,
+    CAST(ISNULL(N.VALOR_NETO_UNITARIO, 0) AS DECIMAL(18,2))  AS VALOR_NETO_UNI,
+    ISNULL(ENC.IDCLIENTE, '')                      AS IDCLIENTE,
+    ISNULL(ENC.IDSUCURSAL, '')                     AS SUCURSAL_DOC,
     ISNULL(OBS.OBSERVACION_IMPRESA, '')            AS OBS
 FROM Foviedo.dbo.M_DOCUMENTOS_DETALLE N
 INNER JOIN Foviedo.dbo.M_DOCUMENTOS MD
     ON MD.IDDOCUMENTO = N.IDDOCUMENTO
 OUTER APPLY (
-    SELECT TOP 1 ENC2.IDRESPONZABLE, ENC2.IDVENDEDOR
+    SELECT TOP 1 ENC2.IDRESPONZABLE, ENC2.IDVENDEDOR,
+                 ENC2.FECHA_REGISTRO, ENC2.IDCLIENTE, ENC2.IDSUCURSAL
     FROM Foviedo.dbo.M_DOCUMENTOS_ENCABEZADO ENC2
     WHERE ENC2.IDDOCUMENTO = N.IDDOCUMENTO
       AND ENC2.IDNUMERO    = N.IDNUMERO
@@ -264,15 +273,28 @@ def main():
                 try:
                     cur.execute(SQL_DOCS, idbodega, codigo)
                     for dr in cur.fetchall():
+                        fecha_emi = str(dr[3] or '').strip()
+                        fecha_reg = str(dr[4] or '').strip()
+                        # Usar FECHA_REGISTRO si FECHA_EMISION tiene hora 00:00:00
+                        fecha_mostrar = fecha_reg if (fecha_reg and fecha_emi.endswith('00:00:00') and not fecha_reg.endswith('00:00:00')) else fecha_emi
                         prod['docs'].append({
-                            'tipo':    str(dr[0] or '').strip(),
-                            'folio':   str(dr[1] or '').strip(),
-                            'idnum':   str(dr[2] or '').strip(),
-                            'fecha':   str(dr[3] or '').strip(),
-                            'cant':    float(dr[4]),
-                            'usuario': str(dr[5] or '').strip(),
-                            'obs':     str(dr[6] or '').strip(),
-                            'bve':     [],
+                            'tipo':          str(dr[0] or '').strip(),
+                            'folio':         str(dr[1] or '').strip(),
+                            'idnum':         str(dr[2] or '').strip(),
+                            'fecha':         fecha_mostrar,
+                            'fecha_emi':     fecha_emi,
+                            'fecha_reg':     fecha_reg,
+                            'cant':          float(dr[5]),
+                            'usuario':       str(dr[6] or '').strip(),
+                            'pc':            str(dr[7] or '').strip(),
+                            'unidad':        str(dr[8] or '').strip(),
+                            'valor_lista':   float(dr[9] or 0),
+                            'desc_pct':      float(dr[10] or 0),
+                            'valor_neto_uni':float(dr[11] or 0),
+                            'idcliente':     str(dr[12] or '').strip(),
+                            'sucursal_doc':  str(dr[13] or '').strip(),
+                            'obs':           str(dr[14] or '').strip(),
+                            'bve':           [],
                         })
                 except Exception as e:
                     print(f'\n  [WARN] docs {codigo}: {e}')
