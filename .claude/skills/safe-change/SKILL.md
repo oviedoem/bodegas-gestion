@@ -1,29 +1,35 @@
 ---
 name: safe-change
-description: Reglas de cambio seguro y ahorro de tokens para el proyecto Isabel Riquelme (SQL Foviedo, reportes HTML, publicación GitHub). Usar antes de tocar generar_merma_ir.py, generar_bodegas_ir.py o el HTML publicado.
+description: Reglas de cambio seguro, ahorro de tokens y no mezclar proyectos para BODEGAS GESTION. Activar antes de cualquier cambio en index.html, scripts Python o JSONs de datos.
 ---
 
-# safe-change — Isabel Riquelme
+# safe-change — BODEGAS GESTION (ex Isabel Riquelme)
 
 Reglas obligatorias para cualquier cambio en este proyecto (`E:\BODEGAS GESTION\`).
+Ver también: skill global `ahorro-tokens` en `C:\Users\alejandro\.claude\skills\ahorro-tokens\SKILL.md`.
 
-## 1. No mezclar proyectos
+## Estado actual del proyecto (2026-08-28)
+- `index.html`: V.68 / SW v74 — tabla dif-sv responsive móvil, leyenda fondo oscuro fijo
+- Usuarios Firebase: `rrojas` (admin), `saliaga` (MODO_SV), `spavez` (MODO_LC)
+- Datos cifrados: `bodegas_gestion.enc`, `bodegas_ir_otras.enc` (AES-256, clave en Firestore)
+- URL autoritativa: `isabel-riquelme-merma.web.app`
+- Deploy: `git push` + `firebase deploy --only hosting --project isabel-riquelme-merma`
+
+## 1. No mezclar proyectos (REGLA ABSOLUTA)
 - Solo se edita dentro de `E:\BODEGAS GESTION\`. Otros proyectos (`E:\ferreteria-oviedo`,
   `W:\SUCURSAL LAS CABRAS`, `E:\git-sync`) son **solo lectura** — copiar y adaptar aquí,
   nunca modificar el original.
-- El repo GitHub de este proyecto (`oviedoem/merma-isabel-riquelme`) es independiente del
+- El repo GitHub de este proyecto (`oviedoem/bodegas-gestion`) es independiente del
   de El Manzano — nunca usar `E:\git-sync` para esto.
+- Una tarea a la vez — completar y confirmar antes de la siguiente.
 
 ## 2. Ahorro de tokens — no re-explorar lo ya verificado
-- IDs de sucursal/bodega/columnas SQL ya están en `IDS_REFERENCIA_IR.md`. No volver a
-  correr `INFORMATION_SCHEMA.COLUMNS` si el dato ya está documentado ahí.
-- Antes de escribir una consulta SQL nueva, revisar `generar_merma_ir.py` y
-  `generar_bodegas_ir.py` — ambos ya tienen el patrón de JOIN correcto
-  (R_STOCK_PRODUCTOS + M_PRODUCTOS + M_DOCUMENTOS_ENCABEZADO + catálogos de
-  familia/marca). Reusar esa estructura, no reinventarla.
-- Para cambios de UI (HTML/CSS/JS), el patrón de pestañas (`VISTAS` en el JS embebido)
-  ya es genérico — agregar una bodega/vista nueva es agregar una entrada al diccionario
-  `VISTAS`, no duplicar el bloque de funciones `render`/`filtrar`/`exportarExcel`.
+- IDs verificados en `IDS_REFERENCIA_IR.md` e `IDS_REFERENCIA_BODEGAS_GESTION.md`.
+  No volver a correr `INFORMATION_SCHEMA.COLUMNS` si el dato ya está documentado.
+- Comportamiento de stock/documentos: en `flujo-stock-justime.html` (sección Referencia ERP).
+- Antes de escribir query SQL nueva, revisar scripts `.py` existentes — tienen el JOIN correcto.
+- `index.html` supera 2000 líneas — usar `Grep` para ubicar secciones, luego `Read` con offset+limit.
+- No leer `CLAUDE.md` / `AGENTS.md` si ya están en contexto de la sesión actual.
 
 ## 3. Descargas SQL — por lotes pequeños
 - Nunca bajar todas las bodegas en una sola consulta masiva. `generar_bodegas_ir.py` baja
