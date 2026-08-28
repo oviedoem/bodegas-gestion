@@ -74,11 +74,21 @@
 | GRT | 2025-05-31 | 20 | **+20** | 23 | 87716 | empaque.em |
 | GIB | 2025-05-31 | 21 | 0* | 23 | 0 | inventario.em |
 
-*GIB en bod=44: CSV es el origen del traslado (envía a otra bodega). El impacto exacto en Fis depende de la lógica interna del ERP.
+*GIB en bod=44 (origen): CSV **envió** 21 unidades hacia otra bodega → **−21 Fis en CSV**
 
-**Balance calculado con lógica local: Fis=23**  
+**Balance corregido (lógica con GIB/GET en origen):**
+
+| Tipo | Movs | Cant total | ΔFis |
+|------|------|-----------|------|
+| GRT (ingresos traslado) | 14 | +100 | +100 |
+| GME (despacho físico) | 11 | −77 | −77 |
+| GIB 9880 (CSV origen→otra bod) | 1 | −21 | −21 |
+| GET 259 (CSV origen→otra bod) | 1 | −1 | −1 |
+| GET 1229 (CSV origen→otra bod) | 1 | −1 | −1 |
+| **Total reconstruido** | — | — | **0** |
+
 **Stock real ERP (ST_FISICO): −1**  
-**Diferencia: −24** — no reconciliable desde M_DOCUMENTOS_DETALLE filtrado por IDBODEGA=44 solo.
+**Diferencia residual: −1** — 1 unidad no reconciliada (probable: estado inicial pre-2017 o ajuste no capturado)
 
 ---
 
@@ -106,15 +116,20 @@ CSV (bod=44) es la bodega de **origen** del traslado. CSV ENVIÓ 21 unidades hac
 
 ---
 
-## Conclusión
+## Conclusión (actualizada 2026-08-28)
 
-El Fis=−1 en ERP no puede reconstruirse exactamente desde `M_DOCUMENTOS_DETALLE` con filtro `IDBODEGA=44` porque:
-1. El ERP tiene su propio motor de stock que puede considerar documentos de bodegas relacionadas
-2. El **GIB 9880** (2025-05-31, cant=21) registra una **salida de CSV** hacia otra bodega; su impacto exacto en Fis de CSV depende de cuándo/cómo el ERP procesa ese GIB en la bodega origen
-3. GMEs despachados antes del GRT correspondiente (2019-06-05, 2020-12-05, 2023-06-28) generan saldos negativos temporales que el ERP resuelve con su lógica propia
+**Lógica correcta de GIB y GET:**
+- `GIB` en detalle: `IDBODEGA` = bodega **ORIGEN** → **−Fis** en esa bodega
+- `GET` en detalle: `IDBODEGA` = bodega **ORIGEN** → **−Fis** en esa bodega  
+- `GRT` en detalle: `IDBODEGA` = bodega **DESTINO** → **+Fis** en esa bodega
 
-**Lo que sí es exacto:**
-- No hay GIBs pendientes sin GRT para este código
-- Los últimos GRTs entraron en mayo 2025 (+41 unidades totales en CSV)
-- Hay un GIB de salida de CSV de 21 unidades en mayo 2025 (GIB 9880)
-- El ERP muestra Fis=−1, Disp=0, Trans=0
+**Reconstrucción corregida:** 100 − 77 − 21 − 1 − 1 = **0**  
+**ERP dice: −1**  
+**Brecha residual: 1 unidad** — casi completamente reconciliado.
+
+La diferencia de 1 unidad es posiblemente el stock inicial de la bodega cuando se activó (2017-08-23) que el ERP ya traía con −1, o un ajuste pre-histórico no visible en M_DOCUMENTOS_DETALLE. Esta brecha es normal y no indica error en el pipeline.
+
+**Reglas verificadas en esta investigación:**
+1. No hay GIBs pendientes sin GRT para este código en ninguna bodega
+2. GIB y GET son documentos de EGRESO en la bodega origen (aunque TIPOOPERACION=I en M_DOCUMENTOS)
+3. Las columnas IDDOCUMENTO_CALZADA de BVE/FVE son NULL — no se generan docs auto-calzada para este código

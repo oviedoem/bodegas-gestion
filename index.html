@@ -188,7 +188,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.56</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">28-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.57</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">28-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -458,11 +458,15 @@
       <select id="difSv_bodega" onchange="difSvFiltrar()"
               style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px">
         <option value="">📦 Todas las bodegas</option>
-        <option value="PSV">PSV — Patio</option>
-        <option value="SSV">SSV — Sala</option>
-        <option value="CSV">CSV — Calzada</option>
-        <option value="MSV">MSV — Mermas</option>
-        <option value="DSV">DSV — Distribución</option>
+        <option value="PSV">PSV — Patio San Vicente (ID 40)</option>
+        <option value="SSV">SSV — Sala San Vicente (ID 39)</option>
+        <option value="CSV">CSV — Calzada San Vicente (ID 44, permite neg.)</option>
+        <option value="MSV">MSV — Mermas San Vicente (ID 42)</option>
+        <option value="GSV">GSV — Gestión San Vicente (ID 41)</option>
+        <option value="ISV">ISV — Ingreso San Vicente (ID 70)</option>
+        <option value="TSV">TSV — Tránsito San Vicente (ID 45)</option>
+        <option value="ESV">ESV — Exhibición San Vicente (ID 95)</option>
+        <option value="DSV">DSV — Distribución San Vicente (ID 88)</option>
       </select>
       <select id="difSv_tipo" onchange="difSvFiltrar()"
               style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px">
@@ -473,8 +477,8 @@
         <option value="devolucion">↩ Devolución pendiente</option>
         <option value="cuadrado">✓ Cuadrado (sin dif)</option>
       </select>
-      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#e2e8f0;cursor:pointer;white-space:nowrap">
-        <input type="checkbox" id="difSv_soloDif" checked onchange="difSvFiltrar()" style="accent-color:#6366f1;width:14px;height:14px">
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#e2e8f0;cursor:pointer;white-space:nowrap;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);border-radius:6px;padding:5px 10px">
+        <input type="checkbox" id="difSv_soloDif" checked onchange="difSvFiltrar()" style="accent-color:#6366f1;width:16px;height:16px;cursor:pointer">
         Solo con diferencia
       </label>
     </div>
@@ -484,13 +488,13 @@
       <select id="difSv_docTipo" onchange="difSvFiltrar()"
               style="padding:6px 10px;border-radius:6px;border:1px solid #6366f1;background:var(--bg);color:#a5b4fc;font-size:12px;font-weight:600">
         <option value="">Todos los documentos</option>
-        <option value="boleta">🧾 Boleta (BVE / FVE)</option>
-        <option value="factura_el">🧾 Factura electrónica (FEL / BEL)</option>
-        <option value="venta_meson">🛒 Venta mesón (NVM / VMN)</option>
-        <option value="nota_venta">🛒 Nota de venta (VMP)</option>
-        <option value="devolucion">↩ Guía devolución (GDC / NCE)</option>
-        <option value="recepcion">📦 Recepción compra (GRC / GRS)</option>
-        <option value="traslado">🚚 Traslado JT (GRT / GIB)</option>
+        <option value="boleta">🧾 BVE / FVE — Boleta o Factura de Venta Electrónica</option>
+        <option value="factura_el">🧾 FEL / BEL — Factura o Boleta Elect. (otros tipos)</option>
+        <option value="venta_meson">🛒 NVM / VMN — Nota de Venta / Venta Mesón</option>
+        <option value="nota_venta">🛒 VMP — Venta Mesón Público POS</option>
+        <option value="devolucion">↩ GDC / NCE — Guía Devolución o Nota Crédito</option>
+        <option value="recepcion">📦 GRC / GRS — Guía Recepción de Compra</option>
+        <option value="traslado">🚚 GRT / GIB / GET — Traslado JustTime</option>
       </select>
       <div id="difSv_info" style="font-size:11px;color:#94a3b8;flex:1;text-align:right"></div>
       <button onclick="difSvExcelAll()"
@@ -1673,6 +1677,57 @@ function kpiBox(label, val, color){
     + '</div>';
 }
 
+// ── Mapa abreviatura → nombre completo del documento ─────────────────────────
+var _DOC_NOMBRES = {
+  'BVE':'Boleta de Venta Electrónica','FVE':'Factura de Venta Electrónica',
+  'BVN':'Boleta de Venta (manual)','BVP':'Boleta Electrónica POS',
+  'BSV':'Boleta Electrónica SERVIU','FCV':'Factura de Venta',
+  'FVE':'Factura de Venta Electrónica','FVP':'Factura Electrónica POS',
+  'BDD':'Boleta Transbank',
+  'NVM':'Nota de Venta (mesón)','VMN':'Venta Mesón Público',
+  'VMP':'Venta Mesón Público POS','NVC':'Nota de Venta Calzada',
+  'NVF':'Nota de Venta Falabella','NVL':'Nota de Venta Linio',
+  'NVW':'Nota de Venta WEB','MKP':'Nota de Venta MarketPlace',
+  'GME':'Guía de Despacho Electrónica (cierre físico)',
+  'GDV':'Guía de Despacho (venta)','GCE':'Guía de Despacho Electrónica',
+  'GDF':'Guía de Despacho + Factura','GDP':'Guía de Despacho (préstamo)',
+  'GDE':'Guía de Despacho a Proveedor (elect.)','Gdp':'Guía de Despacho a Proveedor',
+  'GRT':'Guía de Recepción Traslado','GET':'Guía de Envío Traslado',
+  'GIB':'Guía de Ingreso Entre Bodegas','GTS':'Guía de Traslado Entre Sucursales',
+  'GTE':'Guía de Despacho Electrónica Interna','GST':'Solicitud de Traslado',
+  'GRC':'Guía de Recepción de Compra','GRI':'Guía de Recepción Importación',
+  'GRS':'Guía de Recepción Sucursal','GEI':'Guía de Egreso Inventario',
+  'GII':'Guía de Ingreso Inventario','GIK':'Guía de Ingreso Kit',
+  'GEK':'Guía de Egreso Kit','GEP':'Guía de Envío a Proveedor',
+  'GIG':'Garantía Guía Ingreso','GDG':'Garantía Guía Devolución Proveedor',
+  'GDC':'Guía de Devolución al Cliente','GCG':'Guía de Devolución al Cliente (elect.)',
+  'GCE2':'Guía de Devolución Electrónica al Cliente',
+  'Gdc':'Guía de Devolución Cliente (consignado)',
+  'NCE':'Nota de Crédito Electrónica','NCV':'Nota de Crédito (venta)',
+  'NCI':'Nota de Crédito Importación','NCP':'Nota de Crédito Proveedor',
+  'NDE':'Nota de Débito Electrónica','NDV':'Nota de Débito (venta)',
+  'FCN':'Factura de Compra (proveedor)','FCI':'Factura Compra Declaración Ingreso',
+  'OCN':'Orden de Compra','OCR':'Orden de Despacho','ORP':'Orden con Retiros Parciales',
+  'GEA':'Guía de Egreso Arriendo','GIA':'Guía de Ingreso Arriendo',
+  'GCS':'Guía de Consumo Servicio','GEX':'Guía de Envío Taller Externo',
+  'GEG':'Guía de Egreso Garantía','GNF':'Guía de Devolución no Facturada (compra)',
+  'GEI2':'Guía de Consumo','GEI3':'Guía Merma-Gestión',
+  'GPE':'Guía Dev. Proveedor Elect. no Facturada','GPF':'Guía Dev. Proveedor Elect. Facturada',
+  'FI1':'Factura Interna Servicio','FLV':'Factura Venta Liquidación',
+  'ALF':'Anulación Liquidación Factura','LFP':'Anulación Liquidación Factura Compra',
+  'NCO':'Anulación Guía Despacho Compra','NCE3':'Venta Nota Crédito Electronica WEB',
+  'RGA':'Regularización Guías Compra Años Anteriores',
+  'AGD':'Ajuste Guía Despacho Venta','AGR':'Ajuste Guía Recepción Compra',
+  'DII':'Declaración de Ingreso (solo IVA)','DIL':'Declaración de Ingreso No Libro',
+  'SCI':'Solicitud Cotización Interna','SCN':'Solicitud Cotización Nacional','SCP':'Solicitud de Pedido',
+};
+function _docNombre(tipo){
+  return _DOC_NOMBRES[tipo] ? _DOC_NOMBRES[tipo] + ' (' + tipo + ')' : tipo;
+}
+function _docNombreCorto(tipo){
+  return _DOC_NOMBRES[tipo] || tipo;
+}
+
 // Mapa de opciones de filtro de doc causante → tipos de documento
 var _DOC_TIPO_FILTRO = {
   boleta:     ['BVE','FVE'],
@@ -1939,7 +1994,7 @@ function difSvAbrirDocs(clave){
         vmn_usuario: vmnDoc? vmnDoc.usuario: ''
       });
       rows += '<tr data-ii="'+ii+'" style="background:'+rowBg2+';cursor:pointer" onclick="difSvVerDetalle(\''+encodeURIComponent(JSON.stringify(docConBve))+'\',\''+esc(prod.codigo)+'\',\''+esc(prod.desc)+'\')">'
-        + '<td style="padding:6px 10px;border:'+borde+';font-weight:700;color:'+tipoColor+'">'+indicador+esc(doc.tipo)+'</td>'
+        + '<td style="padding:6px 10px;border:'+borde+';font-weight:700;color:'+tipoColor+'" title="'+esc(_docNombreCorto(doc.tipo))+'">'+indicador+'<span style="font-size:12px">'+esc(doc.tipo)+'</span><div style="font-size:10px;font-weight:400;color:#94a3b8;white-space:normal;max-width:160px">'+esc(_docNombreCorto(doc.tipo))+'</div></td>'
         + '<td '+td+'>'+folio+bveStr+'</td>'
         + '<td style="padding:6px 10px;border:'+borde+';white-space:nowrap;color:#e2e8f0">'+esc(doc.fecha)+'</td>'
         + '<td style="padding:6px 10px;border:'+borde+';text-align:right;font-weight:600;color:#e2e8f0">'+fmt(doc.cant)+'</td>'
@@ -1982,7 +2037,7 @@ function difSvVerDetalle(docJson, codigo, desc){
     // — Cabecera tipo JustTime
     + '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px;margin-bottom:12px">'
     + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 14px;font-size:12px">'
-    + '<div><span style="color:#64748b">Tipo Doc.</span><div style="font-size:17px;font-weight:800;color:'+tipoColor+';margin-top:2px">'+esc(doc.tipo)+'</div></div>'
+    + '<div style="grid-column:span 2"><span style="color:#64748b">Tipo Doc.</span><div style="font-size:17px;font-weight:800;color:'+tipoColor+';margin-top:2px">'+esc(doc.tipo)+'</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">'+esc(_docNombreCorto(doc.tipo))+'</div></div>'
     + '<div><span style="color:#64748b">Número / Folio</span><div style="font-size:17px;font-weight:800;margin-top:2px">'+esc(folio)+'</div></div>'
     + '<div><span style="color:#64748b">Cantidad</span><div style="font-size:17px;font-weight:800;color:#f59e0b;margin-top:2px">'+fmt(doc.cant)+(doc.unidad?' <span style="font-size:11px;color:#94a3b8">'+esc(doc.unidad)+'</span>':'')+'</div></div>'
     + '<div><span style="color:#64748b">Fecha emisión</span><div style="font-weight:600;margin-top:2px">'+esc(fechaStr)+'</div></div>'
@@ -2037,44 +2092,72 @@ function difSvModalCerrar(){
 function difSvExcelAll(){
   if(!_difSvData || !_difSvFiltro.length){ alert('Carga los datos primero'); return; }
   if(typeof XLSX === 'undefined'){ alert('XLSX no disponible'); return; }
-  // Encabezados — refleja exactamente lo que ve el usuario
-  var rows = [['Bodega','Código','Descripción','Marca','Hiperfamilia','Familia',
-               'Físico','Disp','Dif','Contable','Tránsito','Ped','D.Vta','D.Com',
-               'Repo','Costo Prom','Fecha Costo','Estado','Doc causante (tipo)','Doc causante (folio)']];
+
+  // ── Encabezados — orden útil para análisis ────────────────────────────────
+  var cols = ['Bodega','Código','Descripción','Marca','Hiperfamilia','Familia',
+              'Físico','Disp','Dif','Estado',
+              'Doc Causante (sigla)','Doc Causante (nombre completo)','Folio Causante','Cant Causante','Fecha Causante','Usuario Causante',
+              'Contable','Tránsito','Ped','D.Vta','D.Com',
+              'Repo','Costo Prom','Fecha Costo'];
+  var rows = [cols];
+
   _difSvFiltro.forEach(function(p){
     var te = _difSvTipoEfectivo(p);
-    // Buscar el doc causante (⭐) para incluirlo en Excel
     var absDif = Math.abs(p.dif);
-    var causaTipo = '', causaFolio = '';
+    // ── Buscar el doc causante (⭐ exacto) ────────────────────────────────
+    var causaTipo='', causaNombre='', causaFolio='', causaCant='', causaFecha='', causaUser='';
     if(p.docs && p.docs.length > 0 && absDif > 0.001){
       var docsEf = te==='recepcion_jt' ? p.docs.filter(function(d){return _DOCS_REC.indexOf(d.tipo)>=0;})
                  : te==='devolucion'   ? p.docs.filter(function(d){return _DOCS_DEV.indexOf(d.tipo)>=0;})
-                 : te==='anomalia_jt' ? p.docs.filter(function(d){return _DOCS_JT.indexOf(d.tipo)>=0;})
-                 : p.docs.slice();
+                 : te==='anomalia_jt'  ? p.docs.filter(function(d){return _DOCS_JT.indexOf(d.tipo)>=0;})
+                 : p.docs.filter(function(d){return ['NVM','VMP','VMN','BVE','FVE'].indexOf(d.tipo)>=0;});
+      if(!docsEf.length) docsEf = p.docs.slice();
+      // Primero: coincidencia exacta de cantidad; luego: el más reciente
       var exacto = docsEf.filter(function(d){return Math.abs(d.cant-absDif)<0.001;})[0];
-      var causa = exacto || docsEf[0];
-      if(causa){ causaTipo=causa.tipo; causaFolio=causa.folio||causa.idnum||''; }
+      var causa  = exacto || docsEf.reduce(function(a,b){ return (a.fecha||'') > (b.fecha||'') ? a : b; });
+      if(causa){
+        causaTipo    = causa.tipo;
+        causaNombre  = _docNombreCorto(causa.tipo);
+        causaFolio   = (causa.folio && causa.folio!=='0') ? causa.folio : (causa.idnum||'');
+        causaCant    = causa.cant||'';
+        causaFecha   = (causa.fecha||'').substring(0,10);
+        causaUser    = causa.usuario||'';
+      }
     }
+    var estadoTexto = te==='normal' ? 'Compromiso' : te==='anomalia_jt' ? 'Anomalía JT' : te==='recepcion_jt' ? 'Recepción pendiente' : te==='devolucion' ? 'Devolución pendiente' : te==='cuadrado' ? 'Cuadrado' : te;
     rows.push([
-      p.bodega,p.codigo,p.desc,p.marca,p.hiperfam||'',p.familia||'',
-      p.fisico,p.disp,p.dif,p.contable||0,p.transito||0,p.ped,p.dvta,p.dcom,
-      p.st_repo||0,p.costo_prom||0,p.fecha_costo,te,causaTipo,causaFolio
+      p.bodega, p.codigo, p.desc, p.marca||'', p.hiperfam||'', p.familia||'',
+      p.fisico, p.disp, p.dif, estadoTexto,
+      causaTipo, causaNombre, causaFolio, causaCant, causaFecha, causaUser,
+      p.contable||0, p.transito||0, p.ped, p.dvta, p.dcom,
+      p.st_repo||0, p.costo_prom||0, p.fecha_costo||''
     ]);
   });
+
   var ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{wch:6},{wch:12},{wch:48},{wch:20},{wch:20},{wch:20},
-                 {wch:9},{wch:9},{wch:9},{wch:10},{wch:9},{wch:9},{wch:9},{wch:9},
-                 {wch:7},{wch:12},{wch:12},{wch:18},{wch:14},{wch:14}];
+  // Anchos de columna optimizados
+  ws['!cols'] = [
+    {wch:6},{wch:12},{wch:46},{wch:18},{wch:18},{wch:22},        // Bodega…Familia
+    {wch:8},{wch:8},{wch:8},{wch:20},                             // Físico…Estado
+    {wch:10},{wch:38},{wch:12},{wch:8},{wch:12},{wch:18},         // causante
+    {wch:9},{wch:9},{wch:9},{wch:9},{wch:9},{wch:7},{wch:12},{wch:12} // stock cols
+  ];
+  // Freeze primer fila (encabezados fijos)
+  ws['!freeze'] = {xSplit:0, ySplit:1};
+  // AutoFilter sobre toda la tabla
+  var lastCol = XLSX.utils.encode_col(cols.length-1);
+  var lastRow = rows.length;
+  ws['!autofilter'] = {ref:'A1:'+lastCol+lastRow};
+
   var wb = XLSX.utils.book_new();
-  // Nombre de hoja incluye filtros activos
   var bodega  = (document.getElementById('difSv_bodega').value||'');
   var docTipo = (document.getElementById('difSv_docTipo').value||'');
   var sheetName = 'DifSV'+(bodega?'-'+bodega:'')+(docTipo?'-'+docTipo:'');
-  sheetName = sheetName.substring(0,31); // límite Excel
+  sheetName = sheetName.substring(0,31);
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
   var hoy = new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb, 'dif-bodegas-sv-'+hoy+'.xlsx');
-  if(window.toast) toast('📊 Excel: '+_difSvFiltro.length+' filas descargadas','ok');
+  if(window.toast) toast('📊 Excel: '+_difSvFiltro.length+' filas — filtros listos para usar','ok');
 }
 </script>
 
