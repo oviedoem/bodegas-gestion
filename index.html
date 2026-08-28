@@ -191,7 +191,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.63</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">28-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.64</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">28-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -456,10 +456,10 @@
     <!-- Fila 1: búsqueda + bodega + estado -->
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px">
       <input id="difSv_buscar" type="text" placeholder="🔍 Buscar código o descripción…"
-             style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;min-width:220px;flex:1"
+             style="padding:8px 12px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:14px;min-width:220px;flex:1"
              oninput="difSvFiltrar()">
       <select id="difSv_bodega" onchange="difSvFiltrar()"
-              style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px">
+              style="padding:8px 12px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:14px">
         <option value="">📦 Todas las bodegas</option>
         <option value="PSV">PSV — Patio San Vicente (ID 40)</option>
         <option value="SSV">SSV — Sala San Vicente (ID 39)</option>
@@ -472,7 +472,7 @@
         <option value="DSV">DSV — Distribución San Vicente (ID 88)</option>
       </select>
       <select id="difSv_tipo" onchange="difSvFiltrar()"
-              style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px">
+              style="padding:8px 12px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:14px">
         <option value="">Estado: Todos</option>
         <option value="normal">📋 Compromiso (Normal)</option>
         <option value="anomalia_jt">⚠ Anomalía JT (traslado)</option>
@@ -489,15 +489,15 @@
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
       <label style="font-size:13px;color:#cbd5e1;white-space:nowrap;font-weight:700;letter-spacing:.02em">Filtrar por doc. causante:</label>
       <select id="difSv_docTipo" onchange="difSvFiltrar()"
-              style="padding:8px 12px;border-radius:8px;border:1px solid #6366f1;background:var(--bg);color:#a5b4fc;font-size:13px;font-weight:600">
-        <option value="">Todos los documentos</option>
-        <option value="boleta">🧾 BVE / FVE — Boleta o Factura de Venta Electrónica</option>
-        <option value="factura_el">🧾 FEL / BEL — Factura o Boleta Elect. (otros tipos)</option>
-        <option value="venta_meson">🛒 NVM / VMN — Nota de Venta / Venta Mesón</option>
-        <option value="nota_venta">🛒 VMP — Venta Mesón Público POS</option>
-        <option value="devolucion">↩ GDC / NCE — Guía Devolución o Nota Crédito</option>
-        <option value="recepcion">📦 GRC / GRS — Guía Recepción de Compra</option>
-        <option value="traslado">🚚 GRT / GIB / GET — Traslado JustTime</option>
+              style="padding:8px 12px;border-radius:8px;border:1px solid #6366f1;background:#1e2d4a;color:#e2e8f0;font-size:13px;font-weight:600">
+        <option value=""        style="background:#1e2d4a;color:#e2e8f0">Todos los documentos</option>
+        <option value="boleta"      style="background:#1e2d4a;color:#e2e8f0">🧾 BVE / FVE — Boleta o Factura de Venta Electrónica</option>
+        <option value="factura_el"  style="background:#1e2d4a;color:#e2e8f0">🧾 FEL / BEL — Factura o Boleta Elect. (otros tipos)</option>
+        <option value="venta_meson" style="background:#1e2d4a;color:#e2e8f0">🛒 NVM / VMN — Nota de Venta / Venta Mesón</option>
+        <option value="nota_venta"  style="background:#1e2d4a;color:#e2e8f0">🛒 VMP — Venta Mesón Público POS</option>
+        <option value="devolucion"  style="background:#1e2d4a;color:#e2e8f0">↩ GDC / NCE — Guía Devolución o Nota Crédito</option>
+        <option value="recepcion"   style="background:#1e2d4a;color:#e2e8f0">📦 GRC / GRS — Guía Recepción de Compra</option>
+        <option value="traslado"    style="background:#1e2d4a;color:#e2e8f0">🚚 GRT / GIB / GET — Traslado JustTime</option>
       </select>
       <div id="difSv_info" style="font-size:11px;color:#94a3b8;flex:1;text-align:right"></div>
       <button onclick="difSvExcelAll()"
