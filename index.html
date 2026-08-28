@@ -460,7 +460,7 @@
       <option value="cuadrado">Cuadrado (sin dif)</option>
     </select>
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#e2e8f0;cursor:pointer;white-space:nowrap">
-      <input type="checkbox" id="difSv_soloDif" onchange="difSvFiltrar()" style="accent-color:#6366f1;width:14px;height:14px">
+      <input type="checkbox" id="difSv_soloDif" checked onchange="difSvFiltrar()" style="accent-color:#6366f1;width:14px;height:14px">
       Solo con diferencia
     </label>
     <button onclick="difSvExcelAll()"
@@ -772,6 +772,7 @@ function doLogout(){
 
 var MODO_SV = false;
 var MODO_LC = false;
+var _vistaIniciada = {};
 
 auth.onAuthStateChanged(function(user){
   if(user){
@@ -863,8 +864,8 @@ function cargarDatos(){
       ['lascabras'].forEach(function(v){ initVista(v); render(v); });
       aplicarModoLC();
     } else {
-      // Admin: init todas y mostrar todos los tabs
-      VISTAS_STD.forEach(function(v){ initVista(v); render(v); });
+      // Admin: solo render la vista inicial (merma); el resto se init en el primer click
+      initVista('merma'); render('merma'); _vistaIniciada['merma'] = true;
       Object.keys(VISTAS).forEach(function(k){
         var btn=document.getElementById('tabBtn_'+k);
         if(btn) btn.style.display='';
@@ -954,6 +955,10 @@ function cambiarTab(v){
   if(v === 'dif_sv'){
     difSvInit();
     return;
+  }
+  // Lazy init: renderizar la vista la primera vez que se abre (admin)
+  if(VISTAS[v] && !_vistaIniciada[v] && VISTAS[v].DATA && VISTAS[v].DATA.registros && VISTAS[v].DATA.registros.length > 0){
+    initVista(v); render(v); _vistaIniciada[v] = true;
   }
   // Inicializar Solicitud LC la primera vez que se abre
   if(v === 'solicitud_lc'){
@@ -1693,7 +1698,7 @@ function difSvRenderTabla(){
       + '<td '+td+'text-align:right;color:#94a3b8">'+fmt(p.contable||0)+'</td>'
       + '<td '+td+'text-align:right;white-space:nowrap;color:#94a3b8">'+costoStr+'</td>'
       + '<td '+td+'text-align:right;background:rgba(45,27,110,.4)">'+difCell+'</td>'
-      + '<td '+td+'text-align:center;font-size:12px">'+tipoBadge+'</td>'
+      + '<td '+td+'text-align:center;font-size:12px;white-space:nowrap">'+tipoBadge+'</td>'
       + '</tr>';
   });
   tbody.innerHTML = html;
