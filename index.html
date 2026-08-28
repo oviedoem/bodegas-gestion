@@ -143,6 +143,13 @@
     #panel_dif_sv table th,#panel_dif_sv table td{padding:3px 5px}
     #difSv_kpis .kpi-box{min-width:90px;padding:7px 10px}
   }
+  #difSvDetallePanel{
+    position:absolute;inset:0;background:#0f172a;border-radius:12px;
+    padding:20px 24px;overflow-y:auto;
+    transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);
+    display:none;
+  }
+  #difSvDetallePanel.visible{transform:translateX(0)}
 </style>
 </head>
 <body>
@@ -524,9 +531,16 @@
         <tbody id="difSvModalBody"></tbody>
       </table>
     </div>
-    <div id="difSvDetalle" style="display:none;margin-top:14px;background:#0a1628;border:1px solid #1e40af;border-radius:8px;padding:14px;font-size:12px;color:#e2e8f0"></div>
     <div style="margin-top:10px;font-size:10px;color:#64748b">
       Dif = Físico − Disp. Positivo = compromiso normal (Ped/DVta/DCom). Negativo (rojo) = anomalía JT (GRT/GIB sin 2° paso JustWeb).
+    </div>
+    <!-- Panel deslizante de detalle de documento -->
+    <div id="difSvDetallePanel" aria-label="Detalle documento">
+      <button onclick="difSvVolverLista()"
+              style="display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid #334155;border-radius:8px;color:#94a3b8;font-size:13px;padding:5px 12px;cursor:pointer;margin-bottom:16px">
+        ← Volver
+      </button>
+      <div id="difSvDetalleContenido" style="font-size:12px;color:#e2e8f0"></div>
     </div>
   </div>
 </div>
@@ -1725,13 +1739,31 @@ function _difSvTipoCateg(tipo){
 function difSvAbrirDocs(clave){
   var prod = (_difSvData.productos||[]).find(function(p){ return _difSvKey(p)===clave; });
   if(!prod) return;
-  document.getElementById('difSvDetalle').style.display = 'none';
+  // Asegurar que el panel de detalle esté cerrado al (re)abrir la lista
+  var detPanel = document.getElementById('difSvDetallePanel');
+  detPanel.classList.remove('visible');
+  detPanel.style.display = 'none';
   var modal = document.getElementById('difSvModal');
-  var tipoLabel = prod.tipo==='anomalia_jt'
-    ? '⚠️ Anomalía JT — traslados sin 2° paso en JustWeb (GRT/GIB)'
-    : prod.ped>0
-      ? '📋 Boleta/Factura de venta pendiente de despacho (Ped abierto)'
-      : '📋 Boleta/Factura emitida sin GME — Disp reducido, Fis aún sin bajar';
+  // Label descriptivo según el tipo de documento causante
+  var tipoLabel;
+  if(prod.tipo==='anomalia_jt'){
+    tipoLabel = '⚠️ Anomalía JT — traslados sin 2° paso en JustWeb (GRT/GIB)';
+  } else {
+    var allDocs = prod.docs||[];
+    var hasNVM  = allDocs.some(function(d){ return _DOCS_VENTA.indexOf(d.tipo)>=0; });
+    var hasBVE  = allDocs.some(function(d){ return _DOCS_BVE.indexOf(d.tipo)>=0; });
+    if(prod.ped>0){
+      tipoLabel = '📋 Boleta/Factura pendiente de despacho (Ped abierto) — Físico no bajó aún';
+    } else if(hasBVE && hasNVM){
+      tipoLabel = '📋 Venta con boleta (NVM+BVE) sin guía de despacho (GME) — Físico no bajó';
+    } else if(hasBVE){
+      tipoLabel = '📋 Boleta/Factura sin guía de despacho (GME) — Físico no bajó aún';
+    } else if(hasNVM){
+      tipoLabel = '📋 Venta mesón (NVM) sin guía de despacho (GME) — Físico no bajó';
+    } else {
+      tipoLabel = '📋 Diferencia sin despacho registrado — Físico no bajó';
+    }
+  }
   document.getElementById('difSvModalTitle').innerHTML =
     '<span style="color:#a5b4fc">['+esc(prod.bodega)+']</span> '+esc(prod.codigo)+' — '+esc(prod.desc)
     +'<br><span style="font-size:11px;font-weight:400;color:#94a3b8">'+tipoLabel+' · Click en una fila para ver detalle completo</span>';
@@ -1766,6 +1798,14 @@ function difSvAbrirDocs(clave){
     if(Math.abs(docs[_i].cant - absDif)<0.001){ exactoIdx=_i; break; }
   }
   if(exactoIdx>=0){
+    // Si el exacto es NVM/VMP/VMN, preferir la BVE/FVE con misma cant (es el doc raíz)
+    if(_DOCS_VENTA.indexOf(docs[exactoIdx].tipo)>=0){
+      for(var _k=0; _k<docs.length; _k++){
+        if(_DOCS_BVE.indexOf(docs[_k].tipo)>=0 && Math.abs(docs[_k].cant-absDif)<0.001){
+          exactoIdx=_k; break;
+        }
+      }
+    }
     docsCausa[exactoIdx]=true;
   } else {
     var acum=0;
@@ -1825,31 +1865,41 @@ function difSvAbrirDocs(clave){
 function difSvVerDetalle(docJson, codigo, desc){
   var doc;
   try { doc = JSON.parse(decodeURIComponent(docJson)); } catch(e){ return; }
-  var d = document.getElementById('difSvDetalle');
   var tipoColor = _difSvTipoCateg(doc.tipo)==='jt' ? '#f59e0b'
     : _difSvTipoCateg(doc.tipo)==='ped' ? '#60a5fa'
     : _difSvTipoCateg(doc.tipo)==='dcom' ? '#4ade80' : '#e2e8f0';
   var folio = doc.folio && doc.folio!=='0' ? doc.folio : ('ID interno: '+(doc.idnum||'?'));
-  d.innerHTML = '<div style="font-size:13px;font-weight:700;color:#a5b4fc;margin-bottom:10px">📄 Detalle del documento</div>'
-    + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'
-    + '<div style="flex:1;min-width:140px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Tipo</div><div style="font-size:16px;font-weight:800;color:'+tipoColor+'">'+esc(doc.tipo)+'</div></div>'
-    + '<div style="flex:1;min-width:140px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Folio / N°</div><div style="font-size:16px;font-weight:800">'+esc(folio)+'</div></div>'
-    + '<div style="flex:1;min-width:180px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Fecha y Hora</div><div style="font-size:14px;font-weight:700;color:#f8fafc">'+esc(doc.fecha)+'</div></div>'
-    + '<div style="flex:1;min-width:120px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Cantidad</div><div style="font-size:16px;font-weight:800;color:#f59e0b">'+fmt(doc.cant)+'</div></div>'
+  document.getElementById('difSvDetalleContenido').innerHTML =
+    '<div style="font-size:13px;font-weight:700;color:#a5b4fc;margin-bottom:14px">📄 Detalle del documento</div>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">'
+    + '<div style="flex:1;min-width:130px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Tipo</div><div style="font-size:18px;font-weight:800;color:'+tipoColor+'">'+esc(doc.tipo)+'</div></div>'
+    + '<div style="flex:1;min-width:130px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Folio / N°</div><div style="font-size:18px;font-weight:800">'+esc(folio)+'</div></div>'
+    + '<div style="flex:1;min-width:170px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Fecha y Hora</div><div style="font-size:14px;font-weight:700;color:#f8fafc">'+esc(doc.fecha)+'</div></div>'
+    + '<div style="flex:1;min-width:110px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Cantidad</div><div style="font-size:18px;font-weight:800;color:#f59e0b">'+fmt(doc.cant)+'</div></div>'
     + '</div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">'
+    + '<div style="border-top:1px solid #1e3a5f;padding-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12px">'
     + '<div><span style="color:#64748b">Código:</span> <b>'+esc(codigo)+'</b></div>'
     + '<div style="grid-column:span 2"><span style="color:#64748b">Descripción:</span> '+esc(desc)+'</div>'
-    + (doc.bve_folio?'<div style="grid-column:span 2"><span style="color:#64748b">Boleta/Factura:</span> <b style="color:#4ade80">'+esc(doc.bve_tipo)+' N°'+esc(doc.bve_folio)+'</b></div>':'')
+    + (doc.bve_folio?'<div style="grid-column:span 3;background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.25);border-radius:6px;padding:8px"><span style="color:#64748b">Boleta/Factura vinculada:</span> <b style="color:#4ade80;font-size:14px">'+esc(doc.bve_tipo)+' N°'+esc(doc.bve_folio)+'</b></div>':'')
     + '<div><span style="color:#64748b">Usuario:</span> <b>'+esc(doc.usuario||'—')+'</b></div>'
-    + (doc.obs&&doc.obs!=='—'?'<div style="grid-column:span 3"><span style="color:#64748b">Observación:</span> '+esc(doc.obs)+'</div>':'')
+    + (doc.obs&&doc.obs!=='—'?'<div style="grid-column:span 3;background:rgba(148,163,184,.07);border-radius:6px;padding:8px"><span style="color:#64748b">Observación:</span> '+esc(doc.obs)+'</div>':'')
     + '</div>';
-  d.style.display = 'block';
+  var panel = document.getElementById('difSvDetallePanel');
+  panel.style.display = 'block';
+  requestAnimationFrame(function(){ panel.classList.add('visible'); });
+}
+
+function difSvVolverLista(){
+  var panel = document.getElementById('difSvDetallePanel');
+  panel.classList.remove('visible');
+  setTimeout(function(){ panel.style.display = 'none'; }, 230);
 }
 
 function difSvModalCerrar(){
   document.getElementById('difSvModal').style.display = 'none';
-  document.getElementById('difSvDetalle').style.display = 'none';
+  var panel = document.getElementById('difSvDetallePanel');
+  panel.classList.remove('visible');
+  panel.style.display = 'none';
 }
 
 function difSvExcelAll(){
