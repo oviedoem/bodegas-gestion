@@ -173,7 +173,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.47</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.48</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -1718,46 +1718,30 @@ function difSvAbrirDocs(clave){
   // Para normal: primero VMN. Si no hay, GME (despacho activo).
   // Para anomalia_jt: traslados.
   // DCom (GRC/OC) se excluye siempre del panel de causa.
-  // Pre-calcular mapa BVE/FVE: clave "cant_fecha" → boleta
-  var _bveMap = {};
-  (prod.docs||[]).forEach(function(d){
-    if(_DOCS_BVE.indexOf(d.tipo)>=0){
-      var k = d.cant+'_'+d.fecha.substring(0,10);
-      if(!_bveMap[k]) _bveMap[k] = d;
-    }
-  });
-
-  var tiposFiltro;
-  if(prod.tipo === 'anomalia_jt'){
-    tiposFiltro = _DOCS_ANOMALIA;
-  } else if(prod.dif > 0){
-    // Mostrar todos los docs que mueven stock (VMN, BVE, GME) — el ⭐ va en BVE/FVE
-    tiposFiltro = _DOCS_BVE.concat(_DOCS_VENTA).concat(_DOCS_DVEN);
-  } else {
-    tiposFiltro = _DOCS_VENTA.concat(_DOCS_DVEN);
-  }
-  var docs = (prod.docs || []).filter(function(d){ return tiposFiltro.indexOf(d.tipo) >= 0; });
+  // Mostrar TODOS los docs descargados — la diferencia puede venir de cualquier tipo
+  // Para anomalia_jt filtrar solo traslados (GRT/GIB); para el resto: todo
+  var docs = prod.tipo === 'anomalia_jt'
+    ? (prod.docs||[]).filter(function(d){ return _DOCS_ANOMALIA.indexOf(d.tipo)>=0; })
+    : (prod.docs||[]).slice();
 
   // Determinar qué doc(s) son el match exacto de la diferencia
   var absDif = Math.abs(prod.dif);
   // 1. Buscar doc con cant exactamente igual al dif
-  // ⭐ en BVE/FVE cuya cant coincide exactamente con dif
-  // Si no hay BVE, cae en VMN. Si no hay VMN, GME.
+  // ⭐ en el doc cuya cant === dif exacto (cualquier tipo)
+  // Si no hay exacto: acumular greedy los más recientes hasta llegar al dif
   var docsCausa = {};
-  var prioridad = [_DOCS_BVE, _DOCS_VENTA, _DOCS_DVEN];
-  var encontrado = false;
-  for(var _p=0; _p<prioridad.length && !encontrado; _p++){
-    // Buscar exacto por cant en este grupo
-    var exacto = docs.find(function(d){ return prioridad[_p].indexOf(d.tipo)>=0 && Math.abs(d.cant - absDif)<0.001; });
-    if(exacto){ docsCausa[docs.indexOf(exacto)]=true; encontrado=true; break; }
-    // Si no hay exacto, acumular greedy dentro del grupo
+  var exactoIdx = -1;
+  for(var _i=0; _i<docs.length; _i++){
+    if(Math.abs(docs[_i].cant - absDif)<0.001){ exactoIdx=_i; break; }
+  }
+  if(exactoIdx>=0){
+    docsCausa[exactoIdx]=true;
+  } else {
     var acum=0;
     for(var _i=0; _i<docs.length; _i++){
-      if(prioridad[_p].indexOf(docs[_i].tipo)<0) continue;
       if(acum>=absDif) break;
       acum=Math.round((acum+Math.abs(docs[_i].cant))*100)/100;
       docsCausa[_i]=true;
-      encontrado=true;
     }
   }
 
