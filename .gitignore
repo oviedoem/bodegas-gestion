@@ -7,8 +7,6 @@ __pycache__/
 *.pyc
 *.bak
 .firebase/
-bodegas_gestion.json
-bodegas_ir_otras.json
 MERMA.xlsx
 
 # NUNCA subir credenciales de login generadas localmente
@@ -16,9 +14,9 @@ _CREDENCIAL_LOGIN_NO_SUBIR.txt
 _setup_firebase_auth.py
 _subir_datos_firestore.py
 
-# JSONs de bodegas — ahora van al repo (migración Firestore→GitHub)
-# bodegas_gestion.json  ← en repo
-# bodegas_ir_otras.json ← en repo
+# JSONs de bodegas — SÍ van al repo (migración Firestore→GitHub Pages, 2026-08-27)
+# bodegas_gestion.json  → commiteado y servido desde GitHub Pages
+# bodegas_ir_otras.json → commiteado y servido desde GitHub Pages
 # Datos intermedios por sucursal — se excluyen individualmente (no el directorio)
 data/bodegas_*.json
 data/oc-pendientes-lc.json
