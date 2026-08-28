@@ -173,7 +173,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.48</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.49</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -1745,9 +1745,18 @@ function difSvAbrirDocs(clave){
     }
   }
 
+  // Construir mapa BVE/FVE por cant+fecha para vincularlas a VMN/VMP/NVM
+  var _bveMap = {};
+  (prod.docs||[]).forEach(function(d){
+    if(_DOCS_BVE.indexOf(d.tipo)>=0){
+      var k = d.cant+'_'+d.fecha.substring(0,10);
+      _bveMap[k] = d;
+    }
+  });
+
   var rows = '';
   if(!docs.length){
-    rows = '<tr><td colspan="7" style="padding:16px;text-align:center;color:#94a3b8">Sin documentos VMN/NVM que expliquen la diferencia de '+fmt(prod.dif)+' unidades.</td></tr>';
+    rows = '<tr><td colspan="7" style="padding:16px;text-align:center;color:#94a3b8">Sin documentos que expliquen la diferencia de '+fmt(prod.dif)+' unidades.</td></tr>';
   } else {
     docs.forEach(function(doc, ii){
       var categDoc = _difSvTipoCateg(doc.tipo);
