@@ -188,7 +188,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.52</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">28-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.53</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">28-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -1916,13 +1916,28 @@ function difSvAbrirDocs(clave){
       var borde  = esCausa ? '2px solid #f59e0b' : '1px solid #2d3f55';
       var td     = 'style="padding:6px 10px;border:'+borde+';color:#e2e8f0"';
       var folio  = doc.folio && doc.folio!=='0' ? esc(doc.folio) : '<span style="color:#64748b;font-style:italic">ID:'+esc(doc.idnum||'?')+'</span>';
-      // Buscar BVE/FVE vinculada por cant+fecha
+      // Buscar BVE/FVE vinculada por cant+fecha (para VMN→BVE)
       var bveKey = doc.cant+'_'+doc.fecha.substring(0,10);
       var bveDoc = _DOCS_VENTA.indexOf(doc.tipo)>=0 ? _bveMap[bveKey] : null;
       var bveStr = bveDoc ? ' <span style="color:#4ade80;font-size:10px;font-weight:700">'+esc(bveDoc.tipo)+' '+esc(bveDoc.folio)+'</span>' : '';
+      // Buscar VMN vinculado a esta BVE (inverso: BVE→VMN, misma cant+fecha)
+      var vmnDoc = null;
+      if(_DOCS_BVE.indexOf(doc.tipo)>=0){
+        vmnDoc = (prod.docs||[]).find(function(v){
+          return _DOCS_VENTA.indexOf(v.tipo)>=0 && v.cant===doc.cant && v.fecha.substring(0,10)===doc.fecha.substring(0,10);
+        });
+        if(vmnDoc) bveStr = ' <span style="color:#60a5fa;font-size:10px;font-weight:700">'+esc(vmnDoc.tipo)+' '+(vmnDoc.folio&&vmnDoc.folio!=='0'?vmnDoc.folio:'ID:'+vmnDoc.idnum)+'</span>';
+      }
       var usupc  = esc(doc.usuario)+(doc.pc?' <span style="color:#64748b;font-size:10px">('+esc(doc.pc)+')</span>':'');
       var indicador = esCausa ? '⭐ ' : '';
-      var docConBve = Object.assign({}, doc, {bve_tipo: bveDoc?bveDoc.tipo:'', bve_folio: bveDoc?bveDoc.folio:''});
+      var docConBve = Object.assign({}, doc, {
+        bve_tipo:  bveDoc  ? bveDoc.tipo  : '',
+        bve_folio: bveDoc  ? bveDoc.folio : '',
+        vmn_tipo:  vmnDoc  ? vmnDoc.tipo  : '',
+        vmn_folio: vmnDoc  ? (vmnDoc.folio&&vmnDoc.folio!=='0'?vmnDoc.folio:('ID:'+vmnDoc.idnum)) : '',
+        vmn_fecha: vmnDoc  ? vmnDoc.fecha : '',
+        vmn_usuario: vmnDoc? vmnDoc.usuario: ''
+      });
       rows += '<tr data-ii="'+ii+'" style="background:'+rowBg2+';cursor:pointer" onclick="difSvVerDetalle(\''+encodeURIComponent(JSON.stringify(docConBve))+'\',\''+esc(prod.codigo)+'\',\''+esc(prod.desc)+'\')">'
         + '<td style="padding:6px 10px;border:'+borde+';font-weight:700;color:'+tipoColor+'">'+indicador+esc(doc.tipo)+'</td>'
         + '<td '+td+'>'+folio+bveStr+'</td>'
@@ -1941,29 +1956,68 @@ function difSvAbrirDocs(clave){
 function difSvVerDetalle(docJson, codigo, desc){
   var doc;
   try { doc = JSON.parse(decodeURIComponent(docJson)); } catch(e){ return; }
-  var tipoColor = _difSvTipoCateg(doc.tipo)==='jt'  ? '#f59e0b'
-    : _difSvTipoCateg(doc.tipo)==='dev'  ? '#a78bfa'
-    : _difSvTipoCateg(doc.tipo)==='rec'  ? '#2dd4bf'
-    : _difSvTipoCateg(doc.tipo)==='ped'  ? '#60a5fa'
-    : _difSvTipoCateg(doc.tipo)==='dcom' ? '#4ade80' : '#e2e8f0';
-  var folio = doc.folio && doc.folio!=='0' ? doc.folio : ('ID interno: '+(doc.idnum||'?'));
+  var categ = _difSvTipoCateg(doc.tipo);
+  var tipoColor = categ==='jt'  ? '#f59e0b'
+    : categ==='dev'  ? '#a78bfa'
+    : categ==='rec'  ? '#2dd4bf'
+    : categ==='ped'  ? '#60a5fa'
+    : categ==='dcom' ? '#4ade80' : '#e2e8f0';
+  var folio = doc.folio && doc.folio!=='0' ? doc.folio : ('ID: '+(doc.idnum||'?'));
+  var esBoleta = _DOCS_BVE.indexOf(doc.tipo)>=0;
+
+  // Precios — solo mostrar si hay valor_lista en el doc (datos nuevos post SQL fix)
+  var tienePrecios = doc.valor_lista !== undefined;
+  var valorListaFmt  = tienePrecios ? '$'+fmt(doc.valor_lista) : '—';
+  var descPctFmt     = tienePrecios ? (doc.desc_pct?fmt(doc.desc_pct)+'%':'0%') : '—';
+  var valorNetoFmt   = tienePrecios ? '$'+fmt(doc.valor_neto_uni) : '—';
+  // Fechas: emision y registro
+  var fechaEmi = doc.fecha_emi || doc.fecha || '—';
+  var fechaReg = doc.fecha_reg || '';
+  var fechaDisplay = doc.fecha || fechaEmi;
+  var horaStr = fechaDisplay.length >= 19 && !fechaDisplay.endsWith('00:00:00') ? fechaDisplay.substring(11) : (fechaReg && fechaReg.length >= 19 ? fechaReg.substring(11) : '—');
+  var fechaStr = fechaDisplay.substring(0,10);
+
   document.getElementById('difSvDetalleContenido').innerHTML =
-    '<div style="font-size:13px;font-weight:700;color:#a5b4fc;margin-bottom:14px">📄 Detalle del documento</div>'
-    + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">'
-    + '<div style="flex:1;min-width:130px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Tipo</div><div style="font-size:18px;font-weight:800;color:'+tipoColor+'">'+esc(doc.tipo)+'</div></div>'
-    + '<div style="flex:1;min-width:130px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Folio / N°</div><div style="font-size:18px;font-weight:800">'+esc(folio)+'</div></div>'
-    + '<div style="flex:1;min-width:170px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Fecha y Hora</div><div style="font-size:14px;font-weight:700;color:#f8fafc">'+esc(doc.fecha)+'</div></div>'
-    + '<div style="flex:1;min-width:110px"><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Cantidad</div><div style="font-size:18px;font-weight:800;color:#f59e0b">'+fmt(doc.cant)+'</div></div>'
+    '<div style="font-size:13px;font-weight:700;color:#a5b4fc;margin-bottom:12px">📄 Detalle del documento</div>'
+    // — Cabecera tipo JustTime
+    + '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px;margin-bottom:12px">'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 14px;font-size:12px">'
+    + '<div><span style="color:#64748b">Tipo Doc.</span><div style="font-size:17px;font-weight:800;color:'+tipoColor+';margin-top:2px">'+esc(doc.tipo)+'</div></div>'
+    + '<div><span style="color:#64748b">Número / Folio</span><div style="font-size:17px;font-weight:800;margin-top:2px">'+esc(folio)+'</div></div>'
+    + '<div><span style="color:#64748b">Cantidad</span><div style="font-size:17px;font-weight:800;color:#f59e0b;margin-top:2px">'+fmt(doc.cant)+(doc.unidad?' <span style="font-size:11px;color:#94a3b8">'+esc(doc.unidad)+'</span>':'')+'</div></div>'
+    + '<div><span style="color:#64748b">Fecha emisión</span><div style="font-weight:600;margin-top:2px">'+esc(fechaStr)+'</div></div>'
+    + '<div><span style="color:#64748b">Hora registro</span><div style="font-weight:600;margin-top:2px;color:'+(horaStr!=='—'?'#e2e8f0':'#475569')+'">'+esc(horaStr)+'</div></div>'
+    + '<div><span style="color:#64748b">ID interno</span><div style="font-size:11px;color:#64748b;margin-top:2px">'+esc(doc.idnum||'—')+'</div></div>'
+    + '</div></div>'
+    // — Responsable + Estación
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;font-size:12px">'
+    + '<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:8px 10px"><span style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Responsable / Cajero</span><div style="font-weight:700;margin-top:3px">'+esc(doc.usuario||'—')+'</div></div>'
+    + '<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:8px 10px"><span style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Estación PC</span><div style="font-weight:700;margin-top:3px">'+esc(doc.pc||'—')+'</div></div>'
+    + (doc.idcliente?'<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:8px 10px"><span style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Código cliente</span><div style="font-weight:700;margin-top:3px">'+esc(doc.idcliente)+'</div></div>':'')
+    + (doc.sucursal_doc?'<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:8px 10px"><span style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Sucursal doc.</span><div style="font-weight:700;margin-top:3px">'+esc(doc.sucursal_doc)+'</div></div>':'')
     + '</div>'
-    + '<div style="border-top:1px solid #1e3a5f;padding-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12px">'
+    // — Producto
+    + '<div style="border-top:1px solid #1e3a5f;padding-top:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px;margin-bottom:10px">'
     + '<div><span style="color:#64748b">Código:</span> <b>'+esc(codigo)+'</b></div>'
     + '<div style="grid-column:span 2"><span style="color:#64748b">Descripción:</span> '+esc(desc)+'</div>'
-    + (doc.bve_folio?'<div style="grid-column:span 3;background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.25);border-radius:6px;padding:8px"><span style="color:#64748b">Boleta/Factura vinculada:</span> <b style="color:#4ade80;font-size:14px">'+esc(doc.bve_tipo)+' N°'+esc(doc.bve_folio)+'</b></div>':'')
-    + '<div><span style="color:#64748b">Usuario:</span> <b>'+esc(doc.usuario||'—')+'</b></div>'
-    + (doc.obs&&doc.obs!=='—'?'<div style="grid-column:span 3;background:rgba(148,163,184,.07);border-radius:6px;padding:8px"><span style="color:#64748b">Observación:</span> '+esc(doc.obs)+'</div>':'')
-    + '</div>';
+    // — Precios (si están disponibles en el JSON)
+    + (tienePrecios?'<div><span style="color:#64748b">V. Lista:</span> <b>'+valorListaFmt+'</b></div>':'')
+    + (tienePrecios?'<div><span style="color:#64748b">Descuento:</span> <b>'+descPctFmt+'</b></div>':'')
+    + (tienePrecios?'<div><span style="color:#64748b">V. Neto unit.:</span> <b style="color:#4ade80">'+valorNetoFmt+'</b></div>':'')
+    + '</div>'
+    // — Vínculos entre docs
+    + (doc.bve_folio?'<div style="background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.25);border-radius:6px;padding:10px;font-size:12px;margin-bottom:8px">📄 <span style="color:#64748b">Boleta/Factura vinculada:</span> <b style="color:#4ade80;font-size:14px;margin-left:4px">'+esc(doc.bve_tipo)+' N° '+esc(doc.bve_folio)+'</b></div>':'')
+    + (esBoleta && doc.vmn_folio?'<div style="background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.25);border-radius:6px;padding:10px;font-size:12px;margin-bottom:8px">🛒 <span style="color:#64748b">Venta que generó esta boleta:</span> <b style="color:#60a5fa;font-size:14px;margin-left:4px">'+esc(doc.vmn_tipo)+' '+esc(doc.vmn_folio)+'</b>'+(doc.vmn_fecha?' <span style="color:#64748b;font-size:11px;margin-left:8px">'+esc(doc.vmn_fecha)+'</span>':'')+(doc.vmn_usuario?' · <span style="color:#94a3b8;font-size:11px">'+esc(doc.vmn_usuario)+'</span>':'')+'</div>':'')
+    // — Observación
+    + (doc.obs&&doc.obs!=='—'&&doc.obs?'<div style="background:rgba(148,163,184,.07);border-radius:6px;padding:10px;font-size:12px"><span style="color:#64748b">Observación impresa:</span> <span style="color:#e2e8f0">'+esc(doc.obs)+'</span></div>':'')
+    + ((!doc.valor_lista&&!doc.bve_folio&&!doc.vmn_folio&&!doc.pc)?'<div style="font-size:10.5px;color:#475569;margin-top:10px;border-top:1px solid #1e3a5f;padding-top:8px">⚠ Regenera el JSON con <code>descargar_dif_sv.py</code> para ver horas, precios y estación PC</div>':'')
+    + '';
+
   var panel = document.getElementById('difSvDetallePanel');
   panel.style.display = 'block';
+  // Scroll al top para evitar que la tabla del modal filtre por debajo
+  var modalContainer = panel.parentElement;
+  if(modalContainer) modalContainer.scrollTop = 0;
   requestAnimationFrame(function(){ panel.classList.add('visible'); });
 }
 
