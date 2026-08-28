@@ -1566,7 +1566,7 @@ function _difSvCargar(cb){
     })
     .catch(function(e){
       document.getElementById('difSv_tbody').innerHTML =
-        '<tr><td colspan="11" style="padding:20px;text-align:center;color:#dc2626">Error cargando datos: '+e.message+'</td></tr>';
+        '<tr><td colspan="14" style="padding:20px;text-align:center;color:#dc2626">Error cargando datos: '+e.message+'</td></tr>';
     });
 }
 
@@ -1620,7 +1620,7 @@ function difSvFiltrar(){
 function difSvRenderTabla(){
   var tbody = document.getElementById('difSv_tbody');
   if(!_difSvFiltro.length){
-    tbody.innerHTML = '<tr><td colspan="11" style="padding:20px;text-align:center;color:var(--muted)">Sin resultados</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="14" style="padding:20px;text-align:center;color:var(--muted)">Sin resultados</td></tr>';
     return;
   }
   var html = '';
@@ -1707,13 +1707,6 @@ function difSvAbrirDocs(clave){
     kpiBox('D.Vta', prod.dvta, prod.dvta>0?'#60a5fa':'') +
     kpiBox('D.Com', prod.dcom, prod.dcom>0?'#4ade80':'');
 
-  // La causa del Dif>0 siempre es NVM/VMN (reducen Disp).
-  // GRC/OC/FCN son DCom y NO afectan Dif — nunca marcarlos como causa.
-  var causaCateg = prod.tipo==='anomalia_jt' ? 'jt'
-    : prod.dif>0 ? 'ped'   // NVM/VMN redujeron Disp (con o sin GME pendiente)
-    : prod.dif<0 ? 'jt'    // anomalia: Disp > Fis
-    : '';
-
   // Filtro: mostrar SOLO docs que explican el Dif
   // Para normal: primero VMN. Si no hay, GME (despacho activo).
   // Para anomalia_jt: traslados.
@@ -1738,10 +1731,10 @@ function difSvAbrirDocs(clave){
     docsCausa[exactoIdx]=true;
   } else {
     var acum=0;
-    for(var _i=0; _i<docs.length; _i++){
+    for(var _j=0; _j<docs.length; _j++){
       if(acum>=absDif) break;
-      acum=Math.round((acum+Math.abs(docs[_i].cant))*100)/100;
-      docsCausa[_i]=true;
+      acum=Math.round((acum+Math.abs(docs[_j].cant))*100)/100;
+      docsCausa[_j]=true;
     }
   }
 
@@ -1837,7 +1830,7 @@ function difSvExcelAll(){
   var ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!cols'] = [{wch:6},{wch:12},{wch:48},{wch:20},{wch:20},{wch:20},
                  {wch:9},{wch:9},{wch:9},{wch:10},{wch:9},{wch:9},{wch:9},{wch:9},
-                 {wch:7},{wch:7},{wch:7},{wch:7},{wch:12},{wch:12},{wch:14}];
+                 {wch:7},{wch:12},{wch:12},{wch:14}];
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Dif Bodegas SV');
   var hoy = new Date().toISOString().slice(0,10);
