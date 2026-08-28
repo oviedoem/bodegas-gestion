@@ -825,6 +825,466 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- REFERENCIA ERP — conocimiento global del negocio         -->
+  <!-- Fuente: M_DOCUMENTOS, P_BODEGAS consultados 2026-08-28  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+
+  <div class="section-title" style="margin-top:56px">Referencia ERP — Conocimiento global del negocio</div>
+
+  <div class="ciclo" style="padding:0">
+    <!-- Tabs de referencia -->
+    <div style="display:flex;border-bottom:1px solid var(--border);gap:0;overflow-x:auto">
+      <button class="ref-tab ref-tab--active" onclick="showRef('cols')" id="rtab-cols">Columnas Stock</button>
+      <button class="ref-tab" onclick="showRef('docs')" id="rtab-docs">Documentos (195)</button>
+      <button class="ref-tab" onclick="showRef('bods')" id="rtab-bods">Bodegas</button>
+      <button class="ref-tab" onclick="showRef('sucs')" id="rtab-sucs">Sucursales</button>
+    </div>
+
+    <!-- Panel 1: Columnas de stock -->
+    <div id="ref-cols" class="ref-panel" style="padding:22px">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Tabla <code>R_STOCK_PRODUCTOS</code> — campos de stock por bodega y código.</p>
+      <div style="overflow-x:auto">
+      <table class="ref-table">
+        <thead><tr><th>Campo SQL</th><th>Nombre</th><th>Fórmula / Relación</th><th>Cuando sube</th><th>Cuando baja</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code class="col-disp">ST_DISPONIBLE</code></td>
+            <td><strong>Disponible</strong></td>
+            <td>= Físico − comprometido en ventas pendientes</td>
+            <td>GRC (recepción compra), GRT (ingreso traslado), Nota Crédito</td>
+            <td>BVE/FVE/NVM (venta facturada), NVC (nota venta calzada)</td>
+          </tr>
+          <tr>
+            <td><code class="col-fis">ST_FISICO</code></td>
+            <td><strong>Físico</strong></td>
+            <td>Stock real en bodega (inventario contable)</td>
+            <td>GRT (ingreso traslado), GIB (salida origen → destino recibe), GRC directa</td>
+            <td>GME (despacho físico calzada), GIB en origen, GET en origen, mermas</td>
+          </tr>
+          <tr>
+            <td><code class="col-ped">ST_PEDIDO</code></td>
+            <td><strong>Pedido</strong></td>
+            <td>Cantidad comprometida en OCN/OC abiertas</td>
+            <td>OCN (orden de compra emitida)</td>
+            <td>GRC (confirmación llegada), NCO (anulación OC)</td>
+          </tr>
+          <tr>
+            <td><code class="col-trans">ST_TRANSITO</code></td>
+            <td><strong>Tránsito</strong></td>
+            <td>Unidades en camino (GET emitido, GRT pendiente)</td>
+            <td>GET (egreso origen), GIB (ingreso destino intermedio)</td>
+            <td>GRT (confirmación llegada destino)</td>
+          </tr>
+          <tr>
+            <td><code style="color:var(--purple)">ST_DEVENGADOVENTA</code></td>
+            <td><strong>Dev. Venta</strong></td>
+            <td>Compromiso de despacho (GME pendiente)</td>
+            <td>GME, GDV, GCE (despacho devengado)</td>
+            <td>Factura o boleta que cierra el despacho</td>
+          </tr>
+          <tr>
+            <td><code style="color:var(--muted)">ST_DEVENGADOCOMPRA</code></td>
+            <td><strong>Dev. Compra</strong></td>
+            <td>Recepción devengada (GRC pendiente de factura)</td>
+            <td>GRC sin factura aún</td>
+            <td>FCN (factura proveedor confirma)</td>
+          </tr>
+          <tr>
+            <td><code style="color:var(--muted)">ST_CONTABLE</code></td>
+            <td><strong>Contable</strong></td>
+            <td>Stock para fines contables (BVE/FVE afectan aquí)</td>
+            <td>Compras con FCN</td>
+            <td>Ventas con FCV/BVE</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div style="margin-top:16px;padding:12px 14px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);font-size:12px;line-height:1.7">
+        <strong>Dif = Físico − Disponible.</strong>
+        Dif &gt; 0 → hay compromiso abierto (venta sin despacho GME).
+        Dif &lt; 0 → anomalía: Disp superó al Fís.
+        <br>
+        <strong>Bodegas Calzada (ESCALZADA=1, PERMITENEGATIVO=1):</strong> BVE/FVE pueden llevar Disp a negativo — es el ciclo normal. El GRT posterior normaliza.
+        <br>
+        <strong>GIB en origen = −Fis (verificado 2026-08-28):</strong> Cuando IDBODEGA del detalle es la bodega que ENVÍA, GIB resta Físico. GRT en destino suma Físico.
+      </div>
+    </div>
+
+    <!-- Panel 2: Documentos -->
+    <div id="ref-docs" class="ref-panel" style="display:none;padding:22px">
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <input id="doc-filter" type="text" placeholder="Filtrar doc, nombre, tipostock…" oninput="filtrarDocs()"
+          style="flex:1;min-width:180px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:13px">
+        <select id="doc-oper" onchange="filtrarDocs()" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px">
+          <option value="">Todas operac.</option><option value="I">I — Ingreso</option><option value="C">C — Consumo/Venta</option><option value="P">P — Compra/Proveedor</option>
+        </select>
+        <select id="doc-stock" onchange="filtrarDocs()" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px">
+          <option value="">Todo TipoStock</option>
+          <option value="St_Contable">St_Contable</option>
+          <option value="St_DevVen">St_DevVen</option>
+          <option value="St_DevCom">St_DevCom</option>
+          <option value="St_Pedido">St_Pedido</option>
+          <option value="St_Transito">St_Transito</option>
+          <option value="No_Stock">No_Stock</option>
+        </select>
+      </div>
+      <p id="doc-count" style="font-size:11px;color:var(--muted);margin-bottom:8px">195 documentos</p>
+      <div style="overflow-x:auto;max-height:520px;overflow-y:auto">
+      <table class="ref-table" id="docs-table">
+        <thead style="position:sticky;top:0;background:var(--surface)"><tr><th>DOC</th><th>ID</th><th>Oper</th><th>Tran</th><th>Desp</th><th>CamBod</th><th>TipoStock</th><th>CalzPad</th><th>Nombre</th></tr></thead>
+        <tbody id="docs-body"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- Panel 3: Bodegas -->
+    <div id="ref-bods" class="ref-panel" style="display:none;padding:22px">
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <input id="bod-filter" type="text" placeholder="Filtrar bodega, símbolo, sucursal…" oninput="filtrarBods()"
+          style="flex:1;min-width:180px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:13px">
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="bod-calz" onchange="filtrarBods()"> Solo Calzada
+        </label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="bod-neg" onchange="filtrarBods()"> Solo Neg. permitido
+        </label>
+      </div>
+      <div style="overflow-x:auto;max-height:520px;overflow-y:auto">
+      <table class="ref-table" id="bods-table">
+        <thead style="position:sticky;top:0;background:var(--surface)"><tr><th>ID</th><th>Símbolo</th><th>Sucursal</th><th>Calzada</th><th>Neg</th><th>Nombre</th></tr></thead>
+        <tbody id="bods-body"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- Panel 4: Sucursales -->
+    <div id="ref-sucs" class="ref-panel" style="display:none;padding:22px">
+      <div style="overflow-x:auto">
+      <table class="ref-table">
+        <thead><tr><th>IDSUCURSAL</th><th>Nombre</th><th>Bodegas activas</th><th>Notas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>01</strong></td><td>Casa Central Santiago</td><td>CAC, IMP, MKT, REM, BD2</td><td>Administración central</td></tr>
+          <tr><td><strong>02</strong></td><td>Isabel Riquelme</td><td>FER, PIR, CAL, SER, GO, MIR, BFO, EIR, NA, PCS, HEL, RST…</td><td>Sucursal principal. Bodega Merma MIR=75</td></tr>
+          <tr><td><strong>03</strong></td><td>Ferrecenter</td><td>FC (Calzada), MFC</td><td>Solo 2 bodegas activas</td></tr>
+          <tr><td><strong>04</strong></td><td>El Manzano</td><td>SEM, PEM, CEM, GEM, MEM, TEM, RCE, IEM, EEM, RWE</td><td>Bodega Calzada CEM=24</td></tr>
+          <tr><td><strong>05</strong></td><td>San Vicente</td><td>SSV, PSV, GSV, CSV(44-Calzada), MSV, TSV, RSV, ISV, ESV, RWS</td><td>Bodega Calzada CSV=44</td></tr>
+          <tr><td><strong>06</strong></td><td>Las Cabras</td><td>SLC, PLC, CLC, GLC, MLC, TLC, RLC, ILC, ELC, GFL, RWL, VLC</td><td>Bodega Calzada CLC=35</td></tr>
+          <tr><td><strong>08</strong></td><td>Centro de Distribución</td><td>CD, XCD, GCD, MCD, RCD, TCD, ICD, FCM</td><td>Bodegas compartidas todas las sucursales</td></tr>
+          <tr><td><strong>09</strong></td><td>Distribución (CD Litueche)</td><td>DLT=79, BDP=98</td><td>Calzada especial. DLT: calzada pero NO negativo</td></tr>
+          <tr><td><strong>10</strong></td><td>Mercado Libre</td><td>ML=61</td><td>Bodega canal e-commerce</td></tr>
+          <tr><td><strong>11</strong></td><td>Litueche</td><td>SLE, PLE, GLE, TLE, ILE, MLE, CLT(78-Calzada), ELE, RLE, IAL, GFL</td><td>Bodega Calzada CLT=78</td></tr>
+          <tr><td><strong>12</strong></td><td>Alhué</td><td>ALH=50, GAL, MAL, RAL</td><td></td></tr>
+          <tr><td><strong>13</strong></td><td>Peralillo</td><td>PPL=93</td><td></td></tr>
+          <tr><td><strong>14</strong></td><td>Distribución DIR/DSV</td><td>DIR=87 (IR), DSV=88 (SV), DCD=89</td><td>Calzada sin negativo permitido</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .ref-tab {
+      padding: 10px 16px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      font-family: 'IBM Plex Mono', monospace;
+      letter-spacing: .05em;
+      transition: color .15s;
+    }
+    .ref-tab--active {
+      color: var(--disp);
+      border-bottom-color: var(--disp);
+    }
+    .ref-tab:hover { color: var(--text); }
+    .ref-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .ref-table th {
+      text-align: left;
+      padding: 6px 8px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .ref-table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.4;
+    }
+    .ref-table tr:last-child td { border-bottom: none; }
+    .ref-table tr:hover td { background: var(--surface2); }
+    .col-disp { color: var(--disp); font-family: 'IBM Plex Mono', monospace; }
+    .col-fis  { color: var(--fis);  font-family: 'IBM Plex Mono', monospace; }
+    .col-ped  { color: var(--ped);  font-family: 'IBM Plex Mono', monospace; }
+    .col-trans{ color: var(--trans);font-family: 'IBM Plex Mono', monospace; }
+    .tag-calz { display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700;background:var(--purple-bg);color:var(--purple);font-family:'IBM Plex Mono',monospace }
+    .tag-neg  { display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700;background:var(--red-bg);color:var(--red);font-family:'IBM Plex Mono',monospace }
+    .tag-ok   { display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;background:var(--surface2);color:var(--muted) }
+  </style>
+
+  <script>
+  // ── Datos: 195 documentos ──────────────────────────────────────
+  const DOCS = [
+    ['AGD',253,'C',0,0,1,'St_Contable',0,'Ajuste Guia despacho Venta'],
+    ['AGR',252,'P',0,0,1,'St_Contable',0,'Ajuste Guia Recepción de Compra'],
+    ['Ajc',67,'C',0,0,1,'—',0,'Ajuste ctacte cliente siniestrado'],
+    ['Ajc',68,'C',0,0,1,'—',0,'Ajuste ctacte cliente'],
+    ['Ajp',704,'P',0,0,1,'No_Stock',0,'Ajuste ctacte proveedores'],
+    ['ALF',103,'C',0,0,1,'St_Contable',0,'Anulacion Liquidacion Factura'],
+    ['AMA',50,'I',0,0,0,'No_Stock',0,'Bodega Ajuste Mayor Valor de Prod'],
+    ['AME',51,'I',0,0,0,'No_Stock',0,'Bodega Ajuste Menor Valor de Prod'],
+    ['ANC',28,'C',0,0,1,'—',0,'Caja Anticipo Clientes'],
+    ['ANH',250,'P',0,0,1,'—',0,'Tesoreria Anticipo Honorarios'],
+    ['ANP',27,'P',0,0,1,'—',0,'Tesoreria Anticipo Proveedores'],
+    ['BDD',2000,'C',0,0,0,'St_Contable',0,'Boleta Transbank'],
+    ['BSV',318,'C',0,0,0,'St_Contable',0,'BOLETA ELECTRONICA SERVIU'],
+    ['BVE',316,'C',0,0,0,'St_Contable',0,'BOLETA ELECTRONICA'],
+    ['BVE',605,'C',0,0,0,'St_Contable',0,'BOLETA ELECTRONICA WEB'],
+    ['BVN',2,'C',0,0,0,'St_Contable',0,'Venta Boleta'],
+    ['BVP',405,'C',0,0,0,'St_Contable',0,'BOLETA ELECTRONICA POS'],
+    ['Can',201,'C',0,0,1,'—',0,'Cambio anticipo C'],
+    ['Cap',202,'P',0,0,1,'—',0,'Cambio anticipo P'],
+    ['CCI',707,'P',0,0,1,'No_Stock',0,'CARTA DE CREDITO ITAU'],
+    ['CCP',36,'C',0,0,1,'—',0,'Caja Cheque Protestado'],
+    ['CFC',39,'C',0,0,1,'—',0,'Canje Fac. Cliente'],
+    ['CFP',38,'P',0,0,1,'—',0,'Canje Fac. Proveedor'],
+    ['CHC',20,'C',0,0,1,'—',0,'Caja Cheque Cliente'],
+    ['CHP',19,'P',0,0,1,'—',0,'Tesoreria Cheque'],
+    ['CHP',251,'P',0,0,0,'—',0,'Migracion Proveedor'],
+    ['CTP',106,'C',0,0,1,'—',0,'CREDITO TIENDA (NC) POS'],
+    ['CVE',600,'C',1,0,0,'No_Stock',0,'Venta Cotización Externa'],
+    ['CVI',703,'C',1,0,0,'No_Stock',0,'Venta Cotización IVA Incluido'],
+    ['CVN',7,'C',1,0,0,'No_Stock',0,'Venta Cotización'],
+    ['CVN',59,'C',1,0,0,'No_Stock',0,'Venta Cotización calzada'],
+    ['CxP',717,'P',0,0,1,'No_Stock',0,'Cuentas por Pagar Cachapoal'],
+    ['DDC',72,'C',0,0,1,'—',0,'Caja Cliente Excedente'],
+    ['DDC',40,'C',0,0,1,'—',0,'Caja Dep. Directo Cliente'],
+    ['DEC',708,'P',0,0,1,'No_Stock',0,'Dtos. y cXc EERR Cachapoal'],
+    ['DIC',55,'C',0,0,0,'—',0,'Incobrables'],
+    ['DII',111,'P',0,0,0,'St_Contable',0,'Declaracion de Ingreso solo IVA'],
+    ['DIL',112,'P',0,0,0,'St_Contable',0,'Declaracion de Ingreso No Libro'],
+    ['DPT',705,'P',0,0,1,'No_Stock',0,'Devolucion Pago TC'],
+    ['EFC',24,'C',0,0,1,'—',0,'Caja Efectivo Cliente'],
+    ['EVA',43,'C',0,0,1,'—',0,'Caja Vale Vista'],
+    ['FCI',11,'P',0,0,0,'St_Contable',0,'Compra Declaracion Ingreso'],
+    ['FCN',10,'P',0,0,1,'St_Contable',0,'Compra Factura'],
+    ['FCT',113,'P',0,0,1,'St_Contable',0,'Compra Factura tercero'],
+    ['FCV',1,'C',0,0,1,'St_Contable',0,'Venta Factura'],
+    ['FI1',46,'C',0,1,1,'St_Contable',0,'Servicio Factura Interna'],
+    ['FLV',102,'C',0,0,1,'St_Contable',0,'Venta Factura Liquidacion'],
+    ['FVE',35,'C',0,0,1,'St_Contable',0,'Venta Factura Exenta'],
+    ['FVE',301,'C',0,0,1,'St_Contable',0,'Venta Factura Electronica'],
+    ['FVE',601,'C',0,0,1,'St_Contable',0,'Factura Electronica WEB'],
+    ['FVE',335,'C',0,0,1,'St_Contable',0,'Venta Factura Exenta Electronica'],
+    ['FVP',401,'C',0,0,1,'St_Contable',0,'Factura Electrónica POS'],
+    ['GBG',29,'P',0,0,1,'—',0,'Tesoreria Pago directo'],
+    ['GCE',305,'C',1,1,1,'St_DevVen',0,'Venta Guia Despacho Electronica'],
+    ['GCE',315,'I',0,0,1,'St_Contable',0,'Guia devolucion G al cliente Elect'],
+    ['GCG',98,'I',0,0,1,'St_Contable',0,'Guia devolucion al cliente'],
+    ['GCS',45,'C',1,0,1,'St_DevVen',0,'Servicio Guía Consumo'],
+    ['Gdc',79,'P',1,0,1,'St_DevCom',0,'Bodega Guia devolucion Cliente'],
+    ['Gdc',85,'P',1,1,1,'St_Consignado',0,'Consignado Guia Devolucion'],
+    ['Gdc',91,'C',1,1,1,'St_Consignacion',0,'Consignacion Guia Dev'],
+    ['GDE',309,'P',1,0,1,'St_DevVen',0,'Guia despacho a proveedores elect'],
+    ['GDE',314,'I',0,0,1,'St_Contable',0,'Garantia Guia devolucion prov Elect'],
+    ['GDF',42,'C',1,1,1,'St_DevVen',0,'Bodega Guia Despacho Facturas'],
+    ['GDF',58,'C',1,0,1,'St_DevVen',0,'Compra Devolucion facturada'],
+    ['GDG',97,'I',0,0,1,'St_Contable',0,'Garantia Guia devolucion prov'],
+    ['Gdp',78,'P',1,0,1,'St_DevVen',0,'Guia despacho a proveedores'],
+    ['GDP',6,'C',1,0,1,'St_DevVen',0,'Venta Prestamos Guia Despacho'],
+    ['GDP',404,'C',1,1,1,'St_DevVen',0,'Guia Despacho Factura Elect POS'],
+    ['GDP',604,'C',1,1,1,'St_DevVen',0,'Guia Despacho Factura Elect WEB'],
+    ['GDS',74,'C',0,0,1,'St_DevVen',0,'Servicio Guia Devolución'],
+    ['GDV',5,'C',1,1,1,'St_DevVen',0,'Venta Guia Despacho'],
+    ['GEA',80,'C',1,1,0,'St_DevVen',0,'Arriendo Guia Egreso de'],
+    ['Gec',87,'I',1,1,1,'St_Consignado',0,'Consignado Guia Envio Trasl'],
+    ['Gec',90,'C',1,1,1,'St_Consignacion',0,'Consignacion Guia Envio'],
+    ['GEE',313,'I',0,0,1,'St_Contable',0,'Garantia Guia envío proveedor Elect'],
+    ['GEG',47,'I',0,0,1,'St_Contable',0,'Bodega Guía Egreso Garantía'],
+    ['GEI',34,'I',0,0,1,'St_Contable',0,'Bodega Guia Egreso Inventario'],
+    ['GEI',69,'I',1,1,1,'No_Stock',0,'Guia Impresion'],
+    ['GEI',218,'I',0,0,1,'St_Contable',0,'Guia de Consumo'],
+    ['GEI',607,'I',0,0,1,'St_Contable',0,'Guia de Egreso Web'],
+    ['GEI',710,'I',0,1,1,'St_Contable',0,'Guia Merma-Gestion'],
+    ['GEK',501,'I',0,0,1,'St_Contable',0,'Bodega Guia Egreso Kit'],
+    ['GEP',96,'I',0,0,1,'St_Contable',0,'Garantia Guia envío proveedor'],
+    ['GET',18,'I',1,1,1,'St_Contable',0,'Bodega Guia Envio Traslado'],
+    ['GET',700,'I',1,1,1,'St_Contable',0,'Guia Envio Traslado Interna'],
+    ['GEX',99,'I',0,0,1,'St_Contable',0,'Servicio Guia envío taller externo'],
+    ['GIA',81,'C',1,1,0,'St_DevVen',0,'Arriendo Guia Ingreso de'],
+    ['GIB',709,'I',1,1,1,'St_Contable',0,'Guia Ingreso Entre Bodegas'],
+    ['Gic',84,'P',0,0,1,'St_Consignado',0,'Consignado Guia Ingreso'],
+    ['GIE',312,'I',0,0,1,'St_Contable',0,'Garantía Guia ingreso Electronica'],
+    ['GIG',95,'I',0,0,1,'St_Contable',0,'Garantía Guia ingreso'],
+    ['GII',33,'I',0,0,1,'St_Contable',0,'Bodega Guia Ingreso Inventario'],
+    ['GII',606,'I',0,0,1,'St_Contable',0,'Guia de Ingreso Web'],
+    ['GIK',500,'I',0,0,1,'St_Contable',0,'Bodega Guia Ingreso Kit'],
+    ['GME',308,'C',1,1,1,'St_DevVen',0,'GUIA ELECT DESPACHO FACTURA'],
+    ['GNF',57,'P',1,0,1,'st_devCom',0,'Compra Devolucion no facturada'],
+    ['GPE',310,'P',1,0,1,'st_devCom',0,'Guia Dev Proveedor Electr no Facturada'],
+    ['GPF',311,'C',1,0,1,'St_DevVen',0,'Guia Dev Proveedor Electr Facturada'],
+    ['Grc',86,'I',1,1,1,'St_Consignado',0,'Consignado Guia Recep Traslado'],
+    ['GRC',15,'P',1,0,1,'St_DevCom',0,'Compra Guia Recepcion'],
+    ['GRI',16,'P',1,0,1,'St_DevCom',0,'Compra Guia Recepcion Importacion'],
+    ['GRT',17,'I',1,1,1,'St_Contable',0,'Bodega Guia Recepcion Traslado'],
+    ['GRT',307,'I',1,1,1,'St_Contable',0,'Bodega Guia Recepcion Traslado Elect'],
+    ['GRT',701,'I',1,1,1,'St_Contable',0,'Guia Recepcion Traslado'],
+    ['GRT',712,'I',1,1,1,'St_Contable',0,'Bodega Guia Recepcion Traslado 2'],
+    ['GRT',713,'I',1,1,1,'St_Contable',0,'Bodega Guia Recepcion Traslado 3'],
+    ['GST',718,'I',1,1,1,'No_Stock',0,'Solicitud de Traslado Vigente'],
+    ['GST',702,'I',1,1,1,'No_Stock',0,'Solicitud de Traslado'],
+    ['GTE',317,'I',1,1,1,'St_Contable',0,'Guia Despacho Electronica Interno2'],
+    ['GTE',306,'I',1,1,1,'St_Contable',0,'Guia Despacho Electronica Interno'],
+    ['GTS',711,'I',1,1,1,'St_Contable',0,'Guia Traslados Entre Sucursales'],
+    ['Hnr',1100,'P',0,0,0,'—',0,'Compra Boleta Honorarios Adicional'],
+    ['Hnr',110,'P',0,0,0,'—',0,'Compra Boleta Honorarios'],
+    ['LCP',41,'C',0,0,1,'—',0,'Caja Letra Protestada'],
+    ['LFP',105,'P',0,0,1,'St_Contable',0,'Anulacion Liquidacion Factura Compra'],
+    ['LTC',22,'C',0,0,1,'—',0,'Caja Letra Cliente'],
+    ['LTP',21,'P',0,0,1,'—',0,'Tesoreria Letra Cambio'],
+    ['MKP',209,'C',1,0,0,'St_Pedido',0,'Nota de Venta MarketPlace'],
+    ['NCE',304,'C',0,0,1,'St_Contable',0,'Venta Nota Credito Electronica'],
+    ['NCE',603,'C',0,0,1,'St_Contable',0,'Nota Credito Electronica WEB'],
+    ['NCI',14,'P',0,0,1,'St_Contable',0,'Compra Nota Credito Importacion'],
+    ['NCP',13,'P',0,0,1,'St_Contable',0,'Compra Nota Credito Proveedor'],
+    ['NCP',403,'C',0,0,1,'St_Contable',0,'Nota de Credito Electronica POS'],
+    ['NCV',4,'C',0,0,1,'St_Contable',0,'Venta Nota Credito'],
+    ['NDC',12,'P',0,0,1,'St_Contable',0,'Compra Nota Debito'],
+    ['NDE',303,'C',0,0,1,'St_Contable',0,'Venta Nota Debito Electronica'],
+    ['NDE',602,'C',0,0,1,'St_Contable',0,'Nota Debito Electronica WEB'],
+    ['NDP',402,'C',0,0,1,'St_Contable',0,'Nota de Debito Electronica POS'],
+    ['NDV',3,'C',0,0,1,'St_Contable',0,'Venta Nota Debito'],
+    ['NVC',219,'C',1,0,0,'St_Pedido',1,'Venta Nota BDP (calzada)'],
+    ['NVC',203,'C',1,0,0,'St_Pedido',1,'Venta Nota Calzada'],
+    ['NVF',216,'C',1,0,0,'St_Pedido',0,'Nota de Venta Falabella'],
+    ['NVL',215,'C',1,0,0,'St_Pedido',0,'Nota de Venta Linio'],
+    ['NVM',213,'C',1,0,0,'St_Pedido',0,'Nota de Venta Mercado Libre'],
+    ['NVM',205,'C',1,0,0,'St_Pedido',0,'Venta Nota de Venta'],
+    ['NVR',214,'C',1,0,0,'St_Pedido',0,'Nota de Venta Ripley'],
+    ['NVW',217,'C',1,0,0,'St_Pedido',0,'Nota de Venta WEB'],
+    ['OCN',8,'P',1,0,1,'St_Transito',0,'Compra Orden Stock'],
+    ['OCN',26,'P',1,0,1,'St_Transito',1,'Compra Orden Calzada'],
+    ['OCN',9,'P',0,0,1,'St_Transito',0,'Compra Orden Importacion'],
+    ['OCN',104,'P',1,0,1,'St_Transito',0,'Compra Orden Stock Bodega'],
+    ['OCR',211,'P',1,0,1,'St_Transito',0,'Orden de Despacho'],
+    ['ORP',212,'P',1,0,1,'St_Transito',0,'Orden con Retiros Parciales'],
+    ['RGA',223,'P',0,0,1,'St_Contable',0,'Regul Guias Compra Años Anteriores'],
+    ['RGA',224,'C',0,0,1,'St_Contable',0,'Regul Guias Venta Años Anteriores'],
+    ['SCI',32,'P',0,0,1,'No_Stock',0,'Compra Solicitud Cotizacion Int.'],
+    ['SCN',31,'P',0,0,1,'No_Stock',0,'Compra Solicitud Cotizacion Nac'],
+    ['SCP',37,'P',0,0,1,'No_Stock',0,'Compra Solicitud de Pedido'],
+    ['VMN',336,'C',1,0,1,'St_Pedido',0,'Venta meson publico nueva'],
+    ['VMP',210,'C',1,0,1,'St_Pedido',0,'Venta meson publico'],
+  ];
+
+  const TIPOSTOCK_COLOR = {
+    'St_Contable':'#2563eb','St_DevVen':'#d97706','St_DevCom':'#7c3aed',
+    'St_Pedido':'#16a34a','St_Transito':'#1d4ed8','No_Stock':'#94a3b8',
+    'St_Consignado':'#b45309','St_Consignacion':'#b45309','st_devCom':'#7c3aed','—':'#94a3b8'
+  };
+
+  function renderDocs(arr) {
+    const tb = document.getElementById('docs-body');
+    tb.innerHTML = arr.map(d => {
+      const tc = TIPOSTOCK_COLOR[d[6]] || '#94a3b8';
+      const calzBadge = d[7] ? '<span class="tag-calz">Calz</span>' : '';
+      return `<tr>
+        <td><strong style="font-family:'IBM Plex Mono',monospace">${d[0]}</strong></td>
+        <td style="font-family:'IBM Plex Mono',monospace;color:var(--muted)">${d[1]}</td>
+        <td style="font-family:'IBM Plex Mono',monospace;font-weight:700;color:${d[2]==='I'?'var(--fis)':d[2]==='C'?'var(--red)':'var(--purple)'}">${d[2]}</td>
+        <td style="text-align:center">${d[3]?'✓':''}</td>
+        <td style="text-align:center">${d[4]?'✓':''}</td>
+        <td style="text-align:center">${d[5]?'✓':''}</td>
+        <td><span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:${tc}">${d[6]}</span></td>
+        <td>${calzBadge}</td>
+        <td style="color:var(--muted)">${d[8]}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('doc-count').textContent = arr.length + ' documentos';
+  }
+
+  function filtrarDocs() {
+    const q = document.getElementById('doc-filter').value.toLowerCase();
+    const oper = document.getElementById('doc-oper').value;
+    const stk = document.getElementById('doc-stock').value;
+    renderDocs(DOCS.filter(d =>
+      (!q || d[0].toLowerCase().includes(q) || d[8].toLowerCase().includes(q) || String(d[1]).includes(q) || d[6].toLowerCase().includes(q)) &&
+      (!oper || d[2] === oper) &&
+      (!stk || d[6].toLowerCase() === stk.toLowerCase())
+    ));
+  }
+
+  // ── Datos: bodegas ─────────────────────────────────────────────
+  const BODS = [
+    [1,'CAC',1,0,1,'Casa Central'],[17,'BD2',1,1,1,'Despacho Proveedor - NO USAR'],[36,'MKT',1,0,0,'Marketing'],[82,'IMP',1,0,1,'Importaciones'],[84,'REM',1,0,0,'Remate'],
+    [2,'FER',2,0,1,'Ferreteria'],[4,'PIR',2,0,0,'Patio Isabel Riquelme'],[5,'CAL',2,1,1,'Calzada'],[6,'SER',2,0,0,'Servicio Tecnico'],[8,'OVI',2,0,0,'Ovimaq'],[9,'CM',2,1,1,'Convenio Marco'],[10,'AUX',2,0,0,'Auxiliar'],[11,'NA',2,0,1,'Negocios Anticipados'],[15,'CMB',2,0,0,'Convenio Marco Buin'],[18,'EPQ',2,0,0,'Empaque'],[19,'SFO',2,0,0,'Salon Ferreteria Oviedo'],[20,'BFO',2,0,1,'Bodega Ferreteria'],[25,'WEB',2,0,0,'Retiro Web Santiago'],[30,'GO',2,0,1,'Gestion Isabel Riquelme'],[52,'EVE',2,0,0,'Eventos'],[53,'GAR',2,0,0,'Garantia Santiago'],[58,'B2B',2,0,0,'B2B'],[69,'IIR',2,0,0,'Ingreso Isabel Riquelme'],[75,'MIR',2,0,0,'Mermas Isabel Riquelme'],[77,'BMC',2,0,0,'Marticorena Stgo'],[85,'EIR',2,0,0,'Exhibicion Isabel Riquelme'],[86,'SIR',2,0,0,'Sala Isabel Riquelme'],[92,'RST',2,0,0,'Recepcion Santiago'],[94,'PCS',2,0,0,'Patio Constructor Santiago'],[99,'HEL',2,0,0,'Herramientas Electricas'],
+    [14,'FC',3,1,1,'Calzada Ferrecenter'],[21,'MFC',3,0,0,'Mermas Ferrocenter'],
+    [13,'SEM',4,0,0,'Sala El Manzano'],[22,'PEM',4,0,0,'Patio El Manzano'],[24,'CEM',4,1,1,'Calzada El Manzano'],[28,'GEM',4,0,1,'Gestion El Manzano'],[29,'MEM',4,0,0,'Mermas El Manzano'],[46,'TEM',4,0,0,'Transito El Manzano'],[49,'RWE',4,0,0,'Retiro Web El Manzano'],[55,'RCE',4,0,0,'Recepcion El Manzano'],[72,'IEM',4,0,0,'Ingreso El Manzano'],[83,'EEM',4,0,0,'Exhibicion El Manzano'],
+    [39,'SSV',5,0,0,'Sala San Vicente'],[40,'PSV',5,0,0,'Patio San Vicente'],[41,'GSV',5,0,1,'Gestion San Vicente'],[42,'MSV',5,0,0,'Mermas San Vicente'],[43,'CSV',5,0,0,'Consumo San Vicente'],[44,'CSV',5,1,1,'Calzada San Vicente'],[45,'TSV',5,0,0,'Transito San Vicente'],[48,'RWS',5,0,0,'Retiro Web San Vicente'],[56,'RSV',5,0,0,'Recepcion San Vicente'],[70,'ISV',5,0,0,'Ingreso San Vicente'],[95,'ESV',5,0,0,'Exhibicion San Vicente'],
+    [16,'TLC',6,0,0,'Transito Las Cabras'],[33,'SLC',6,0,0,'Sala Las Cabras'],[34,'PLC',6,0,0,'Patio Las Cabras'],[35,'CLC',6,1,1,'Calzada Las Cabras'],[37,'GLC',6,0,1,'Gestion Las Cabras'],[38,'MLC',6,0,0,'Mermas Las Cabras'],[47,'RWL',6,0,0,'Retiro Web Las Cabras'],[57,'RLC',6,0,0,'Recepcion Las Cabras'],[71,'ILC',6,0,0,'Ingreso Las Cabras'],[91,'GFL',6,0,0,'Garantia Las Cabras'],[96,'ELC',6,0,0,'Exhibicion Las Cabras'],[97,'VLC',6,0,0,'Volumen Las Cabras'],
+    [7,'XCD',8,0,0,'CrossDock Centro Distribucion'],[12,'FCM',8,0,1,'Ferrocenter'],[23,'CD',8,0,0,'Centro de Distribucion'],[26,'MCD',8,0,0,'Mermas CD'],[27,'GCD',8,0,1,'Gestion CD'],[54,'RCD',8,0,0,'Recepcion Centro Distribucion'],[67,'TCD',8,0,0,'Transito Centro Distribucion'],[73,'ICD',8,0,0,'Ingreso Centro Distribucion'],
+    [79,'DLT',9,1,0,'Distribucion Litueche'],[98,'BDP',9,1,1,'Despacho Proveedor'],
+    [61,'ML',10,0,0,'Mercado Libre'],
+    [59,'TLE',11,0,0,'Transito Litueche'],[60,'PLE',11,0,0,'Patio Litueche'],[62,'SLE',11,0,0,'Sala Litueche'],[63,'GLE',11,0,1,'Gestion Litueche'],[64,'ELE',11,0,0,'Exhibicion Litueche'],[66,'RLE',11,0,0,'Retiro WEB Litueche'],[68,'IAL',11,0,0,'Ingreso Alhue'],[74,'ILE',11,0,0,'Ingreso Litueche'],[76,'MLE',11,0,0,'Mermas Litueche'],[78,'CLT',11,1,1,'Calzada Litueche'],
+    [50,'ALH',12,0,0,'Alhue'],[65,'RAL',12,0,0,'Retiro WEB Alhue'],[80,'MAL',12,0,0,'Mermas Alhue'],[81,'GAL',12,0,0,'Gestion Alhue'],
+    [93,'PPL',13,0,0,'Peralillo'],
+    [87,'DIR',14,1,0,'Distribucion Isabel Riquelme'],[88,'DSV',14,1,0,'Distribucion San Vicente'],[89,'DCD',14,0,0,'Distribucion CD'],
+  ];
+
+  const SUC_NAME = {1:'Casa Central',2:'Isabel Riquelme',3:'Ferrecenter',4:'El Manzano',5:'San Vicente',6:'Las Cabras',8:'Centro Distrib.',9:'Distrib. CD',10:'Mercado Libre',11:'Litueche',12:'Alhué',13:'Peralillo',14:'Distribución'};
+
+  function renderBods(arr) {
+    const tb = document.getElementById('bods-body');
+    tb.innerHTML = arr.map(b => {
+      const calzTag = b[3] ? '<span class="tag-calz">Calzada</span>' : '<span class="tag-ok">—</span>';
+      const negTag  = b[4] ? '<span class="tag-neg">Neg</span>' : '<span class="tag-ok">—</span>';
+      return `<tr>
+        <td><strong style="font-family:'IBM Plex Mono',monospace">${b[0]}</strong></td>
+        <td style="font-family:'IBM Plex Mono',monospace">${b[1]}</td>
+        <td><span style="font-size:11px;font-family:'IBM Plex Mono',monospace">suc=${String(b[2]).padStart(2,'0')}</span> <span style="font-size:11px;color:var(--muted)">${SUC_NAME[b[2]]||''}</span></td>
+        <td>${calzTag}</td>
+        <td>${negTag}</td>
+        <td style="color:var(--muted)">${b[5]}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function filtrarBods() {
+    const q = document.getElementById('bod-filter').value.toLowerCase();
+    const onlyCalz = document.getElementById('bod-calz').checked;
+    const onlyNeg  = document.getElementById('bod-neg').checked;
+    renderBods(BODS.filter(b =>
+      (!q || String(b[0]).includes(q) || b[1].toLowerCase().includes(q) || b[5].toLowerCase().includes(q) || String(b[2]).includes(q)) &&
+      (!onlyCalz || b[3]) &&
+      (!onlyNeg  || b[4])
+    ));
+  }
+
+  function showRef(tab) {
+    ['cols','docs','bods','sucs'].forEach(t => {
+      document.getElementById('ref-'+t).style.display = t===tab ? '' : 'none';
+      document.getElementById('rtab-'+t).classList.toggle('ref-tab--active', t===tab);
+    });
+    if (tab==='docs' && !document.getElementById('docs-body').innerHTML) { renderDocs(DOCS); }
+    if (tab==='bods' && !document.getElementById('bods-body').innerHTML)  { renderBods(BODS); }
+  }
+  </script>
+
   <!-- Leyenda -->
   <div class="leyenda">
     <h3>Leyenda de chips de stock</h3>
