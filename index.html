@@ -191,7 +191,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.60</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">28-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.61</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">28-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -456,10 +456,10 @@
     <!-- Fila 1: búsqueda + bodega + estado -->
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px">
       <input id="difSv_buscar" type="text" placeholder="🔍 Buscar código o descripción…"
-             style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;min-width:220px;flex:1"
+             style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;min-width:220px;flex:1"
              oninput="difSvFiltrar()">
       <select id="difSv_bodega" onchange="difSvFiltrar()"
-              style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px">
+              style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px">
         <option value="">📦 Todas las bodegas</option>
         <option value="PSV">PSV — Patio San Vicente (ID 40)</option>
         <option value="SSV">SSV — Sala San Vicente (ID 39)</option>
@@ -472,7 +472,7 @@
         <option value="DSV">DSV — Distribución San Vicente (ID 88)</option>
       </select>
       <select id="difSv_tipo" onchange="difSvFiltrar()"
-              style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px">
+              style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px">
         <option value="">Estado: Todos</option>
         <option value="normal">📋 Compromiso (Normal)</option>
         <option value="anomalia_jt">⚠ Anomalía JT (traslado)</option>
@@ -487,9 +487,9 @@
     </div>
     <!-- Fila 2: filtro por tipo de documento causante + Excel -->
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-      <label style="font-size:11px;color:#94a3b8;white-space:nowrap;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Filtrar por doc. causante:</label>
+      <label style="font-size:13px;color:#cbd5e1;white-space:nowrap;font-weight:700;letter-spacing:.02em">Filtrar por doc. causante:</label>
       <select id="difSv_docTipo" onchange="difSvFiltrar()"
-              style="padding:6px 10px;border-radius:6px;border:1px solid #6366f1;background:var(--bg);color:#a5b4fc;font-size:12px;font-weight:600">
+              style="padding:8px 12px;border-radius:8px;border:1px solid #6366f1;background:var(--bg);color:#a5b4fc;font-size:13px;font-weight:600">
         <option value="">Todos los documentos</option>
         <option value="boleta">🧾 BVE / FVE — Boleta o Factura de Venta Electrónica</option>
         <option value="factura_el">🧾 FEL / BEL — Factura o Boleta Elect. (otros tipos)</option>
@@ -1815,8 +1815,8 @@ function difSvRenderTabla(){
     html += '<tr style="background:'+rowBg+';transition:background .12s" onmouseover="this.style.background=\'#1a2d4a\'" onmouseout="this.style.background=\''+rowBg+'\'">'
       + '<td '+td+'white-space:nowrap;font-weight:700;color:#7dd3fc;font-size:12px;letter-spacing:.3px">'+esc(p.bodega)+'</td>'
       + '<td '+td+'white-space:nowrap;font-family:\'JetBrains Mono\',Consolas,monospace;font-size:12.5px;color:#e2e8f0;letter-spacing:.2px">'+esc(p.codigo)+'</td>'
-      + '<td '+td+'color:#f0f6ff;font-size:13px;font-weight:500;min-width:160px;max-width:240px;white-space:normal;line-height:1.35">'+esc(p.desc)+'</td>'
-      + '<td '+td+'color:#cbd5e1;font-size:12px;min-width:70px;max-width:110px;white-space:normal;line-height:1.35">'+esc(p.marca||'—')+'</td>'
+      + '<td '+td+'color:#f0f6ff;font-size:13px;font-weight:500;min-width:180px;max-width:260px;display:revert"><div style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;white-space:normal" title="'+esc(p.desc)+'">'+esc(p.desc)+'</div></td>'
+      + '<td '+td+'color:#cbd5e1;font-size:12px;min-width:70px;max-width:100px"><div style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;white-space:normal">'+esc(p.marca||'—')+'</div></td>'
       + '<td '+td+'text-align:right;font-weight:700;color:#e2e8f0;font-size:13px">'+fmt(p.disp)+'</td>'
       + '<td '+td+'text-align:right;font-weight:700;color:#e2e8f0;font-size:13px">'+fmt(p.fisico)+'</td>'
       + '<td '+td+'text-align:right;color:#94a3b8;font-size:12px">'+fmt(p.ped)+'</td>'
