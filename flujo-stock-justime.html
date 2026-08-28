@@ -22,6 +22,8 @@
     --slate:     #475569;
     --arrow:     #94a3b8;
     --step-num:  #e2e8f0;
+    --trans:     #1d4ed8;
+    --trans-bg:  #dbeafe;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -45,6 +47,8 @@
       --slate:     #94a3b8;
       --arrow:     #475569;
       --step-num:  #1e293b;
+      --trans:     #93c5fd;
+      --trans-bg:  #1e3a5f;
     }
   }
 
@@ -68,6 +72,8 @@
     --slate:     #94a3b8;
     --arrow:     #475569;
     --step-num:  #1e293b;
+    --trans:     #93c5fd;
+    --trans-bg:  #1e3a5f;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -281,6 +287,7 @@
   .chip--nc      { background: var(--fis-bg);     color: var(--fis);    }
   .chip--trasl   { background: var(--red-bg);     color: var(--red);    }
   .chip--anular  { background: var(--red-bg);     color: var(--red);    }
+  .chip--compra  { background: var(--trans-bg);   color: var(--trans);  }
 
   /* ── Estado de stock por paso ── */
   .paso-estado {
@@ -321,6 +328,9 @@
   .sc--ped-up    { background: var(--ped-bg);  color: var(--ped);  border-color: var(--ped);  }
   .sc--ped-dn    { background: var(--fis-bg);  color: var(--fis);  border-color: var(--fis);  }
   .sc--ped-ok    { background: var(--surface2);color: var(--muted);border-color: var(--border);}
+  .sc--trans-up  { background: var(--trans-bg); color: var(--trans); border-color: var(--trans); }
+  .sc--trans-dn  { background: var(--red-bg);  color: var(--red);   border-color: var(--red);   }
+  .sc--trans-ok  { background: var(--surface2);color: var(--muted); border-color: var(--border);}
 
   .estado-nota {
     font-size: 11px;
@@ -341,7 +351,8 @@
   }
   .alert--warn  { background: var(--ped-bg);  color: var(--ped);  border-color: var(--ped);  }
   .alert--ok    { background: var(--fis-bg);  color: var(--fis);  border-color: var(--fis);  }
-  .alert--red   { background: var(--red-bg);  color: var(--red);  border-color: var(--red);  }
+  .alert--red    { background: var(--red-bg);  color: var(--red);  border-color: var(--red);  }
+  .alert--yellow { background: var(--ped-bg);  color: var(--ped);  border-color: var(--ped);  }
   .alert--info  { background: var(--disp-bg); color: var(--disp); border-color: var(--disp); }
   .alert strong { font-weight: 700; }
 
@@ -676,6 +687,144 @@
     </div>
   </div>
 
+  <!-- Ciclo 5 -->
+  <div class="section-title">Ciclo 5 — Recepción de compra (OC → GRC)</div>
+  <div class="ciclo">
+    <div class="ciclo-header">
+      <div class="ciclo-num">C5</div>
+      <div>
+        <div class="ciclo-title">OC / GRC / GRS — Orden de Compra y Guía de Recepción</div>
+        <div class="ciclo-sub">El proveedor entrega mercadería. La recepción sube el stock según los permisos del usuario que recepciona.</div>
+      </div>
+    </div>
+    <div class="flujo">
+
+      <div class="paso">
+        <div class="paso-doc">
+          <div class="doc-chip chip--compra">OC / OCL / OCE</div>
+          <div class="doc-nombre">Orden de Compra</div>
+          <div class="doc-actor">👤 Compras / Administración</div>
+        </div>
+        <div class="paso-estado">
+          <div class="paso-desc">Se emite la OC al proveedor. El ERP reserva las unidades en Tránsito — el producto "viene en camino" pero aún no está en bodega.</div>
+          <div class="stock-chips">
+            <span class="stock-chip sc--trans-up">Tránsito <span class="arrow">↑</span></span>
+            <span class="stock-chip sc--disp-ok">Disp sin cambio</span>
+            <span class="stock-chip sc--fis-ok">Fís sin cambio</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="paso">
+        <div class="paso-doc">
+          <div class="doc-chip chip--compra">GRC / GRS</div>
+          <div class="doc-nombre">Guía de Recepción de Compra / Servicio</div>
+          <div class="doc-actor">👤 Bodeguero / Recepcionista</div>
+        </div>
+        <div class="paso-estado">
+          <div class="paso-desc">Llega la mercadería. El bodeguero crea la GRC vinculada a la OC. El comportamiento siguiente depende de los permisos del usuario.</div>
+          <div class="stock-chips">
+            <span class="stock-chip sc--trans-dn">Tránsito <span class="arrow">↓</span></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Permisos recepción -->
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-family:'IBM Plex Mono',monospace;margin-bottom:10px">Comportamiento según permisos del usuario que recepciona</div>
+      <div class="permisos-grid">
+        <div class="permiso-card">
+          <h4 style="color:var(--ped)">⚠️ Permisos limitados</h4>
+          <p>Al crear la GRC, solo sube el <strong>Disponible</strong>. El Físico <em>no sube</em> de inmediato. El usuario debe entrar a "Mantención de Despachos" en JustWeb, abrir la GRC, presionar <strong>Editar</strong> y luego <strong>Grabar</strong> para que el Físico también suba.</p>
+          <div class="stock-chips" style="margin-top:8px">
+            <span class="stock-chip sc--disp-up">Disp <span class="arrow">↑</span> (inmediato)</span>
+            <span class="stock-chip sc--fis-ok">Fís sin cambio hasta Editar+Grabar</span>
+          </div>
+          <div class="alert alert--yellow" style="margin-top:8px">
+            <strong>Dif &lt; 0 activa</strong> mientras no se complete el segundo paso — Disp superó al Fís.
+          </div>
+        </div>
+        <div class="permiso-card">
+          <h4 style="color:var(--fis)">✓ Permisos completos</h4>
+          <p>Al grabar la GRC, el ERP sube <strong>Disponible y Físico al mismo tiempo</strong>, y baja el Tránsito. El ciclo queda cerrado en un solo paso, sin intervención adicional.</p>
+          <div class="stock-chips" style="margin-top:8px">
+            <span class="stock-chip sc--disp-up">Disp <span class="arrow">↑</span></span>
+            <span class="stock-chip sc--fis-up">Fís <span class="arrow">↑</span></span>
+            <span class="stock-chip sc--trans-dn">Tránsito <span class="arrow">↓</span></span>
+          </div>
+          <span class="completo">✓ Ciclo completo — Dif = 0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ciclo 6 -->
+  <div class="section-title">Ciclo 6 — Venta Calzada (stock negativo permitido)</div>
+  <div class="ciclo">
+    <div class="ciclo-header">
+      <div class="ciclo-num">C6</div>
+      <div>
+        <div class="ciclo-title">BVE (Disp negativo) → GRT/GIB ingreso → GME despacho</div>
+        <div class="ciclo-sub">Bodega Calzada acepta ventas con stock negativo. El producto llega desde otra sucursal o CD después de facturar.</div>
+      </div>
+    </div>
+
+    <!-- Paso 1 -->
+    <div class="paso">
+      <div class="paso-doc">
+        <span class="doc-badge" style="background:#7c3aed;color:#fff">BVE / FVE</span>
+        <span class="doc-nombre">Boleta o Factura Electrónica</span>
+      </div>
+      <div class="paso-estado">
+        <span class="stock-chip sc--disp-dn">Disp ↓</span>
+        <span class="stock-chip sc--disp-ok">Fís sin cambio</span>
+        <div class="paso-desc">El vendedor cierra la venta y emite el documento tributario. <strong>Disp puede quedar negativo</strong> — la bodega está configurada para permitirlo. El producto aún no existe físicamente en Calzada.</div>
+      </div>
+      <div class="paso-dif" style="background:rgba(124,58,237,.15);border:1px solid #7c3aed;border-radius:8px;padding:10px 14px;font-size:12px;color:#c4b5fd">
+        📊 Estado: <strong>Dif &gt; 0</strong> — Físico = 0, Disp &lt; 0 (negativo). El sistema muestra diferencia hasta que llegue el producto.
+      </div>
+    </div>
+
+    <!-- Paso 2 -->
+    <div class="paso">
+      <div class="paso-doc">
+        <span class="doc-badge" style="background:#0891b2;color:#fff">GRT / GIB</span>
+        <span class="doc-nombre">Guía Recepción Traslado / Guía Ingreso Bodega</span>
+      </div>
+      <div class="paso-estado">
+        <span class="stock-chip sc--disp-up">Disp ↑</span>
+        <span class="stock-chip sc--fis-up">Fís ↑</span>
+        <div class="paso-desc">El producto llega desde otra sucursal o CD. El GRT (entre bodegas) o GRC (desde proveedor) registra el ingreso: <strong>Disp sube compensando el negativo y queda en 0; Físico sube al total recibido</strong>.</div>
+      </div>
+      <div class="paso-dif" style="background:rgba(8,145,178,.15);border:1px solid #0891b2;border-radius:8px;padding:10px 14px;font-size:12px;color:#67e8f9">
+        📊 Estado: <strong>Dif = cantidad recibida</strong> — Disp = 0, Físico &gt; 0. El producto está en bodega pero la guía de despacho aún no se emitió.
+      </div>
+    </div>
+
+    <!-- Paso 3 -->
+    <div class="paso">
+      <div class="paso-doc">
+        <span class="doc-badge" style="background:#059669;color:#fff">GME</span>
+        <span class="doc-nombre">Guía de Despacho</span>
+      </div>
+      <div class="paso-estado">
+        <span class="stock-chip sc--disp-ok">Disp sin cambio</span>
+        <span class="stock-chip sc--fis-dn">Fís ↓</span>
+        <div class="paso-desc">El producto sale físicamente de la bodega hacia el cliente. Recién aquí el Físico baja. El ciclo se cierra: Disp = 0, Físico = 0.</div>
+      </div>
+      <div style="margin-top:10px">
+        <span class="completo">✓ Ciclo completo — Dif = 0</span>
+      </div>
+    </div>
+
+    <!-- Nota -->
+    <div class="alert alert--yellow" style="margin-top:16px;font-size:12px">
+      <strong>⚠ Dif positiva ≠ error:</strong> Si ves Dif &gt; 0 en Calzada con BVE reciente y GRT de ingreso, es el ciclo normal en espera de la GME de despacho. No requiere corrección en el ERP — solo emitir la guía cuando el producto salga al cliente.
+    </div>
+  </div>
+
   <!-- Leyenda -->
   <div class="leyenda">
     <h3>Leyenda de chips de stock</h3>
@@ -686,12 +835,14 @@
       <span class="stock-chip sc--fis-up">Fís ↑ &nbsp;sube</span>
       <span class="stock-chip sc--ped-up">Ped ↑ &nbsp;sube</span>
       <span class="stock-chip sc--ped-dn">Ped ↓ &nbsp;baja</span>
+      <span class="stock-chip sc--trans-up">Tránsito ↑ &nbsp;sube</span>
+      <span class="stock-chip sc--trans-dn">Tránsito ↓ &nbsp;baja</span>
       <span class="stock-chip sc--disp-ok">sin cambio</span>
     </div>
     <div style="margin-top:14px;font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:12px">
       <strong style="color:var(--text)">Dif = Físico − Disponible.</strong>
       Dif &gt; 0 (normal): hay compromiso abierto — venta emitida sin despacho físico.
-      Dif &lt; 0 (anomalía): Disp superó al Fís — puede ser GRT sin 2° paso <em>o</em> GDC sin Nota de Crédito. Verificar el tipo de documento antes de actuar.
+      Dif &lt; 0 (anomalía): Disp superó al Fís — puede ser GRT sin 2° paso, GDC sin Nota de Crédito, <em>o</em> GRC con permisos limitados sin confirmar. Verificar el tipo de documento antes de actuar.
     </div>
   </div>
 
