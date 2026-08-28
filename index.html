@@ -173,7 +173,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.46</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.47</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">27-08-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -1692,8 +1692,8 @@ function difSvAbrirDocs(clave){
   var tipoLabel = prod.tipo==='anomalia_jt'
     ? '⚠️ Anomalía JT — traslados sin 2° paso en JustWeb (GRT/GIB)'
     : prod.ped>0
-      ? '📋 NVM/VMN pendiente de despacho (Ped abierto)'
-      : '📋 Venta facturada sin GME — Disp reducido, Fis aún sin bajar (Ped=0 por BVE/FVE)';
+      ? '📋 Boleta/Factura de venta pendiente de despacho (Ped abierto)'
+      : '📋 Boleta/Factura emitida sin GME — Disp reducido, Fis aún sin bajar';
   document.getElementById('difSvModalTitle').innerHTML =
     '<span style="color:#a5b4fc">['+esc(prod.bodega)+']</span> '+esc(prod.codigo)+' — '+esc(prod.desc)
     +'<br><span style="font-size:11px;font-weight:400;color:#94a3b8">'+tipoLabel+' · Click en una fila para ver detalle completo</span>';
@@ -1731,9 +1731,8 @@ function difSvAbrirDocs(clave){
   if(prod.tipo === 'anomalia_jt'){
     tiposFiltro = _DOCS_ANOMALIA;
   } else if(prod.dif > 0){
-    // Prioridad: VMN → si no hay, DVen → nunca DCom
-    var hayVenta = (prod.docs||[]).some(function(d){ return _DOCS_VENTA.indexOf(d.tipo)>=0; });
-    tiposFiltro = hayVenta ? _DOCS_VENTA : _DOCS_DVEN;
+    // Mostrar todos los docs que mueven stock (VMN, BVE, GME) — el ⭐ va en BVE/FVE
+    tiposFiltro = _DOCS_BVE.concat(_DOCS_VENTA).concat(_DOCS_DVEN);
   } else {
     tiposFiltro = _DOCS_VENTA.concat(_DOCS_DVEN);
   }
@@ -1742,17 +1741,23 @@ function difSvAbrirDocs(clave){
   // Determinar qué doc(s) son el match exacto de la diferencia
   var absDif = Math.abs(prod.dif);
   // 1. Buscar doc con cant exactamente igual al dif
-  var exacto = docs.find(function(d){ return Math.abs(d.cant - absDif) < 0.001; });
-  // 2. Si no hay exacto, buscar suma acumulada que llegue al dif (greedy por fecha desc)
+  // ⭐ en BVE/FVE cuya cant coincide exactamente con dif
+  // Si no hay BVE, cae en VMN. Si no hay VMN, GME.
   var docsCausa = {};
-  if(exacto){
-    docsCausa[docs.indexOf(exacto)] = true;
-  } else {
-    var acum = 0;
+  var prioridad = [_DOCS_BVE, _DOCS_VENTA, _DOCS_DVEN];
+  var encontrado = false;
+  for(var _p=0; _p<prioridad.length && !encontrado; _p++){
+    // Buscar exacto por cant en este grupo
+    var exacto = docs.find(function(d){ return prioridad[_p].indexOf(d.tipo)>=0 && Math.abs(d.cant - absDif)<0.001; });
+    if(exacto){ docsCausa[docs.indexOf(exacto)]=true; encontrado=true; break; }
+    // Si no hay exacto, acumular greedy dentro del grupo
+    var acum=0;
     for(var _i=0; _i<docs.length; _i++){
-      if(acum >= absDif) break;
-      acum = Math.round((acum + Math.abs(docs[_i].cant))*100)/100;
-      docsCausa[_i] = true;
+      if(prioridad[_p].indexOf(docs[_i].tipo)<0) continue;
+      if(acum>=absDif) break;
+      acum=Math.round((acum+Math.abs(docs[_i].cant))*100)/100;
+      docsCausa[_i]=true;
+      encontrado=true;
     }
   }
 
