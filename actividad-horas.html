@@ -1,0 +1,444 @@
+<title>Actividad por Hora</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+
+<style>
+:root {
+  --bg:           #edf0f5;
+  --surface:      #ffffff;
+  --ink:          #18202c;
+  --ink-2:        #4a5568;
+  --ink-3:        #8896a8;
+  --bar:          #2563eb;
+  --bar-h:        #1d4ed8;
+  --grid:         #dde1ea;
+  --axis:         #c0c8d6;
+  /* zone bg fills */
+  --zone-sleep:   rgba(0,0,0,0.013);
+  --zone-apertura:rgba(37,99,235,0.04);
+  --zone-peak:    rgba(37,99,235,0.055);
+  --zone-lunch:   rgba(245,158,11,0.075);
+  --zone-cierre:  rgba(251,146,60,0.05);
+  /* zone strip colors */
+  --strip-sleep:  #c0c8d6;
+  --strip-apertura:#6aa0f0;
+  --strip-peak:   #2563eb;
+  --strip-lunch:  #f59e0b;
+  --strip-cierre: #fb923c;
+  --shadow:       0 1px 2px rgba(0,0,0,0.06),0 4px 12px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:           #0d1421;
+    --surface:      #141f30;
+    --ink:          #e4eaf4;
+    --ink-2:        #8ba3bc;
+    --ink-3:        #4e6a82;
+    --bar:          #3987e5;
+    --bar-h:        #60a5fa;
+    --grid:         #1d2d42;
+    --axis:         #2a3d56;
+    --zone-sleep:   rgba(255,255,255,0.015);
+    --zone-apertura:rgba(59,135,229,0.06);
+    --zone-peak:    rgba(59,135,229,0.08);
+    --zone-lunch:   rgba(217,119,6,0.08);
+    --zone-cierre:  rgba(194,65,12,0.06);
+    --strip-sleep:  #2a3d56;
+    --strip-apertura:#4880cf;
+    --strip-peak:   #3987e5;
+    --strip-lunch:  #d97706;
+    --strip-cierre: #c2410c;
+    --shadow:       0 1px 3px rgba(0,0,0,0.3),0 4px 16px rgba(0,0,0,0.2);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg:           #0d1421;
+  --surface:      #141f30;
+  --ink:          #e4eaf4;
+  --ink-2:        #8ba3bc;
+  --ink-3:        #4e6a82;
+  --bar:          #3987e5;
+  --bar-h:        #60a5fa;
+  --grid:         #1d2d42;
+  --axis:         #2a3d56;
+  --zone-sleep:   rgba(255,255,255,0.015);
+  --zone-apertura:rgba(59,135,229,0.06);
+  --zone-peak:    rgba(59,135,229,0.08);
+  --zone-lunch:   rgba(217,119,6,0.08);
+  --zone-cierre:  rgba(194,65,12,0.06);
+  --strip-sleep:  #2a3d56;
+  --strip-apertura:#4880cf;
+  --strip-peak:   #3987e5;
+  --strip-lunch:  #d97706;
+  --strip-cierre: #c2410c;
+  --shadow:       0 1px 3px rgba(0,0,0,0.3),0 4px 16px rgba(0,0,0,0.2);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Barlow', system-ui, -apple-system, sans-serif;
+  padding: 32px 24px;
+  min-height: 100vh;
+}
+
+.page-header { margin-bottom: 22px; }
+
+.page-title {
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-wrap: balance;
+  line-height: 1.2;
+}
+
+.page-sub {
+  color: var(--ink-2);
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.stat {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow);
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.stat-note {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 3px;
+}
+
+.chart-card {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 20px 20px 16px;
+  box-shadow: var(--shadow);
+}
+
+.chart-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+}
+
+.chart-wrap { position: relative; user-select: none; }
+
+.chart-svg { width: 100%; display: block; }
+
+/* SVG classes */
+.zone-sleep    { fill: var(--zone-sleep);    }
+.zone-apertura { fill: var(--zone-apertura); }
+.zone-peak     { fill: var(--zone-peak);     }
+.zone-lunch    { fill: var(--zone-lunch);    }
+.zone-cierre   { fill: var(--zone-cierre);   }
+
+.strip-sleep    { fill: var(--strip-sleep);    }
+.strip-apertura { fill: var(--strip-apertura); }
+.strip-peak     { fill: var(--strip-peak);     }
+.strip-lunch    { fill: var(--strip-lunch);    }
+.strip-cierre   { fill: var(--strip-cierre);   }
+
+.zone-sep  { stroke: var(--grid); stroke-width: 1; fill: none; }
+.grid-line { stroke: var(--grid); stroke-width: 1; fill: none; }
+.axis-line { stroke: var(--axis); stroke-width: 1; fill: none; }
+.ax-lbl    { fill: var(--ink-3); }
+.zone-lbl  { fill: var(--ink-3); }
+
+.bar       { fill: var(--bar); transition: fill 0.1s; }
+.bar-hit   { fill: transparent; cursor: pointer; }
+.bar-slot:hover .bar,
+.bar-slot:focus-within .bar { fill: var(--bar-h); }
+.bar-slot  { outline: none; }
+
+/* Tooltip */
+.tt {
+  position: absolute;
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: 'Barlow', system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translate(-50%, calc(-100% - 10px));
+  opacity: 0;
+  transition: opacity 0.1s;
+  z-index: 10;
+}
+.tt.visible { opacity: 1; }
+.tt-hour { opacity: 0.6; font-size: 10px; letter-spacing: 0.04em; }
+.tt-docs { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 580px) {
+  .stats-row { grid-template-columns: 1fr; }
+  .stat-value { font-size: 28px; }
+  body { padding: 18px 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar,.tt { transition: none; }
+}
+</style>
+
+<header class="page-header">
+  <div class="page-title">Actividad Operacional · Documentos por Hora</div>
+  <div class="page-sub">Patrón típico · Todas las sucursales · Día hábil</div>
+</header>
+
+<div class="stats-row">
+  <div class="stat">
+    <div class="stat-label">Pico diario</div>
+    <div class="stat-value">330</div>
+    <div class="stat-note">docs · 10:00 h</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Total horario comercial</div>
+    <div class="stat-value">2.410</div>
+    <div class="stat-note">docs · 08–18 h</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Horas &gt; 200 docs</div>
+    <div class="stat-value">6</div>
+    <div class="stat-note">Peak mañana + tarde</div>
+  </div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-label">Documentos por hora del día</div>
+  <div class="chart-wrap" id="wrap">
+    <svg class="chart-svg" id="svg"
+         viewBox="0 0 840 320"
+         role="img"
+         aria-label="Patrón de actividad por hora del día. Pico de 330 documentos a las 10:00."></svg>
+    <div class="tt" id="tt">
+      <div class="tt-hour" id="ttH"></div>
+      <div class="tt-docs" id="ttD"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  {h:0,d:5},{h:1,d:4},{h:2,d:3},{h:3,d:2},{h:4,d:3},{h:5,d:7},
+  {h:6,d:15},{h:7,d:27},{h:8,d:123},{h:9,d:280},{h:10,d:330},
+  {h:11,d:310},{h:12,d:230},{h:13,d:120},{h:14,d:200},{h:15,d:310},
+  {h:16,d:250},{h:17,d:172},{h:18,d:85},{h:19,d:28},{h:20,d:15},
+  {h:21,d:10},{h:22,d:6},{h:23,d:3}
+];
+
+const ZONES = [
+  {s:0,  e:7,  label:'Madrugada',    cls:'sleep'},
+  {s:8,  e:8,  label:'Apertura',     cls:'apertura'},
+  {s:9,  e:12, label:'Peak mañana',  cls:'peak'},
+  {s:13, e:13, label:'Almuerzo',     cls:'lunch'},
+  {s:14, e:16, label:'Peak tarde',   cls:'peak'},
+  {s:17, e:18, label:'Cierre',       cls:'cierre'},
+  {s:19, e:23, label:'Residual',     cls:'sleep'},
+];
+
+// ViewBox 840×320
+const W=840, H=320;
+const ML=52, MT=40, MR=20, MB=36;
+const PW=W-ML-MR;   // 768
+const PH=H-MT-MB;   // 244
+const MAX_Y=350;
+const SLOT=PW/24;   // 32px
+const BW=22;        // bar width ≤24px per spec
+const BO=(SLOT-BW)/2;
+const SEP_HRS=[8,9,13,14,17,19];
+const GRID_VALS=[0,100,200,300];
+const X_LABELS=[0,3,6,9,12,15,18,21];
+
+function ns(tag) {
+  return document.createElementNS('http://www.w3.org/2000/svg', tag);
+}
+
+function yPx(v) { return MT+PH-(v/MAX_Y)*PH; }
+function slotX(h) { return ML+h*SLOT; }
+function barX(h) { return slotX(h)+BO; }
+
+function barPath(bx,by,bw,bh) {
+  const r=4;
+  if(bh<r*2) return `M${bx},${by+bh}L${bx},${by}L${bx+bw},${by}L${bx+bw},${by+bh}Z`;
+  return `M${bx},${by+bh}L${bx},${by+r}Q${bx},${by} ${bx+r},${by}L${bx+bw-r},${by}Q${bx+bw},${by} ${bx+bw},${by+r}L${bx+bw},${by+bh}Z`;
+}
+
+function addEl(parent, tag, attrs, cls) {
+  const el=ns(tag);
+  if(cls) el.setAttribute('class', cls);
+  for(const [k,v] of Object.entries(attrs)) el.setAttribute(k,v);
+  parent.appendChild(el);
+  return el;
+}
+
+function addText(parent, x, y, content, cls, extraAttrs={}) {
+  const t=ns('text');
+  t.setAttribute('class', cls||'');
+  t.setAttribute('x', x); t.setAttribute('y', y);
+  t.setAttribute('font-family', "'Barlow',system-ui,sans-serif");
+  for(const [k,v] of Object.entries(extraAttrs)) t.setAttribute(k,v);
+  t.textContent=content;
+  parent.appendChild(t);
+  return t;
+}
+
+function build() {
+  const svg=document.getElementById('svg');
+  svg.innerHTML='';
+
+  // 1. Zone backgrounds
+  ZONES.forEach(z=>{
+    const x1=slotX(z.s), x2=slotX(z.e+1);
+    addEl(svg,'rect',{x:x1,y:MT,width:x2-x1,height:PH},`zone-${z.cls}`);
+  });
+
+  // 2. Zone separator hairlines
+  SEP_HRS.forEach(h=>{
+    addEl(svg,'line',{x1:slotX(h),y1:MT,x2:slotX(h),y2:MT+PH},'zone-sep');
+  });
+
+  // 3. Zone strip (colored bar + label at top)
+  ZONES.forEach(z=>{
+    const x1=slotX(z.s), x2=slotX(z.e+1), zw=x2-x1;
+    // colored strip bar
+    addEl(svg,'rect',{x:x1+1,y:6,width:zw-2,height:5,rx:2},`strip-${z.cls}`);
+    // label only when zone is wide enough
+    if(zw>=60) {
+      const t=addText(svg, x1+zw/2, 26, z.label.toUpperCase(), 'zone-lbl', {
+        'text-anchor':'middle',
+        'font-size':'8.5',
+        'font-weight':'600',
+        'letter-spacing':'0.06em'
+      });
+    }
+  });
+
+  // 4. Y-axis gridlines + labels
+  GRID_VALS.forEach(v=>{
+    const y=yPx(v);
+    addEl(svg,'line',{x1:ML,y1:y,x2:ML+PW,y2:y},'grid-line');
+    addText(svg, ML-7, y+4, v===0?'0':v, 'ax-lbl', {
+      'text-anchor':'end',
+      'font-size':'11',
+      'font-variant-numeric':'tabular-nums'
+    });
+  });
+
+  // 5. Baseline
+  addEl(svg,'line',{x1:ML,y1:MT+PH,x2:ML+PW,y2:MT+PH},'axis-line');
+
+  // 6. X-axis hour labels
+  X_LABELS.forEach(h=>{
+    addText(svg, slotX(h)+SLOT/2, MT+PH+21,
+      String(h).padStart(2,'0')+':00', 'ax-lbl', {
+      'text-anchor':'middle',
+      'font-size':'11',
+      'font-variant-numeric':'tabular-nums'
+    });
+  });
+
+  // 7. Bars (with full-slot hit area)
+  DATA.forEach(({h,d})=>{
+    const bh=(d/MAX_Y)*PH;
+    const bx=barX(h), by=yPx(d);
+
+    const g=ns('g');
+    g.setAttribute('class','bar-slot');
+    g.setAttribute('data-h',h);
+    g.setAttribute('data-d',d);
+    g.setAttribute('tabindex','0');
+    g.setAttribute('role','graphics-symbol');
+    g.setAttribute('aria-label',
+      `${String(h).padStart(2,'0')}:00 — ${d} documentos`);
+
+    // full-height hit rect for easy targeting
+    const hit=ns('rect');
+    hit.setAttribute('x',slotX(h)); hit.setAttribute('y',MT);
+    hit.setAttribute('width',SLOT); hit.setAttribute('height',PH);
+    hit.setAttribute('class','bar-hit');
+    g.appendChild(hit);
+
+    // bar path (4px rounded top, square at baseline)
+    const p=ns('path');
+    p.setAttribute('d', barPath(bx,by,BW,bh));
+    p.setAttribute('class','bar');
+    g.appendChild(p);
+
+    svg.appendChild(g);
+  });
+}
+
+// Tooltip
+const tt=document.getElementById('tt');
+const ttH=document.getElementById('ttH');
+const ttD=document.getElementById('ttD');
+
+document.getElementById('svg').addEventListener('mouseover', e=>{
+  const g=e.target.closest('.bar-slot');
+  if(g) showTip(+g.dataset.h, +g.dataset.d);
+});
+document.getElementById('svg').addEventListener('mouseout', e=>{
+  if(!e.relatedTarget?.closest?.('.bar-slot')) hideTip();
+});
+document.getElementById('svg').addEventListener('focusin', e=>{
+  const g=e.target.closest('.bar-slot');
+  if(g) showTip(+g.dataset.h, +g.dataset.d);
+}, true);
+document.getElementById('svg').addEventListener('focusout', hideTip, true);
+
+function showTip(h,d) {
+  const svg=document.getElementById('svg');
+  const wrap=document.getElementById('wrap');
+  const sR=svg.getBoundingClientRect();
+  const wR=wrap.getBoundingClientRect();
+  const scale=sR.width/W;
+  const sx=sR.left+(barX(h)+BW/2)*scale-wR.left;
+  const sy=sR.top+yPx(d)*scale-wR.top;
+  ttH.textContent=String(h).padStart(2,'0')+':00 h';
+  ttD.textContent=d.toLocaleString('es-CL')+' docs';
+  tt.style.left=sx+'px';
+  tt.style.top=sy+'px';
+  tt.classList.add('visible');
+}
+function hideTip() { tt.classList.remove('visible'); }
+
+build();
+</script>
