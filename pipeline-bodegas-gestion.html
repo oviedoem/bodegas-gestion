@@ -223,7 +223,7 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
 <div class="header">
   <h1>📦 Pipeline de datos — <span>Bodegas Gestión</span></h1>
   <div class="subtitle">
-    SQL Server → Python → JSON → GitHub Pages · <b>V.35 / SW v41</b> · Actualizado 2026-08-27 · Ferretería Oviedo
+    SQL Server → Python → JSON → GitHub Pages · <b>V.73 / SW v79</b> · Actualizado 2026-08-31 · Ferretería Oviedo
   </div>
 </div>
 
@@ -241,12 +241,12 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
 <div id="view-flow" class="view active">
 
   <div class="kpi-row">
-    <div class="kpi acc"><div class="kl">Códigos bodegas</div><div class="kn">13.972</div><div class="ks">gestion + IR otras</div></div>
+    <div class="kpi acc"><div class="kl">Códigos bodegas</div><div class="kn">12.159</div><div class="ks">gestion + IR otras (29-08)</div></div>
     <div class="kpi g"><div class="kl">Sucursales</div><div class="kn">5</div><div class="ks">EM · SV · LC · LT · IR</div></div>
     <div class="kpi b"><div class="kl">Merma IR</div><div class="kn">427</div><div class="ks">códigos MERMA.xlsx</div></div>
     <div class="kpi"><div class="kl">Stock crítico LC</div><div class="kn">1.465</div><div class="ks">productos con parámetros</div></div>
-    <div class="kpi"><div class="kl">OC pendientes LC</div><div class="kn">476</div><div class="ks">códigos con qty pendiente</div></div>
-    <div class="kpi"><div class="kl">Versión app</div><div class="kn">V.35</div><div class="ks">SW v41 · 2026-08-27</div></div>
+    <div class="kpi"><div class="kl">OC pendientes LC</div><div class="kn">447</div><div class="ks">códigos con qty pendiente</div></div>
+    <div class="kpi"><div class="kl">Versión app</div><div class="kn">V.73</div><div class="ks">SW v79 · 2026-08-29</div></div>
   </div>
 
   <p class="lead">Cada fila es un dato que viaja de su <b>fuente</b> → <b>script Python</b> que lo descarga y procesa → <b>JSON</b> que genera → <b>tab de la app</b> que lo consume. Los JSON se sirven directamente desde <b>GitHub Pages</b> (no hay backend). La merma IR genera además un HTML standalone autónomo.</p>
@@ -346,7 +346,43 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
     </div>
   </div>
 
-  <!-- FILA 3 — Stock crítico LC -->
+  <!-- FILA 3 — Diferencias bodegas San Vicente -->
+  <div class="flow-row">
+    <div class="fr-src sql">
+      <div class="fw">SQL Server <span class="badge b-sql">San Vicente</span></div>
+      <div class="sm">R_STOCK_PRODUCTOS · M_DOCUMENTOS_DETALLE</div>
+      <div style="margin-top:6px">
+        <span class="tag">GSV=41</span><span class="tag">MSV=42</span>
+        <span class="tag">ISV=70</span><span class="tag">TSV=45</span>
+        <span class="tag">CSV=44</span><span class="tag">ESV=95</span>
+        <span class="tag">CONSV=43</span>
+      </div>
+      <div class="sm" style="margin-top:4px">Cruza stock físico vs último documento registrado</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-script">
+      <div class="fw"><span class="mono">scripts/descargar_dif_sv.py</span></div>
+      <div class="sm">Descarga movimientos y stock SV · calcula diferencias</div>
+      <div class="sm" style="margin-top:4px">Dedup GIB/GRT aplicado · ST_FISICO ≠ 0</div>
+      <div class="sm">Campos: bodega, código, descripción, disp, físico, dif, tipoDoc, folio, fecha</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-json">
+      <div class="fw"><span class="mono">data/dif-bodegas-sv.json</span></div>
+      <div class="sm">Diferencias stock SV (29-08: 156 prod / 7 difs post-inventario)</div>
+      <div class="sm" style="margin-top:4px"><span class="badge b-git">en repo</span> GitHub Pages</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fr-tabs">
+      <b>Tab:</b> <span class="tag b">Dif. Bodegas SV</span>
+      <div class="sm" style="margin-top:6px">Tabla responsive móvil · modal documentos</div>
+      <div class="sm">Filtros: Bodega · Tipo dif · Buscar</div>
+      <div class="sm">KPIs: Total productos · Con diferencia · Sin movimiento</div>
+      <div class="sm" style="margin-top:4px">Var JS: <span class="mono">_bveMap</span> · ⭐ exacto sin filtro tipo</div>
+    </div>
+  </div>
+
+  <!-- FILA 4 — Stock crítico LC -->
   <div class="flow-row">
     <div class="fr-src sql">
       <div class="fw">SQL Server <span class="badge b-sql">Las Cabras</span></div>
@@ -382,7 +418,7 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
     </div>
   </div>
 
-  <!-- FILA 4 — OC Pendientes LC -->
+  <!-- FILA 5 — OC Pendientes LC -->
   <div class="flow-row">
     <div class="fr-src sql">
       <div class="fw">SQL Server <span class="badge b-sql">OC activas LC</span></div>
@@ -435,7 +471,7 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
     <div class="fr-json" style="border-left-color:var(--purple)">
       <div class="fw"><span class="mono">index.html</span> + <span class="mono">sw.js</span></div>
       <div class="sm">Versión bumpeada automáticamente</div>
-      <div class="sm" style="margin-top:4px">Último: <b>V.35 / SW v41</b> · 27-08-2026</div>
+      <div class="sm" style="margin-top:4px">Último: <b>V.73 / SW v79</b> · 29-08-2026</div>
     </div>
     <div class="arr">→</div>
     <div class="fr-tabs" style="border-left-color:var(--purple)">
@@ -451,7 +487,7 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
 ═══════════════════════════════════════════════════════ -->
 <div id="view-scripts" class="view">
 
-  <h2 class="sec">🛠 Scripts activos (flujo 2026-08-27+)</h2>
+  <h2 class="sec">🛠 Scripts activos (flujo 2026-08-31 — 5 scripts + verificador)</h2>
 
   <div class="tbl-wrap">
   <table>
@@ -474,6 +510,13 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
         <td>Lee códigos de MERMA.xlsx, consulta movimientos bodega MIR=75 en SQL, genera JSON y HTML autónomo de merma.</td>
         <td class="mono-cell">merma_isabel_riquelme.json<br>MERMA_ISABEL_RIQUELME.html</td>
         <td><span class="badge b-sql">VPN + SQL</span> <span class="badge b-loc">MERMA.xlsx</span></td>
+      </tr>
+      <tr>
+        <td class="mono-cell">scripts/descargar_dif_sv.py</td>
+        <td class="r">~8 KB</td>
+        <td>Descarga stock y movimientos de todas las bodegas SV. Calcula diferencias entre stock físico y último documento. Tab Dif. Bodegas SV.</td>
+        <td class="mono-cell">data/dif-bodegas-sv.json</td>
+        <td><span class="badge b-sql">VPN + SQL</span></td>
       </tr>
       <tr>
         <td class="mono-cell">scripts/descargar_stock_critico_lc.py</td>
@@ -545,28 +588,35 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
     <div class="step">
       <div class="step-num">3</div>
       <div class="step-body">
+        <b>Diferencias bodegas San Vicente</b>
+        <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_dif_sv.py"</code>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
         <b>Stock crítico LC</b>
         <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_stock_critico_lc.py"</code>
       </div>
     </div>
     <div class="step">
-      <div class="step-num">4</div>
+      <div class="step-num">5</div>
       <div class="step-body">
         <b>OC pendientes LC</b>
         <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_oc_pendientes_lc.py"</code>
       </div>
     </div>
     <div class="step">
-      <div class="step-num">5</div>
+      <div class="step-num">6</div>
       <div class="step-body">
         <b>Commit y push</b> — bump_version.py corre automáticamente como hook pre-commit
-        <code class="cmd">git add bodegas_gestion.json bodegas_ir_otras.json merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html data/stock-critico-lc.json data/oc-pend-resumen-lc.json</code>
+        <code class="cmd">git add bodegas_gestion.json bodegas_ir_otras.json merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html data/dif-bodegas-sv.json data/stock-critico-lc.json data/oc-pend-resumen-lc.json</code>
         <code class="cmd">git commit -m "data: actualizacion completa YYYY-MM-DD"</code>
         <code class="cmd">cd /d "E:\BODEGAS GESTION" && git push origin main</code>
       </div>
     </div>
     <div class="step">
-      <div class="step-num">6</div>
+      <div class="step-num">7</div>
       <div class="step-body">
         <b>(Opcional) Firebase Hosting</b> — solo si hubo cambios en index.html / sw.js
         <code class="cmd">DEPLOY_APP.bat</code>
