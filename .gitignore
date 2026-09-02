@@ -26,3 +26,7 @@ _subir_firestore_chunked.py
 _cifrar_y_subir_clave.py
 _service_account.json
 _CLAVE_FIRESTORE_MANUAL.json
+
+# Logs de monitoreo local
+*.log
+monitor_sv.log
