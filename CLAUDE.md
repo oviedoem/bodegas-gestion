@@ -94,6 +94,16 @@ Después de correr los 3, `generar_merma_ir.py` ya generó el HTML final leyendo
 
 ## Historial reciente
 
+### 2026-09-05 — Datos frescos (V.78/SW v84)
+- Corridos los 5 pasos de `ACTUALIZAR_DATOS.bat`: Merma IR, Bodegas SQL (todas las
+  sucursales), Diferencias SV, Stock crítico LC, OC pendientes LC — sin warnings de
+  anti-retroceso, sin sucursales en 0
+- `bodegas_gestion.json`: 9.797 códigos · `bodegas_ir_otras.json`: 4.521 códigos ·
+  `dif-bodegas-sv.json`: 4.426 productos (142 con diferencia) · `stock-critico-lc.json`:
+  1.465 productos · `oc-pend-resumen-lc.json`: 406 códigos (258 OCs activas)
+- Commit `ef38488` (hook auto-bump a V.78/SW v84), deploy Firebase confirmado
+  ("Deploy complete") en `isabel-riquelme-merma.web.app`
+
 ### 2026-08-27 — Migración cifrado→JSON plano (V.35/SW v41)
 - **Eliminado sistema AES-256:** `.enc` + `_cifrar_y_subir_clave.py` movidos a `_ARCHIVO_HISTORICO/`
 - `index.html` ahora fetchea `bodegas_gestion.json` y `bodegas_ir_otras.json` directamente desde GitHub Pages
