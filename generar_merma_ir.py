@@ -80,12 +80,19 @@ INNER JOIN Foviedo.dbo.M_PRODUCTOS B ON B.CODIGO_TECNICO = A.CODIGO_TECNICO
 INNER JOIN Foviedo.dbo.P_BODEGAS D ON A.IDBODEGA = D.IDBODEGA
 INNER JOIN ENTRADAS N
     ON N.IDBODEGA = A.IDBODEGA AND N.CODIGO_TECNICO = A.CODIGO_TECNICO
-    -- OJO: NO filtrar por N.IDSUCURSAL = A.IDSUCURSAL. El documento puede quedar
-    -- grabado con el IDSUCURSAL de origen del traslado (confirmado en ref. descargar_bod.py).
+    -- OJO: NO comparar contra A.IDSUCURSAL (sucursal del stock destino) — el
+    -- documento puede quedar grabado con el IDSUCURSAL de origen del traslado
+    -- (confirmado en ref. descargar_bod.py). Por eso el join de observacion/
+    -- encabezado usa N.IDSUCURSAL (la sucursal PROPIA del documento), que es
+    -- la unica forma de no cruzar folios repetidos entre sucursales distintas
+    -- (bug real detectado 10-09-2026: observacion/usuario de un traslado ajeno
+    -- pegada a un codigo de otra sucursal, mismo IDDOCUMENTO+IDNUMERO).
 LEFT JOIN Foviedo.dbo.M_Documentos_Encabezado_Observacion G
     ON G.IDDOCUMENTO = N.IDDOCUMENTO AND G.IDNUMERO = N.IDNUMERO
+    AND G.IDSUCURSAL = N.IDSUCURSAL
 LEFT JOIN Foviedo.dbo.M_DOCUMENTOS_ENCABEZADO ENC
     ON ENC.IDDOCUMENTO = N.IDDOCUMENTO AND ENC.IDNUMERO = N.IDNUMERO
+    AND ENC.IDSUCURSAL = N.IDSUCURSAL
 WHERE A.IDBODEGA = ? AND A.IDSUCURSAL = ?
   AND A.CODIGO_TECNICO IN ({codigos})
 ORDER BY N.FECHA_EMISION DESC

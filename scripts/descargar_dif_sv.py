@@ -147,17 +147,22 @@ FROM Foviedo.dbo.M_DOCUMENTOS_DETALLE N
 INNER JOIN Foviedo.dbo.M_DOCUMENTOS MD
     ON MD.IDDOCUMENTO = N.IDDOCUMENTO
 OUTER APPLY (
+    -- Filtro por N.IDSUCURSAL (sucursal propia del documento), no la del stock
+    -- destino — el folio IDDOCUMENTO+IDNUMERO se repite entre sucursales
+    -- (bug real detectado 10-09-2026, mismo fix que descargar_bodegas_sql.py).
     SELECT TOP 1 ENC2.IDRESPONZABLE, ENC2.IDVENDEDOR,
                  ENC2.FECHA_REGISTRO, ENC2.IDENTIDAD, ENC2.IDSUCURSAL, ENC2.ESTACION
     FROM Foviedo.dbo.M_DOCUMENTOS_ENCABEZADO ENC2
     WHERE ENC2.IDDOCUMENTO = N.IDDOCUMENTO
       AND ENC2.IDNUMERO    = N.IDNUMERO
+      AND ENC2.IDSUCURSAL  = N.IDSUCURSAL
 ) ENC
 OUTER APPLY (
     SELECT TOP 1 G2.OBSERVACION_IMPRESA
     FROM Foviedo.dbo.M_Documentos_Encabezado_Observacion G2
     WHERE G2.IDDOCUMENTO = N.IDDOCUMENTO
       AND G2.IDNUMERO    = N.IDNUMERO
+      AND G2.IDSUCURSAL  = N.IDSUCURSAL
 ) OBS
 WHERE N.IDBODEGA       = ?
   AND N.CODIGO_TECNICO = ?

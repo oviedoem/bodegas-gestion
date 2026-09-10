@@ -177,17 +177,22 @@ LEFT JOIN Foviedo.dbo.P_MARCAS MA ON MA.IDMARCA = B.IDMARCA
 INNER JOIN ENTRADAS N
     ON N.IDBODEGA = A.IDBODEGA AND N.CODIGO_TECNICO = A.CODIGO_TECNICO
 OUTER APPLY (
+    -- Filtro por N.IDSUCURSAL (sucursal propia del documento/entrada), NUNCA
+    -- A.IDSUCURSAL (sucursal del stock destino) — el folio IDDOCUMENTO+IDNUMERO
+    -- se repite entre sucursales, y comparar contra el destino puede traer la
+    -- observacion de un documento distinto de otra sucursal (bug real detectado
+    -- 10-09-2026: obs. de un traslado ajeno pegada a un codigo de otra bodega).
     SELECT TOP 1 G2.OBSERVACION_IMPRESA
     FROM Foviedo.dbo.M_Documentos_Encabezado_Observacion G2
     WHERE G2.IDDOCUMENTO = N.IDDOCUMENTO AND G2.IDNUMERO = N.IDNUMERO
-    ORDER BY CASE WHEN G2.IDSUCURSAL = A.IDSUCURSAL THEN 0 ELSE 1 END
+      AND G2.IDSUCURSAL = N.IDSUCURSAL
 ) G
 OUTER APPLY (
     SELECT TOP 1 ENC2.FECHA_REGISTRO, ENC2.IDRESPONZABLE, ENC2.AUTORIZADO_FIRMA,
                  ENC2.IDVENDEDOR, ENC2.ESTACION
     FROM Foviedo.dbo.M_DOCUMENTOS_ENCABEZADO ENC2
     WHERE ENC2.IDDOCUMENTO = N.IDDOCUMENTO AND ENC2.IDNUMERO = N.IDNUMERO
-    ORDER BY CASE WHEN ENC2.IDSUCURSAL = A.IDSUCURSAL THEN 0 ELSE 1 END
+      AND ENC2.IDSUCURSAL = N.IDSUCURSAL
 ) ENC
 WHERE A.IDBODEGA = ?
   AND A.IDSUCURSAL = ?
