@@ -29,7 +29,9 @@ identifica el registro exacto de ese documento, no la sucursal de negocio;
 mismo criterio que el fix de cruce de sucursal del 10-09-2026.)
 
 SOLO LECTURA de SQL Server. Output:
-  E:\\BODEGAS GESTION\\data\\consumo-interno.json
+  E:\\BODEGAS GESTION\\data\\consumo-interno.json     (admin, las 6 sucursales)
+  E:\\BODEGAS GESTION\\data\\consumo-interno-sv.json  (MODO_SV, solo San Vicente)
+  E:\\BODEGAS GESTION\\data\\consumo-interno-lc.json  (MODO_LC, solo Las Cabras)
 
 Anti-retroceso: aborta si nuevo total < 50% del anterior.
 """
@@ -43,6 +45,14 @@ from descargar_bodegas_sql import conectar  # reusa credenciales/conexion ya pro
 
 BASE_DIR = Path(__file__).parent.parent
 OUT_JSON = BASE_DIR / 'data' / 'consumo-interno.json'
+
+# Recortes por sucursal para MODO_SV/MODO_LC — igual criterio que
+# generar_bodegas_modo.py: no es solo peso, es que un usuario restringido
+# NUNCA debe descargar el consumo de otra sucursal (privacidad de datos).
+OUT_SLICES = {
+    '05': BASE_DIR / 'data' / 'consumo-interno-sv.json',
+    '06': BASE_DIR / 'data' / 'consumo-interno-lc.json',
+}
 
 IDDOCUMENTO_CONSUMO = 218  # GEI 218 — "Guia de Consumo" (verificado SQL 11-09-2026)
 
@@ -196,6 +206,19 @@ def main():
     log('[3/3] Generando JSON...')
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     OUT_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+
+    # Recortes MODO_SV / MODO_LC — un solo archivo por sucursal, sin el resto.
+    for idsuc, out_path in OUT_SLICES.items():
+        eventos_suc = por_sucursal.get(idsuc, [])
+        slice_payload = {
+            'generado': payload['generado'],
+            'idSucursal': idsuc,
+            'nombre': NOMBRES_SUCURSAL.get(idsuc, f'Sucursal {idsuc}'),
+            'total': len(eventos_suc),
+            'registros': eventos_suc,
+        }
+        out_path.write_text(json.dumps(slice_payload, ensure_ascii=False, indent=2), encoding='utf-8')
+        log(f'  recorte {out_path.name}: {len(eventos_suc)} eventos')
 
     for s in sucursales_out:
         log(f'  {s["idSucursal"]} {s["nombre"]:25s} {s["total"]:6d} eventos')

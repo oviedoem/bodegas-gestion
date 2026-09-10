@@ -205,7 +205,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.84</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">10-09-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.85</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">10-09-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -1048,7 +1048,7 @@ function fillSelect(v, base, valores){
 
 function aplicarModoSV(){
   // Todos los tabs nacen ocultos — solo mostramos los de SV
-  ['sanvicente','dif_sv'].forEach(function(k){
+  ['sanvicente','dif_sv','consumo_interno'].forEach(function(k){
     var btn=document.getElementById('tabBtn_'+k);
     if(btn) btn.style.display='';
   });
@@ -1057,7 +1057,7 @@ function aplicarModoSV(){
 
 function aplicarModoLC(){
   // Todos los tabs nacen ocultos — solo mostramos los de LC
-  ['lascabras','solicitud_lc'].forEach(function(k){
+  ['lascabras','solicitud_lc','consumo_interno'].forEach(function(k){
     var btn=document.getElementById('tabBtn_'+k);
     if(btn) btn.style.display='';
   });
@@ -2300,29 +2300,50 @@ var _consumoChart = null;     // instancia Chart.js activa
 
 function consumoInit(){
   if(_consumoData){ consumoFiltrar(); return; }
-  fetch('data/consumo-interno.json',{cache:'no-store'}).then(function(r){ return r.json(); })
+  // MODO_SV/MODO_LC: archivo recortado, SOLO esa sucursal (ni siquiera se
+  // descarga el resto) — mismo criterio de privacidad que bodegas-sv.json.
+  var url = MODO_SV ? 'data/consumo-interno-sv.json'
+          : MODO_LC ? 'data/consumo-interno-lc.json'
+          : 'data/consumo-interno.json';
+  var restringido = MODO_SV || MODO_LC;
+
+  fetch(url,{cache:'no-store'}).then(function(r){ return r.json(); })
     .then(function(d){
       _consumoData = d;
+      var sucursalesInfo = restringido
+        ? [{ idSucursal: d.idSucursal, nombre: d.nombre, total: d.total }]
+        : (d.sucursales || []);
+
       var eventos = [];
-      (d.sucursales||[]).forEach(function(s){
-        (s.registros||[]).forEach(function(r){
-          r.idSucursal = s.idSucursal;
-          r.nombreSucursal = s.nombre;
-          eventos.push(r);
+      if(restringido){
+        (d.registros||[]).forEach(function(r){
+          r.idSucursal = d.idSucursal; r.nombreSucursal = d.nombre; eventos.push(r);
         });
-      });
+      } else {
+        (d.sucursales||[]).forEach(function(s){
+          (s.registros||[]).forEach(function(r){
+            r.idSucursal = s.idSucursal; r.nombreSucursal = s.nombre; eventos.push(r);
+          });
+        });
+      }
       _consumoEventos = eventos;
 
       document.getElementById('consumo_meta').textContent =
-        'Generado: '+(d.generado||'—')+' · '+(d.total||eventos.length)+' eventos de consumo · '+(d.sucursales||[]).length+' sucursales';
+        'Generado: '+(d.generado||'—')+' · '+(d.total||eventos.length)+' eventos de consumo'+
+        (restringido ? ' · '+d.nombre : ' · '+sucursalesInfo.length+' sucursales');
 
-      // Poblar selects de sucursal/marca/familia con los valores reales
+      // Modo restringido: 1 sola sucursal — ocultar el selector, no tiene sentido.
       var selSuc = document.getElementById('consumo_sucursal');
-      (d.sucursales||[]).slice().sort(function(a,b){ return a.nombre.localeCompare(b.nombre); }).forEach(function(s){
-        var o = document.createElement('option');
-        o.value = s.idSucursal; o.textContent = s.nombre+' ('+s.total+')';
-        selSuc.appendChild(o);
-      });
+      if(restringido){
+        selSuc.style.display = 'none';
+        selSuc.value = '';
+      } else {
+        sucursalesInfo.slice().sort(function(a,b){ return a.nombre.localeCompare(b.nombre); }).forEach(function(s){
+          var o = document.createElement('option');
+          o.value = s.idSucursal; o.textContent = s.nombre+' ('+s.total+')';
+          selSuc.appendChild(o);
+        });
+      }
       var marcas = {}, familias = {};
       eventos.forEach(function(r){ if(r.marca) marcas[r.marca]=1; if(r.familia) familias[r.familia]=1; });
       var selMarca = document.getElementById('consumo_marca');

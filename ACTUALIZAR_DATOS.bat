@@ -131,7 +131,7 @@ echo    data\bodegas-sv.json + data\bodegas-lc.json (recorte MODO_SV/MODO_LC)
 echo    data\dif-bodegas-sv.json
 echo    data\stock-critico-lc.json
 echo    data\oc-pend-resumen-lc.json
-echo    data\consumo-interno.json
+echo    data\consumo-interno.json (+ recortes -sv.json / -lc.json)
 echo    merma_isabel_riquelme.json
 echo    MERMA_ISABEL_RIQUELME.html
 echo ============================================================
@@ -144,7 +144,7 @@ if /i not "%PUBLICAR%"=="S" (
     echo    git add bodegas_gestion.json bodegas_ir_otras.json
     echo    git add data\bodegas-sv.json data\bodegas-lc.json
     echo    git add data\dif-bodegas-sv.json data\stock-critico-lc.json data\oc-pend-resumen-lc.json
-    echo    git add data\consumo-interno.json
+    echo    git add data\consumo-interno.json data\consumo-interno-sv.json data\consumo-interno-lc.json
     echo    git add merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html
     echo    git commit -m "data: datos frescos"  ^&^& git push
     echo    E:\npm-global\firebase.cmd deploy --only hosting --project isabel-riquelme-merma
@@ -156,7 +156,7 @@ echo [PUBLICAR 1/3] git add + commit...
 git add bodegas_gestion.json bodegas_ir_otras.json
 git add data\bodegas-sv.json data\bodegas-lc.json
 git add data\dif-bodegas-sv.json data\stock-critico-lc.json data\oc-pend-resumen-lc.json
-git add data\consumo-interno.json
+git add data\consumo-interno.json data\consumo-interno-sv.json data\consumo-interno-lc.json
 git add merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html
 git commit -m "data: datos frescos %DATE%"
 if errorlevel 1 (
