@@ -16,7 +16,7 @@ En orden de prioridad. Si hay conflicto, gana el nivel más alto:
 1. **Nunca editar otros proyectos** — este repo es independiente; solo se LEE de El Manzano/Las Cabras/etc.
 2. **Credenciales fuera de código y git** — la clave de login vive SOLO en `_CREDENCIAL_LOGIN_NO_SUBIR.txt`
 3. **Sin write masivo a Firestore** — quota Spark agotada; bodegas van a JSON estático, no a Firestore
-4. **VPN activa antes de SQL** — sin VPN, la conexión a [SQL-SERVER-IP] falla silenciosamente
+4. **VPN activa antes de SQL** — sin VPN, la conexión al SQL Server falla silenciosamente
 5. **Un cambio a la vez** — un prompt = un script o una sucursal; nunca agregar scope no pedido
 
 ---

@@ -120,14 +120,49 @@ echo    data\stock-critico-lc.json
 echo    data\oc-pend-resumen-lc.json
 echo    merma_isabel_riquelme.json
 echo    MERMA_ISABEL_RIQUELME.html
+echo ============================================================
 echo.
-echo  Para publicar:
-echo    git add bodegas_gestion.json bodegas_ir_otras.json
-echo    git add data\bodegas-sv.json data\bodegas-lc.json
-echo    git add data\dif-bodegas-sv.json data\stock-critico-lc.json data\oc-pend-resumen-lc.json
-echo    git add merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html
-echo    git commit -m "data: datos frescos"
-echo    git push
+
+set /p PUBLICAR="Publicar ahora (git commit+push y deploy Firebase)? [S/N]: "
+if /i not "%PUBLICAR%"=="S" (
+    echo.
+    echo  Sin publicar. Los archivos quedan listos en disco; para publicar despues:
+    echo    git add bodegas_gestion.json bodegas_ir_otras.json
+    echo    git add data\bodegas-sv.json data\bodegas-lc.json
+    echo    git add data\dif-bodegas-sv.json data\stock-critico-lc.json data\oc-pend-resumen-lc.json
+    echo    git add merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html
+    echo    git commit -m "data: datos frescos"  ^&^& git push
+    echo    E:\npm-global\firebase.cmd deploy --only hosting --project isabel-riquelme-merma
+    goto :FIN_OK
+)
+
+echo.
+echo [PUBLICAR 1/3] git add + commit...
+git add bodegas_gestion.json bodegas_ir_otras.json
+git add data\bodegas-sv.json data\bodegas-lc.json
+git add data\dif-bodegas-sv.json data\stock-critico-lc.json data\oc-pend-resumen-lc.json
+git add merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html
+git commit -m "data: datos frescos %DATE%"
+if errorlevel 1 (
+    echo  [INFO] Nada nuevo para comitear o el commit fallo - revisa arriba.
+)
+
+echo.
+echo [PUBLICAR 2/3] git push...
+git push
+if errorlevel 1 (
+    echo.
+    echo  [ERROR] git push fallo. Revisa conexion/credenciales de git.
+    goto :FIN_ERROR
+)
+
+echo.
+echo [PUBLICAR 3/3] Deploy Firebase Hosting...
+call "%PROJ%\DEPLOY_APP.bat"
+
+echo.
+echo ============================================================
+echo  PUBLICADO - isabel-riquelme-merma.web.app
 echo ============================================================
 goto :FIN_OK
 

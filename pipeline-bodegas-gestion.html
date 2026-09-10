@@ -223,7 +223,7 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
 <div class="header">
   <h1>📦 Pipeline de datos — <span>Bodegas Gestión</span></h1>
   <div class="subtitle">
-    SQL Server → Python → JSON → GitHub Pages · <b>V.73 / SW v79</b> · Actualizado 2026-08-31 · Ferretería Oviedo
+    SQL Server → Python → JSON → GitHub Pages · <b>V.82 / SW v88</b> · Actualizado 2026-09-10 · Ferretería Oviedo
   </div>
 </div>
 
@@ -241,12 +241,12 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
 <div id="view-flow" class="view active">
 
   <div class="kpi-row">
-    <div class="kpi acc"><div class="kl">Códigos bodegas</div><div class="kn">12.159</div><div class="ks">gestion + IR otras (29-08)</div></div>
+    <div class="kpi acc"><div class="kl">Códigos bodegas</div><div class="kn">14.384</div><div class="ks">gestion (9.730) + IR otras (4.654) · 10-09</div></div>
     <div class="kpi g"><div class="kl">Sucursales</div><div class="kn">5</div><div class="ks">EM · SV · LC · LT · IR</div></div>
     <div class="kpi b"><div class="kl">Merma IR</div><div class="kn">427</div><div class="ks">códigos MERMA.xlsx</div></div>
     <div class="kpi"><div class="kl">Stock crítico LC</div><div class="kn">1.465</div><div class="ks">productos con parámetros</div></div>
-    <div class="kpi"><div class="kl">OC pendientes LC</div><div class="kn">447</div><div class="ks">códigos con qty pendiente</div></div>
-    <div class="kpi"><div class="kl">Versión app</div><div class="kn">V.73</div><div class="ks">SW v79 · 2026-08-29</div></div>
+    <div class="kpi"><div class="kl">OC pendientes LC</div><div class="kn">407</div><div class="ks">códigos con qty pendiente</div></div>
+    <div class="kpi"><div class="kl">Versión app</div><div class="kn">V.82</div><div class="ks">SW v88 · 2026-09-10</div></div>
   </div>
 
   <p class="lead">Cada fila es un dato que viaja de su <b>fuente</b> → <b>script Python</b> que lo descarga y procesa → <b>JSON</b> que genera → <b>tab de la app</b> que lo consume. Los JSON se sirven directamente desde <b>GitHub Pages</b> (no hay backend). La merma IR genera además un HTML standalone autónomo.</p>
@@ -334,7 +334,7 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
       <div class="fw"><span class="mono">merma_isabel_riquelme.json</span></div>
       <div class="sm">367 KB · bodega MIR=75 · suc=02</div>
       <div style="margin-top:6px" class="fw"><span class="mono">MERMA_ISABEL_RIQUELME.html</span></div>
-      <div class="sm">136 KB · reporte HTML autónomo (sin login)</div>
+      <div class="sm">136 KB · alias completo del panel (mismo login Firebase, mantenido por compatibilidad con la URL vieja del repo — NO es un reporte simple, ver AGENTS.md)</div>
       <div class="sm" style="margin-top:4px"><span class="badge b-git">ambos en repo</span> GitHub Pages</div>
     </div>
     <div class="arr">→</div>
@@ -471,7 +471,7 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
     <div class="fr-json" style="border-left-color:var(--purple)">
       <div class="fw"><span class="mono">index.html</span> + <span class="mono">sw.js</span></div>
       <div class="sm">Versión bumpeada automáticamente</div>
-      <div class="sm" style="margin-top:4px">Último: <b>V.73 / SW v79</b> · 29-08-2026</div>
+      <div class="sm" style="margin-top:4px">Último: <b>V.82 / SW v88</b> · 10-09-2026</div>
     </div>
     <div class="arr">→</div>
     <div class="fr-tabs" style="border-left-color:var(--purple)">
@@ -487,7 +487,7 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
 ═══════════════════════════════════════════════════════ -->
 <div id="view-scripts" class="view">
 
-  <h2 class="sec">🛠 Scripts activos (flujo 2026-08-31 — 5 scripts + verificador)</h2>
+  <h2 class="sec">🛠 Scripts activos (flujo 2026-09-10 — 6 scripts + verificador)</h2>
 
   <div class="tbl-wrap">
   <table>
@@ -510,6 +510,13 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
         <td>Lee códigos de MERMA.xlsx, consulta movimientos bodega MIR=75 en SQL, genera JSON y HTML autónomo de merma.</td>
         <td class="mono-cell">merma_isabel_riquelme.json<br>MERMA_ISABEL_RIQUELME.html</td>
         <td><span class="badge b-sql">VPN + SQL</span> <span class="badge b-loc">MERMA.xlsx</span></td>
+      </tr>
+      <tr>
+        <td class="mono-cell">scripts/generar_bodegas_modo.py</td>
+        <td class="r">~2 KB</td>
+        <td>NO baja nada del ERP — recorta bodegas_gestion.json (ya descargado por el script anterior) en los 2 datasets livianos para MODO_SV/MODO_LC. Siempre después del paso anterior.</td>
+        <td class="mono-cell">data/bodegas-sv.json<br>data/bodegas-lc.json</td>
+        <td><span class="badge b-loc">bodegas_gestion.json</span></td>
       </tr>
       <tr>
         <td class="mono-cell">scripts/descargar_dif_sv.py</td>
@@ -567,40 +574,49 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
   <div class="sm" style="margin-bottom:16px">* <span class="mono">oc-pendientes-lc.json</span> está en .gitignore (detalle completo, solo local)</div>
 
   <h2 class="sec">⚡ Secuencia completa de actualización</h2>
-  <p class="lead">Correr en orden. Requiere VPN activa y MERMA.xlsx en la raíz del proyecto.</p>
+  <p class="lead">Doble clic en <span class="mono">ACTUALIZAR_DATOS.bat</span> corre los 6 pasos en orden y al final
+    pregunta si publicar (git commit+push + deploy Firebase) — ya no hace falta correr paso a paso a mano.
+    El detalle de cada paso, por si se necesita correr uno suelto:</p>
 
   <div class="step-grid">
     <div class="step">
       <div class="step-num">1</div>
+      <div class="step-body">
+        <b>Merma Isabel Riquelme</b> — requiere MERMA.xlsx en la raíz
+        <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\generar_merma_ir.py"</code>
+        <div class="sm" style="margin-top:6px">Atajo: doble clic en <span class="mono">ACTUALIZAR_MERMA_IR.bat</span> (solo este paso + abre el reporte)</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
       <div class="step-body">
         <b>Bodegas todas las sucursales</b> — descarga desde SQL, genera los 2 JSON principales
         <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_bodegas_sql.py"</code>
       </div>
     </div>
     <div class="step">
-      <div class="step-num">2</div>
+      <div class="step-num">3</div>
       <div class="step-body">
-        <b>Merma Isabel Riquelme</b> — requiere MERMA.xlsx en la raíz
-        <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\generar_merma_ir.py"</code>
-        <div class="sm" style="margin-top:6px">O doble clic en <span class="mono">ACTUALIZAR_MERMA_IR.bat</span></div>
+        <b>Recorte SV/LC</b> — NO baja nada del ERP, solo recorta el JSON del paso 2. Siempre después.
+        <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\generar_bodegas_modo.py"</code>
       </div>
     </div>
     <div class="step">
-      <div class="step-num">3</div>
+      <div class="step-num">4</div>
       <div class="step-body">
         <b>Diferencias bodegas San Vicente</b>
         <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_dif_sv.py"</code>
       </div>
     </div>
     <div class="step">
-      <div class="step-num">4</div>
+      <div class="step-num">5</div>
       <div class="step-body">
         <b>Stock crítico LC</b>
         <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_stock_critico_lc.py"</code>
       </div>
     </div>
     <div class="step">
-      <div class="step-num">5</div>
+      <div class="step-num">6</div>
       <div class="step-body">
         <b>OC pendientes LC</b>
         <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_oc_pendientes_lc.py"</code>

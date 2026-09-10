@@ -30,3 +30,8 @@ _CLAVE_FIRESTORE_MANUAL.json
 # Logs de monitoreo local
 *.log
 monitor_sv.log
+
+# Archivos huerfanos archivados 10-09-2026 (sin referencias en ningun script activo,
+# datasets viejos por-sucursal previos a bodegas_gestion.json) — se guardan localmente
+# de respaldo pero no vale la pena comitear 12 MB de JSON sin uso al repo publico.
+_ARCHIVO_HISTORICO/data-huerfanos/

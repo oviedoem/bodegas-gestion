@@ -502,6 +502,11 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .neg{color:#fff;background:var(--rojo);font-weight:700;border-radius:4px;padding:2px 6px;display:inline-block}
   .tablewrap{overflow:auto;max-height:72vh;border:1px solid var(--border);border-radius:8px}
   .badge-na{color:#9ca3af;font-style:italic}
+  .grt-toggle{cursor:pointer;color:#6366f1;display:inline-block;width:12px;font-size:10px;user-select:none}
+  tr.grt-sub td{background:#f5f4ff;padding:4px 9px 8px 28px;border-top:none}
+  table.grt-detail{width:100%;border-collapse:collapse;font-size:11px;border-left:3px solid #a5b4fc}
+  table.grt-detail th{background:#eef2ff;color:#4338ca;padding:4px 8px}
+  table.grt-detail td{padding:3px 8px;border-color:#dfe1ff}
   .footer-note{font-size:11px;color:#9ca3af;text-align:center;padding:10px}
   .tabs{display:flex;gap:6px;padding:0 22px;background:var(--dark)}
   .tab-btn{font-size:13px;font-weight:700;color:#cbd5e1;background:#1f2937;border:none;border-bottom:3px solid transparent;
@@ -890,15 +895,24 @@ function render(v){
     '<div class="kpi red"><div class="l">Stock negativo (s/recepción)</div><div class="n">'+stockNeg+'</div></div>'+
     '<div class="kpi"><div class="l">Máx. días</div><div class="n">'+maxDias+'</div></div>';
 
-  $(v,'tbody').innerHTML = FIL.map(function(r){
+  var COLSPAN = cfg.conBodega ? 17 : 16;
+  $(v,'tbody').innerHTML = FIL.map(function(r,i){
     var dias = r.diasAntiguedad!=null? r.diasAntiguedad : '—';
     var dcls = (typeof dias==='number')? (dias>=90?'d90':dias>=30?'d30':'') : '';
     var qty = (r.fisico!=null?r.fisico:r.disp)||0;
     var val = qty*(r.costo||0);
     var sinDatos = !r.tipoDoc;
     var bodCell = cfg.conBodega ? ('<td class="mono">'+esc(r.bodega)+'</td>') : '';
-    return '<tr>'+bodCell+
-      '<td class="mono">'+esc(r.codigoTecnico)+'</td>'+
+    // documentosGRT: si el fisico se compuso de 2+ documentos, se listan
+    // aparte en vez de mostrar una unica fecha/antiguedad para todo el total.
+    var docs = r.documentosGRT;
+    var hasGRT = docs && docs.length>1;
+    var subId = 'grt_'+v+'_'+i;
+    var arrow = hasGRT
+      ? '<span class="grt-toggle" id="'+subId+'_a" onclick="toggleGRT(\''+subId+'\')">▶</span>'
+      : '<span style="display:inline-block;width:12px"></span>';
+    var mainRow = '<tr>'+bodCell+
+      '<td class="mono">'+arrow+' '+esc(r.codigoTecnico)+'</td>'+
       '<td class="desc">'+esc(r.descripcion)+'</td>'+
       '<td>'+esc(r.marca)+'</td>'+
       '<td>'+esc(r.familia)+'</td>'+
@@ -908,14 +922,37 @@ function render(v){
       '<td class="right">'+numCell(r.fisico)+'</td>'+
       '<td class="right">'+clp(r.costo)+'</td>'+
       '<td class="center">'+esc(r.fechaRegistro)+'</td>'+
-      '<td class="right '+dcls+'">'+dias+'</td>'+
+      '<td class="right '+dcls+'">'+dias+(hasGRT?' <span class="badge-na" title="Fisico compuesto por '+docs.length+' documentos">('+docs.length+')</span>':'')+'</td>'+
       '<td class="right">'+clpCell(val)+'</td>'+
       '<td>'+esc(r.usuario)+'</td>'+
       '<td>'+esc(r.estacionPc)+'</td>'+
       '<td class="center">'+esc(r.fechaRegistroSistema)+'</td>'+
       '<td class="obs">'+esc(r.observacion)+'</td>'+
       '</tr>';
+    if(!hasGRT) return mainRow;
+    var subRow = '<tr class="grt-sub" id="'+subId+'" style="display:none"><td colspan="'+COLSPAN+'">'+
+      '<table class="grt-detail"><thead><tr><th>Tipo Doc.</th><th>Folio</th><th class="right">Cantidad</th>'+
+      '<th class="center">Fecha</th><th class="right">Días</th><th>Observación</th></tr></thead><tbody>'+
+      docs.map(function(d){
+        return '<tr><td>'+esc(d.tipoDocNombre||d.tipoDoc)+'</td>'+
+          '<td class="right mono">'+(d.folio&&d.folio!=='0'?esc(d.folio):'<span class="badge-na">s/nº</span>')+'</td>'+
+          '<td class="right">'+numCell(d.cantidad)+'</td>'+
+          '<td class="center">'+esc(d.fechaRegistro)+'</td>'+
+          '<td class="right">'+(d.diasAntiguedad!=null?d.diasAntiguedad:'—')+'</td>'+
+          '<td class="obs">'+esc(d.observacion)+'</td></tr>';
+      }).join('')+
+      '</tbody></table></td></tr>';
+    return mainRow+subRow;
   }).join('');
+}
+
+function toggleGRT(subId){
+  var row = document.getElementById(subId);
+  var arrow = document.getElementById(subId+'_a');
+  if(!row) return;
+  var abrir = row.style.display==='none';
+  row.style.display = abrir ? 'table-row' : 'none';
+  if(arrow) arrow.textContent = abrir ? '▼' : '▶';
 }
 
 var HEADERS_BASE = ['Código','Descripción','Marca','Familia','Tipo Doc.','Folio','Disp.','Físico',
