@@ -36,25 +36,38 @@ Distribución:
 IDs SQL verificados: ver `IDS_REFERENCIA_IR.md` (Isabel Riquelme) e
 `IDS_REFERENCIA_BODEGAS_GESTION.md` (las otras 4 sucursales + compartidas).
 
-## Scripts principales
+## Scripts principales (vigentes desde V.73, 31-08-2026 — reemplazan a los `generar_bodegas_*.py`
+## archivados en `_ARCHIVO_HISTORICO/`, no usar esos)
 - `generar_merma_ir.py` — lee códigos de `MERMA.xlsx`, consulta SQL (bodega MIR=75) y
   genera `merma_isabel_riquelme.json` + el HTML publicado (`MERMA_ISABEL_RIQUELME.html`
-  / `index.html`) — este script genera el HTML completo, con TODOS los tabs (incluye
-  los de `generar_bodegas_gestion.py`, ver abajo).
-- `generar_bodegas_ir.py` — bodegas "Otras Bodegas IR" (CAL, SER, WEB, GO, GAR, IIR,
-  BMC, RST, HEL, EIR) en lotes de 2 → `bodegas_ir_otras.json`.
-- `generar_bodegas_gestion.py` — bodegas de El Manzano/San Vicente/Las Cabras/Litueche
-  + Compartidas (CD y afines) en lotes de 2 → `bodegas_gestion.json`.
+  / `index.html`) — este script genera el HTML completo, con TODOS los tabs.
+- `scripts/descargar_bodegas_sql.py` — bodegas de El Manzano/San Vicente/Las Cabras/
+  Litueche + Compartidas (CD y afines) + "Otras Bodegas IR" en lotes pequeños →
+  `bodegas_gestion.json` + `bodegas_ir_otras.json`.
+- `scripts/generar_bodegas_modo.py` — recorta `bodegas_gestion.json` (ya descargado
+  por el script anterior, no baja nada nuevo del ERP) para armar `data/bodegas-sv.json`
+  y `data/bodegas-lc.json`, los datasets livianos que cargan los usuarios MODO_SV/MODO_LC
+  al login. **Siempre correr después de `descargar_bodegas_sql.py`, nunca antes** — si se
+  olvida este paso, SV/LC quedan viendo datos de la última vez que corrió (bug real
+  detectado 10-09-2026: quedaron 12 días desactualizados porque este paso no estaba en
+  el pipeline).
+- `scripts/descargar_dif_sv.py` → `data/dif-bodegas-sv.json` (tab Dif. Bodegas SV).
+- `scripts/descargar_stock_critico_lc.py` / `scripts/descargar_oc_pendientes_lc.py` →
+  datos de Solicitud Stock LC.
 - `verificar_bodegas_gestion.py` — consulta `P_BODEGAS` en vivo para re-verificar IDs
   si cambia el ERP (no descarga movimientos, solo lista bodegas por categoría).
 
-Para regenerar tras actualizar `MERMA.xlsx` o los IDs de bodega:
+Para regenerar todo tras actualizar `MERMA.xlsx` o los IDs de bodega, correr
+`ACTUALIZAR_DATOS.bat` (orquesta los 6 pasos en el orden correcto) o a mano:
 ```
 E:\python-portable\python.exe "E:\BODEGAS GESTION\generar_merma_ir.py"
-E:\python-portable\python.exe "E:\BODEGAS GESTION\generar_bodegas_ir.py"
-E:\python-portable\python.exe "E:\BODEGAS GESTION\generar_bodegas_gestion.py"
+E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_bodegas_sql.py"
+E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\generar_bodegas_modo.py"
+E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_dif_sv.py"
+E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_stock_critico_lc.py"
+E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_oc_pendientes_lc.py"
 ```
-Después de correr los 3, `generar_merma_ir.py` ya generó el HTML final leyendo
+Después de correr `generar_merma_ir.py` ya queda el HTML final leyendo
 `merma_isabel_riquelme.json` — no hace falta un paso aparte para "armar" el HTML.
 
 ## Publicación y seguridad de acceso (actualizado 2026-08-27 — V.35/SW v41)
@@ -103,6 +116,9 @@ Después de correr los 3, `generar_merma_ir.py` ya generó el HTML final leyendo
   1.465 productos · `oc-pend-resumen-lc.json`: 406 códigos (258 OCs activas)
 - Commit `ef38488` (hook auto-bump a V.78/SW v84), deploy Firebase confirmado
   ("Deploy complete") en `isabel-riquelme-merma.web.app`
+- Commit `fdb1625` (mismo cierre de sesión): bump manual a **V.79/SW v85** — versión
+  real vigente en `index.html`/`sw.js`, no quedó registrado como entrada propia hasta
+  ahora (revisión 08-09-2026)
 
 ### 2026-08-27 — Migración cifrado→JSON plano (V.35/SW v41)
 - **Eliminado sistema AES-256:** `.enc` + `_cifrar_y_subir_clave.py` movidos a `_ARCHIVO_HISTORICO/`
