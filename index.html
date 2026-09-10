@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>Bodegas Gestión — Ferretería Oviedo</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -205,7 +206,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.85</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">10-09-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.86</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">10-09-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -602,7 +603,7 @@
   <div id="consumo_kpis" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px"></div>
 
   <!-- Filtros -->
-  <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;margin-bottom:12px">
+  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:12px">
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px">
       <input id="consumo_buscar" type="text" placeholder="🔍 Código o descripción…"
              style="padding:8px 12px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:14px;min-width:220px;flex:1"
@@ -621,31 +622,58 @@
       </select>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-      <label style="font-size:13px;color:#cbd5e1;font-weight:700">Desde</label>
+      <label style="font-size:13px;color:#475569;font-weight:700">Desde</label>
       <input id="consumo_desde" type="date" onchange="consumoFiltrar()"
              style="padding:7px 10px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:13px">
-      <label style="font-size:13px;color:#cbd5e1;font-weight:700">Hasta</label>
+      <label style="font-size:13px;color:#475569;font-weight:700">Hasta</label>
       <input id="consumo_hasta" type="date" onchange="consumoFiltrar()"
              style="padding:7px 10px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:13px">
-      <div id="consumo_count" style="font-size:12px;color:#94a3b8;flex:1;text-align:right"></div>
+      <div id="consumo_count" style="font-size:12px;color:#64748b;flex:1;text-align:right"></div>
       <button onclick="consumoExportExcel()"
               style="padding:8px 16px;border-radius:6px;border:none;background:#16a34a;color:#fff;font-size:13px;cursor:pointer;font-weight:700;white-space:nowrap">
         ⬇ Excel
+      </button>
+      <button onclick="consumoExportHtml()"
+              style="padding:8px 16px;border-radius:6px;border:none;background:#2563eb;color:#fff;font-size:13px;cursor:pointer;font-weight:700;white-space:nowrap">
+        🌐 HTML interactivo
       </button>
     </div>
   </div>
 
   <!-- Gráfico comparativo -->
-  <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;margin-bottom:14px">
+  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-      <div style="font-size:13px;font-weight:700;color:#e2e8f0">📊 Comparativa mensual (respeta los filtros activos, agrupa por año)</div>
-      <select id="consumo_metrica" onchange="consumoRenderChart()"
-              style="padding:6px 10px;border-radius:6px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:12px">
-        <option value="cantidad">Unidades consumidas</option>
-        <option value="costo">Costo acumulado ($)</option>
-      </select>
+      <div style="font-size:14px;font-weight:800;color:#1e293b">📊 <span id="consumo_chart_titulo">Comparativa mensual por año</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select id="consumo_vista" onchange="consumoRenderChart()"
+                style="padding:6px 10px;border-radius:6px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:12px;font-weight:600">
+          <option value="mensual">📅 Ver por mes (año vs año)</option>
+          <option value="sucursal">🏬 Ver por sucursal</option>
+        </select>
+        <select id="consumo_metrica" onchange="consumoRenderChart()"
+                style="padding:6px 10px;border-radius:6px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:12px">
+          <option value="cantidad">Unidades consumidas</option>
+          <option value="costo">Costo acumulado ($)</option>
+        </select>
+      </div>
     </div>
-    <div style="height:280px"><canvas id="consumo_chart"></canvas></div>
+    <div style="height:320px"><canvas id="consumo_chart"></canvas></div>
+  </div>
+
+  <!-- Desglose por sucursal (respeta filtros activos, incl. busqueda de un producto puntual) -->
+  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px">
+    <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:10px">🏬 Desglose por sucursal — según filtros activos</div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>Sucursal</th><th class="right">Cantidad consumida</th><th class="right">% del total</th>
+          <th class="center">Primera fecha<br><span style="font-weight:400;text-transform:none;font-size:10px">en el rango</span></th>
+          <th class="center">Última fecha<br><span style="font-weight:400;text-transform:none;font-size:10px">en el rango</span></th>
+          <th class="right">Costo acumulado</th><th class="right">% del costo</th><th class="right">N° eventos</th>
+        </tr></thead>
+        <tbody id="consumo_sucursal_tbody"></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Tabla ranking -->
@@ -2428,18 +2456,95 @@ function consumoFiltrar(){
   var totalCant = 0, totalCosto = 0;
   eventos.forEach(function(r){ totalCant += r.cantidad||0; totalCosto += r.costoAcumulado||0; });
 
+  var desde = document.getElementById('consumo_desde').value;
+  var hasta = document.getElementById('consumo_hasta').value;
+  var top = _consumoRanking[0];
+
   document.getElementById('consumo_kpis').innerHTML =
+    '<div class="kpi"><div class="l">Período mostrado</div><div class="n" style="font-size:14px">'+
+      (desde?fechaCorta(desde):'—')+' → '+(hasta?fechaCorta(hasta):'—')+'</div></div>'+
     '<div class="kpi"><div class="l">Códigos distintos</div><div class="n">'+_consumoRanking.length+'</div></div>'+
     '<div class="kpi"><div class="l">Eventos de consumo</div><div class="n">'+eventos.length+'</div></div>'+
     '<div class="kpi"><div class="l">Unidades consumidas</div><div class="n">'+fmt(totalCant)+'</div></div>'+
     '<div class="kpi acc"><div class="l">Costo acumulado</div><div class="n">'+clp(totalCosto)+'</div></div>'+
-    '<div class="kpi"><div class="l">Más consumido</div><div class="n" style="font-size:13px">'+
-      (_consumoRanking[0] ? esc(_consumoRanking[0].descripcion.substring(0,28)) : '—')+'</div></div>';
+    '<div class="kpi"><div class="l">Más consumido (en el período)</div><div class="n" style="font-size:13px">'+
+      (top ? esc(top.descripcion.substring(0,28))+
+        '<div style="font-size:11px;font-weight:700;color:#92400e;margin-top:2px">'+
+        fmt(top.cantidad)+' un. · '+top.eventos.length+' eventos · última: '+
+        (top.ultimaFecha?fechaCorta(top.ultimaFecha):'—')+'</div>' : '—')+'</div></div>';
 
   document.getElementById('consumo_count').textContent = _consumoRanking.length+' códigos en el ranking';
 
   consumoRenderTabla();
   consumoRenderChart();
+  consumoRenderPorSucursal(eventos, totalCant, totalCosto);
+}
+
+// dd-mm-aaaa a partir de un ISO yyyy-mm-dd, para mostrar fechas cortas en KPIs.
+function fechaCorta(iso){
+  if(!iso || iso.length<10) return iso||'';
+  return iso.slice(8,10)+'-'+iso.slice(5,7)+'-'+iso.slice(0,4);
+}
+
+// Agrega los eventos filtrados por sucursal — usado por la tabla de desglose,
+// el grafico "por sucursal" y el detalle expandible (fechas dentro del rango
+// activo, no la fecha global del codigo).
+function consumoAgruparPorSucursal(eventos){
+  var mapa = {};
+  eventos.forEach(function(r){
+    var k = r.idSucursal||'?';
+    if(!mapa[k]){
+      mapa[k] = { idSucursal:k, nombre: r.nombreSucursal||'—', cantidad:0, costoAcumulado:0,
+        primeraFecha:'', ultimaFecha:'', eventosDetalle:[] };
+    }
+    var s = mapa[k];
+    s.cantidad += r.cantidad||0;
+    s.costoAcumulado += r.costoAcumulado||0;
+    var f = r.fechaRegistroIso||'';
+    if(f && (!s.primeraFecha || f < s.primeraFecha)) s.primeraFecha = f;
+    if(f && (!s.ultimaFecha || f > s.ultimaFecha)) s.ultimaFecha = f;
+    s.eventosDetalle.push(r);
+  });
+  var lista = Object.keys(mapa).map(function(k){ return mapa[k]; });
+  lista.forEach(function(s){
+    s.eventosDetalle.sort(function(a,b){ return (b.fechaRegistroIso||'').localeCompare(a.fechaRegistroIso||''); });
+  });
+  lista.sort(function(a,b){ return b.cantidad - a.cantidad; });
+  return lista;
+}
+
+function consumoRenderPorSucursal(eventos, totalCant, totalCosto){
+  var lista = consumoAgruparPorSucursal(eventos);
+  document.getElementById('consumo_sucursal_tbody').innerHTML = lista.map(function(s,i){
+    var pctCant = totalCant ? (s.cantidad/totalCant*100) : 0;
+    var pctCosto = totalCosto ? (s.costoAcumulado/totalCosto*100) : 0;
+    var subId = 'consumo_suc_'+i;
+    var mainRow = '<tr>'+
+      '<td><span class="grt-toggle" id="'+subId+'_a" onclick="toggleGRT(\''+subId+'\')">▶</span> <b>'+esc(s.nombre)+'</b></td>'+
+      '<td class="right"><b>'+fmt(s.cantidad)+'</b></td>'+
+      '<td class="right">'+pctCant.toFixed(1)+'%</td>'+
+      '<td class="center">'+(s.primeraFecha?fechaCorta(s.primeraFecha):'—')+'</td>'+
+      '<td class="center">'+(s.ultimaFecha?fechaCorta(s.ultimaFecha):'—')+'</td>'+
+      '<td class="right">'+clp(s.costoAcumulado)+'</td>'+
+      '<td class="right">'+pctCosto.toFixed(1)+'%</td>'+
+      '<td class="right">'+fmt(s.eventosDetalle.length)+'</td>'+
+      '</tr>';
+    var subRow = '<tr class="grt-sub" id="'+subId+'" style="display:none"><td colspan="8">'+
+      '<table class="grt-detail"><thead><tr><th>Bodega</th><th>Código</th><th>Descripción</th><th>Folio</th>'+
+      '<th class="right">Cantidad</th><th class="center">Fecha</th><th>Usuario</th><th>Observación</th></tr></thead><tbody>'+
+      s.eventosDetalle.map(function(e){
+        return '<tr><td>'+esc(e.bodega)+'</td>'+
+          '<td class="mono">'+esc(e.codigoTecnico)+'</td>'+
+          '<td class="desc">'+esc(e.descripcion)+'</td>'+
+          '<td class="right mono">'+(e.folio?esc(e.folio):'<span class="badge-na">s/nº</span>')+'</td>'+
+          '<td class="right">'+fmt(e.cantidad)+'</td>'+
+          '<td class="center">'+esc(e.fechaRegistro)+'</td>'+
+          '<td>'+esc(e.usuario)+'</td>'+
+          '<td class="obs">'+esc(e.observacion)+'</td></tr>';
+      }).join('')+
+      '</tbody></table></td></tr>';
+    return mainRow+subRow;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:14px">Sin datos para el filtro activo</td></tr>';
 }
 
 function consumoRenderTabla(){
@@ -2477,13 +2582,65 @@ function consumoRenderTabla(){
   }).join('');
 }
 
+// Colores/tipografia comunes del grafico — pensados para el fondo CLARO real de la
+// app (tarjeta blanca), no para tema oscuro. Los valores anteriores (#cbd5e1/#e2e8f0
+// sobre fondo blanco) quedaban casi invisibles — reportado por el usuario.
+var CONSUMO_CHART_FONT = { size: 13, weight: '600' };
+var CONSUMO_CHART_TICK_COLOR = '#334155';
+var CONSUMO_CHART_GRID_COLOR = 'rgba(15,23,42,.08)';
+var CONSUMO_CHART_LEGEND_COLOR = '#1e293b';
+
 function consumoRenderChart(){
   var canvas = document.getElementById('consumo_chart');
   if(!canvas || typeof Chart==='undefined') return;
   var metrica = document.getElementById('consumo_metrica').value;
+  var vista = document.getElementById('consumo_vista').value;
+  var eventos = consumoEventosFiltrados();
+
+  if(_consumoChart) _consumoChart.destroy();
+
+  if(vista === 'sucursal'){
+    document.getElementById('consumo_chart_titulo').textContent =
+      'Consumo por sucursal'+(metrica==='costo' ? ' — costo acumulado' : ' — unidades consumidas');
+    var porSucursal = consumoAgruparPorSucursal(eventos);
+    var total = porSucursal.reduce(function(a,s){ return a+(metrica==='costo'?s.costoAcumulado:s.cantidad); },0);
+    var colores = ['#2563eb','#16a34a','#d97706','#dc2626','#0891b2','#7c3aed','#db2777','#65a30d'];
+
+    _consumoChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: porSucursal.map(function(s){ return s.nombre; }),
+        datasets: [{
+          label: metrica==='costo' ? 'Costo acumulado' : 'Unidades consumidas',
+          data: porSucursal.map(function(s){ return metrica==='costo' ? s.costoAcumulado : s.cantidad; }),
+          backgroundColor: porSucursal.map(function(s,i){ return colores[i%colores.length]; }),
+          borderRadius: 5,
+          maxBarThickness: 60
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display:false },
+          tooltip: { titleFont:CONSUMO_CHART_FONT, bodyFont:CONSUMO_CHART_FONT, callbacks: { label: function(ctx){
+            var v = ctx.parsed.y;
+            var pct = total ? (v/total*100).toFixed(1) : '0.0';
+            return (metrica==='costo' ? clp(v) : fmt(v)+' un.')+' · '+pct+'% del total';
+          } } }
+        },
+        scales: {
+          x: { ticks:{color:CONSUMO_CHART_TICK_COLOR, font:CONSUMO_CHART_FONT}, grid:{display:false} },
+          y: { ticks:{color:CONSUMO_CHART_TICK_COLOR, font:CONSUMO_CHART_FONT}, grid:{color:CONSUMO_CHART_GRID_COLOR},
+               beginAtZero:true }
+        }
+      }
+    });
+    return;
+  }
+
+  document.getElementById('consumo_chart_titulo').textContent = 'Comparativa mensual por año';
 
   // Agrupar eventos filtrados (sin importar el codigo, total del mes) por Año -> Mes(0-11)
-  var eventos = consumoEventosFiltrados();
   var porAnioMes = {}; // {anio: [12 valores]}
   eventos.forEach(function(r){
     if(!r.fechaRegistroIso) return;
@@ -2494,31 +2651,30 @@ function consumoRenderChart(){
   });
   var anios = Object.keys(porAnioMes).sort();
   var MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  var colores = ['#6366f1','#16a34a','#d97706','#dc2626','#0891b2','#7c3aed'];
+  var coloresAnio = ['#2563eb','#16a34a','#d97706','#dc2626','#0891b2','#7c3aed'];
 
   var datasets = anios.map(function(a,i){
     return {
       label: a,
       data: porAnioMes[a],
-      backgroundColor: colores[i%colores.length],
+      backgroundColor: coloresAnio[i%coloresAnio.length],
       borderRadius: 4
     };
   });
 
-  if(_consumoChart) _consumoChart.destroy();
   _consumoChart = new Chart(canvas.getContext('2d'), {
     type: 'bar',
     data: { labels: MESES, datasets: datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       scales: {
-        x: { ticks:{color:'#cbd5e1'}, grid:{color:'rgba(255,255,255,.06)'} },
-        y: { ticks:{color:'#cbd5e1'}, grid:{color:'rgba(255,255,255,.06)'},
+        x: { ticks:{color:CONSUMO_CHART_TICK_COLOR, font:CONSUMO_CHART_FONT}, grid:{display:false} },
+        y: { ticks:{color:CONSUMO_CHART_TICK_COLOR, font:CONSUMO_CHART_FONT}, grid:{color:CONSUMO_CHART_GRID_COLOR},
              beginAtZero:true }
       },
       plugins: {
-        legend: { labels:{color:'#e2e8f0'} },
-        tooltip: { callbacks: { label: function(ctx){
+        legend: { labels:{color:CONSUMO_CHART_LEGEND_COLOR, font:CONSUMO_CHART_FONT} },
+        tooltip: { titleFont:CONSUMO_CHART_FONT, bodyFont:CONSUMO_CHART_FONT, callbacks: { label: function(ctx){
           var v = ctx.parsed.y;
           return ctx.dataset.label+': '+(metrica==='costo' ? clp(v) : fmt(v));
         } } }
@@ -2527,29 +2683,242 @@ function consumoRenderChart(){
   });
 }
 
-function consumoExportExcel(){
-  if(!_consumoRanking.length){ alert('No hay datos para exportar con el filtro actual.'); return; }
-  if(typeof XLSX === 'undefined'){ alert('XLSX no disponible'); return; }
+// Arma una hoja aoa_to_sheet con anchos de columna, fila congelada y autofiltro —
+// mismo criterio "ordenado" en las 3 pestañas (SheetJS Community no soporta bordes/
+// colores de celda al escribir .xlsx, solo la version Pro paga; el look de "tabla" se
+// logra con freeze+autofilter+anchos, que es lo que Excel ya resalta por defecto).
+//
+// Se usa ExcelJS (no SheetJS) para esta exportacion puntual porque SheetJS Community
+// NO escribe color/relleno/borde de celda (verificado con una prueba real: XLSX.writeFile
+// ignora cell.s en silencio) — ExcelJS si soporta estilos reales, por eso el Excel de
+// Consumo Interno sale con encabezado de color y bordes tipo tabla, y los otros 3 Excel
+// del proyecto (Merma, Solicitud LC, Dif. Bodegas SV) siguen con SheetJS sin tocarlos.
+var CONSUMO_FMT_CLP = '"$"#,##0';
+var CONSUMO_FMT_UN  = '#,##0';
+var CONSUMO_FMT_PCT = '0%';
+var CONSUMO_XL_BORDE = { style:'thin', color:{argb:'FFC7CCD4'} };
+var CONSUMO_XL_BORDE_TODO = { top:CONSUMO_XL_BORDE, left:CONSUMO_XL_BORDE, bottom:CONSUMO_XL_BORDE, right:CONSUMO_XL_BORDE };
 
-  var cols = ['Código','Descripción','Marca','Familia','Cantidad consumida',
-              'Costo unit. promedio','Costo acumulado','Última fecha','N° eventos'];
-  var rows = [cols];
-  _consumoRanking.forEach(function(g){
-    rows.push([g.codigoTecnico, g.descripcion, g.marca||'', g.familia||'',
-      g.cantidad, Math.round(g.costoUnitProm), Math.round(g.costoAcumulado),
-      g.eventos[0]?g.eventos[0].fechaRegistro:'', g.eventos.length]);
+function _consumoEstiloEncabezado(row){
+  row.eachCell(function(cell){
+    cell.font = { bold:true, color:{argb:'FFFFFFFF'}, size:11 };
+    cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1E3A5F'} };
+    cell.border = CONSUMO_XL_BORDE_TODO;
+    cell.alignment = { vertical:'middle', wrapText:true };
   });
+  row.height = 24;
+}
 
-  var ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{wch:12},{wch:46},{wch:18},{wch:22},{wch:16},{wch:16},{wch:16},{wch:14},{wch:10}];
-  ws['!freeze'] = {xSplit:0, ySplit:1};
-  var lastCol = XLSX.utils.encode_col(cols.length-1);
-  ws['!autofilter'] = {ref:'A1:'+lastCol+rows.length};
+function _consumoEstiloFila(row, bandeada){
+  row.eachCell(function(cell){
+    cell.border = CONSUMO_XL_BORDE_TODO;
+    if(bandeada) cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF8FAFC'} };
+  });
+}
 
-  var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Consumo Interno');
+function _consumoHojaBase(wb, nombre, columnas){
+  var ws = wb.addWorksheet(nombre, { views:[{state:'frozen', ySplit:1}] });
+  ws.columns = columnas;
+  var header = ws.getRow(1);
+  columnas.forEach(function(c,i){ header.getCell(i+1).value = c.header; });
+  _consumoEstiloEncabezado(header);
+  return ws;
+}
+
+// Descarga un .html autocontenido (sin dependencias externas) con buscador en vivo
+// y desglose por sucursal expandible — snapshot de los datos ya filtrados en pantalla,
+// pensado para compartir/abrir sin login (a diferencia del panel real).
+function consumoExportHtml(){
+  if(!_consumoRanking.length){ alert('No hay datos para exportar con el filtro actual.'); return; }
+
+  var eventos = consumoEventosFiltrados();
+  var totalCant = 0, totalCosto = 0;
+  eventos.forEach(function(r){ totalCant += r.cantidad||0; totalCosto += r.costoAcumulado||0; });
+  var porSucursal = consumoAgruparPorSucursal(eventos);
+  var desde = document.getElementById('consumo_desde').value;
+  var hasta = document.getElementById('consumo_hasta').value;
+
+  var filasRanking = _consumoRanking.map(function(g,i){
+    var busca = (g.codigoTecnico+' '+g.descripcion).toLowerCase();
+    var subId = 'r'+i;
+    var hasMulti = g.eventos.length>1;
+    var arrow = hasMulti ? '<span class="tgl" onclick="tg(\''+subId+'\',this)">▶</span>' : '';
+    var sub = hasMulti ? '<tr class="sub" id="'+subId+'" hidden><td colspan="8"><table class="mini"><thead><tr><th>Bodega</th><th>Folio</th><th>Cantidad</th><th>Fecha</th><th>Usuario</th><th>Observación</th></tr></thead><tbody>'+
+      g.eventos.map(function(e){ return '<tr><td>'+esc(e.bodega)+' — '+esc(e.nombreSucursal)+'</td><td>'+(e.folio?esc(e.folio):'s/nº')+'</td><td class="r">'+fmt(e.cantidad)+'</td><td>'+esc(e.fechaRegistro)+'</td><td>'+esc(e.usuario)+'</td><td>'+esc(e.observacion)+'</td></tr>'; }).join('')+
+      '</tbody></table></td></tr>' : '';
+    return '<tr data-busca="'+esc(busca)+'"><td class="mono">'+arrow+' '+esc(g.codigoTecnico)+'</td><td>'+esc(g.descripcion)+'</td><td>'+esc(g.marca)+'</td><td>'+esc(g.familia)+'</td>'+
+      '<td class="r"><b>'+fmt(g.cantidad)+'</b></td><td class="r">'+clp(g.costoUnitProm)+'</td><td class="r">'+clp(g.costoAcumulado)+'</td>'+
+      '<td class="c">'+esc(g.eventos[0]?g.eventos[0].fechaRegistro:'')+(hasMulti?' <span class="badge">'+g.eventos.length+' ev.</span>':'')+'</td></tr>'+sub;
+  }).join('');
+
+  var filasSucursal = porSucursal.map(function(s,i){
+    var subId = 's'+i;
+    var sub = '<tr class="sub" id="'+subId+'" hidden><td colspan="8"><table class="mini"><thead><tr><th>Bodega</th><th>Código</th><th>Descripción</th><th>Folio</th><th>Cantidad</th><th>Fecha</th><th>Usuario</th><th>Observación</th></tr></thead><tbody>'+
+      s.eventosDetalle.map(function(e){ return '<tr><td>'+esc(e.bodega)+'</td><td class="mono">'+esc(e.codigoTecnico)+'</td><td>'+esc(e.descripcion)+'</td><td>'+(e.folio?esc(e.folio):'s/nº')+'</td><td class="r">'+fmt(e.cantidad)+'</td><td>'+esc(e.fechaRegistro)+'</td><td>'+esc(e.usuario)+'</td><td>'+esc(e.observacion)+'</td></tr>'; }).join('')+
+      '</tbody></table></td></tr>';
+    var pctCant = totalCant?(s.cantidad/totalCant*100):0, pctCosto = totalCosto?(s.costoAcumulado/totalCosto*100):0;
+    return '<tr><td><span class="tgl" onclick="tg(\''+subId+'\',this)">▶</span> <b>'+esc(s.nombre)+'</b></td><td class="r"><b>'+fmt(s.cantidad)+'</b></td><td class="r">'+pctCant.toFixed(1)+'%</td>'+
+      '<td class="c">'+(s.primeraFecha?fechaCorta(s.primeraFecha):'—')+'</td><td class="c">'+(s.ultimaFecha?fechaCorta(s.ultimaFecha):'—')+'</td>'+
+      '<td class="r">'+clp(s.costoAcumulado)+'</td><td class="r">'+pctCosto.toFixed(1)+'%</td><td class="r">'+fmt(s.eventosDetalle.length)+'</td></tr>'+sub;
+  }).join('');
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<title>Consumo Interno — Bodegas Gestión — '+esc(new Date().toLocaleDateString('es-CL'))+'</title><style>'+
+    'body{font-family:Inter,Arial,sans-serif;background:#f0f2f5;margin:0;padding:20px;color:#1a1a1a}'+
+    '.card{background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-bottom:14px;max-width:1400px;margin-left:auto;margin-right:auto}'+
+    'h2{margin:0 0 4px}.sub{color:#6b7280;font-size:12px;margin-bottom:12px}'+
+    '.kpis{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}'+
+    '.kpi{background:#fef3c7;color:#92400e;border-radius:8px;padding:8px 14px;min-width:110px}'+
+    '.kpi .l{font-size:10px;font-weight:700;text-transform:uppercase}.kpi .n{font-size:18px;font-weight:800}'+
+    'input#buscar{padding:9px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:14px;width:100%;max-width:420px;margin-bottom:12px;box-sizing:border-box}'+
+    'table{border-collapse:collapse;width:100%;font-size:12.5px}th,td{border:1px solid #e5e7eb;padding:6px 8px;text-align:left}'+
+    'th{background:#1e3a5f;color:#fff;position:sticky;top:0}.r{text-align:right}.c{text-align:center}.mono{font-family:monospace}'+
+    '.badge{background:#e0e7ff;color:#3730a3;border-radius:4px;padding:1px 5px;font-size:10px}'+
+    '.tgl{cursor:pointer;color:#2563eb;font-weight:900;display:inline-block;width:12px}'+
+    'tr.sub td{background:#f8fafc;padding:0 0 8px 20px}table.mini{margin-top:4px}table.mini th{background:#334155;font-size:11px}'+
+    '.footer{font-size:11px;color:#9ca3af;text-align:center;padding:10px}'+
+    '</style></head><body>'+
+    '<div class="card"><h2>🧤 Consumo Interno — Insumos de uso propio de la tienda</h2>'+
+    '<div class="sub">Exportado: '+new Date().toLocaleString('es-CL')+' · Período: '+(desde?fechaCorta(desde):'—')+' → '+(hasta?fechaCorta(hasta):'—')+' · snapshot estático, sin conexión al panel en vivo</div>'+
+    '<div class="kpis">'+
+      '<div class="kpi"><div class="l">Códigos</div><div class="n">'+_consumoRanking.length+'</div></div>'+
+      '<div class="kpi"><div class="l">Eventos</div><div class="n">'+eventos.length+'</div></div>'+
+      '<div class="kpi"><div class="l">Unidades</div><div class="n">'+fmt(totalCant)+'</div></div>'+
+      '<div class="kpi"><div class="l">Costo acumulado</div><div class="n">'+clp(totalCosto)+'</div></div>'+
+    '</div>'+
+    '<input id="buscar" type="text" placeholder="🔍 Filtrar por código o descripción…" oninput="filtrar()">'+
+    '<div id="contador" class="sub"></div>'+
+    '<h3>🏬 Desglose por sucursal</h3><table><thead><tr><th>Sucursal</th><th class="r">Cantidad</th><th class="r">% total</th><th class="c">Primera fecha</th><th class="c">Última fecha</th><th class="r">Costo</th><th class="r">% costo</th><th class="r">Eventos</th></tr></thead><tbody>'+filasSucursal+'</tbody></table>'+
+    '<h3 style="margin-top:20px">📦 Ranking por código</h3><table id="tabla"><thead><tr><th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th><th class="r">Cantidad</th><th class="r">Costo unit.</th><th class="r">Costo acum.</th><th class="c">Última fecha</th></tr></thead><tbody>'+filasRanking+'</tbody></table>'+
+    '</div><div class="footer">Ferretería Oviedo · Guía de Consumo (IDDOCUMENTO=218) · archivo generado localmente, no se sube a ningún servidor</div>'+
+    '<script>'+
+    'function tg(id,el){var r=document.getElementById(id);var abrir=r.hidden;r.hidden=!abrir;el.textContent=abrir?"▼":"▶";}'+
+    'function filtrar(){var q=document.getElementById("buscar").value.toLowerCase();var rows=document.querySelectorAll("#tabla > tbody > tr[data-busca]");var n=0;rows.forEach(function(r){var ok=r.dataset.busca.indexOf(q)>=0;r.style.display=ok?"":"none";if(ok)n++;});document.getElementById("contador").textContent=n+" códigos encontrados";}'+
+    'filtrar();'+
+    '</'+'script></body></html>';
+
+  var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  var a = document.createElement('a');
+  document.body.appendChild(a);
+  a.href = URL.createObjectURL(blob);
+  a.download = 'consumo-interno-'+new Date().toISOString().slice(0,10)+'.html';
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+async function consumoExportExcel(){
+  if(!_consumoRanking.length){ alert('No hay datos para exportar con el filtro actual.'); return; }
+  if(typeof ExcelJS === 'undefined'){ alert('ExcelJS no disponible'); return; }
+
+  var eventos = consumoEventosFiltrados();
+  var totalCant = 0, totalCosto = 0;
+  eventos.forEach(function(r){ totalCant += r.cantidad||0; totalCosto += r.costoAcumulado||0; });
+  var porSucursal = consumoAgruparPorSucursal(eventos);
+  var wb = new ExcelJS.Workbook();
+  wb.creator = 'Bodegas Gestión — Ferretería Oviedo';
+  wb.created = new Date();
+
+  // Hoja 1: ranking por código (igual a la tabla principal en pantalla)
+  var ws1 = _consumoHojaBase(wb, 'Consumo Interno', [
+    {header:'Código', key:'cod', width:12},
+    {header:'Descripción', key:'desc', width:46},
+    {header:'Marca', key:'marca', width:18},
+    {header:'Familia', key:'familia', width:22},
+    {header:'Cantidad consumida', key:'cant', width:16, style:{numFmt:CONSUMO_FMT_UN}},
+    {header:'Costo unit. promedio', key:'costoUnit', width:16, style:{numFmt:CONSUMO_FMT_CLP}},
+    {header:'Costo acumulado', key:'costo', width:16, style:{numFmt:CONSUMO_FMT_CLP}},
+    {header:'Última fecha', key:'fecha', width:14},
+    {header:'N° eventos', key:'nEventos', width:10, style:{numFmt:CONSUMO_FMT_UN}}
+  ]);
+  _consumoRanking.forEach(function(g,i){
+    var row = ws1.addRow({
+      cod:g.codigoTecnico, desc:g.descripcion, marca:g.marca||'', familia:g.familia||'',
+      cant:g.cantidad, costoUnit:Math.round(g.costoUnitProm), costo:Math.round(g.costoAcumulado),
+      fecha:g.eventos[0]?g.eventos[0].fechaRegistro:'', nEventos:g.eventos.length
+    });
+    _consumoEstiloFila(row, i%2===1);
+  });
+  ws1.autoFilter = 'A1:I1';
+
+  // Hoja 2: resumen por sucursal — mismo dato que la tabla "Desglose por sucursal" en pantalla
+  var ws2 = _consumoHojaBase(wb, 'Por sucursal', [
+    {header:'Sucursal', key:'nombre', width:24},
+    {header:'Cantidad consumida', key:'cant', width:18, style:{numFmt:CONSUMO_FMT_UN}},
+    {header:'% del total', key:'pctCant', width:12, style:{numFmt:CONSUMO_FMT_PCT}},
+    {header:'Primera fecha (rango)', key:'primera', width:18},
+    {header:'Última fecha (rango)', key:'ultima', width:18},
+    {header:'Costo acumulado', key:'costo', width:16, style:{numFmt:CONSUMO_FMT_CLP}},
+    {header:'% del costo', key:'pctCosto', width:12, style:{numFmt:CONSUMO_FMT_PCT}},
+    {header:'N° eventos', key:'nEventos', width:10, style:{numFmt:CONSUMO_FMT_UN}}
+  ]);
+  porSucursal.forEach(function(s,i){
+    var row = ws2.addRow({
+      nombre:s.nombre, cant:s.cantidad, pctCant:totalCant?s.cantidad/totalCant:0,
+      primera:s.primeraFecha?fechaCorta(s.primeraFecha):'', ultima:s.ultimaFecha?fechaCorta(s.ultimaFecha):'',
+      costo:Math.round(s.costoAcumulado), pctCosto:totalCosto?s.costoAcumulado/totalCosto:0,
+      nEventos:s.eventosDetalle.length
+    });
+    _consumoEstiloFila(row, i%2===1);
+  });
+  var filaTotal = ws2.addRow({
+    nombre:'TOTAL', cant:totalCant, pctCant:totalCant?1:0, primera:'', ultima:'',
+    costo:Math.round(totalCosto), pctCosto:totalCosto?1:0,
+    nEventos: porSucursal.reduce(function(a,s){return a+s.eventosDetalle.length;},0)
+  });
+  filaTotal.eachCell(function(cell){
+    cell.font = { bold:true, color:{argb:'FF92400E'} };
+    cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFEF3C7'} };
+    cell.border = { top:{style:'medium', color:{argb:'FF92400E'}}, left:CONSUMO_XL_BORDE, bottom:CONSUMO_XL_BORDE, right:CONSUMO_XL_BORDE };
+  });
+  ws2.autoFilter = 'A1:H1';
+
+  // Hoja 3: detalle evento a evento, agrupado por sucursal con "Group" nativo de Excel
+  // (nivel de outline colapsado por defecto — clic en el "+" del margen izquierdo lo expande).
+  var ws3 = _consumoHojaBase(wb, 'Detalle eventos', [
+    {header:'Sucursal', key:'sucursal', width:20},
+    {header:'Bodega', key:'bodega', width:16},
+    {header:'Código', key:'cod', width:10},
+    {header:'Descripción', key:'desc', width:34},
+    {header:'Cantidad', key:'cant', width:10, style:{numFmt:CONSUMO_FMT_UN}},
+    {header:'Fecha', key:'fecha', width:26},
+    {header:'Folio', key:'folio', width:10},
+    {header:'Usuario', key:'usuario', width:12},
+    {header:'Observación', key:'obs', width:30}
+  ]);
+  porSucursal.forEach(function(s){
+    var rGrupo = ws3.addRow({
+      sucursal:s.nombre, cant:s.cantidad,
+      fecha:s.eventosDetalle.length+' eventos · '+(s.primeraFecha?fechaCorta(s.primeraFecha):'—')+' a '+(s.ultimaFecha?fechaCorta(s.ultimaFecha):'—')
+    });
+    rGrupo.eachCell(function(cell){
+      cell.font = { bold:true, color:{argb:'FF3730A3'} };
+      cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFE0E7FF'} };
+      cell.border = CONSUMO_XL_BORDE_TODO;
+    });
+    ws3.mergeCells(rGrupo.number, 1, rGrupo.number, 4);
+    ws3.mergeCells(rGrupo.number, 6, rGrupo.number, 9);
+    s.eventosDetalle.forEach(function(e,i){
+      var row = ws3.addRow({
+        bodega:e.bodega||'', cod:e.codigoTecnico, desc:e.descripcion, cant:e.cantidad,
+        fecha:e.fechaRegistro||'', folio:e.folio||'s/nº', usuario:e.usuario||'', obs:e.observacion||''
+      });
+      row.outlineLevel = 1;
+      row.hidden = true;
+      _consumoEstiloFila(row, i%2===1);
+    });
+  });
+  ws3.properties.outlineLevelRow = 1;
+  ws3.autoFilter = 'A1:I1';
+
+  var buffer = await wb.xlsx.writeBuffer();
+  var blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  var a = document.createElement('a');
   var hoy = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, 'consumo-interno-'+hoy+'.xlsx');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'consumo-interno-'+hoy+'.xlsx';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 </script>
 

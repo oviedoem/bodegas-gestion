@@ -77,7 +77,7 @@ SELECT
     B.DESCRIPCION,
     CAST(ISNULL(D.CANTIDAD, 0) AS DECIMAL(18,2)) AS CANTIDAD,
     CAST(ISNULL(B.COSTO_PROMEDIO, 0) AS DECIMAL(18,2)) AS COSTO_PROMEDIO,
-    D.NUMERO,
+    ENC.NUMERO_ENC,
     D.FECHA_EMISION,
     D.IDDOCUMENTO,
     D.IDNUMERO,
@@ -106,8 +106,13 @@ OUTER APPLY (
       AND G2.IDSUCURSAL = D.IDSUCURSAL
 ) G
 OUTER APPLY (
+    -- ENC2.NUMERO es el folio real que ve el usuario en el ERP (secuencial,
+    -- ej. 1694, 1729, 1759...). D.NUMERO (M_DOCUMENTOS_DETALLE) SIEMPRE vale 0
+    -- para este tipo de documento — verificado con SQL en vivo 11-09-2026,
+    -- bug encontrado por el usuario comparando contra la vista "Guia de
+    -- Consumo" del ERP. El folio real vive en el ENCABEZADO, no en el DETALLE.
     SELECT TOP 1 ENC2.FECHA_REGISTRO, ENC2.IDRESPONZABLE, ENC2.AUTORIZADO_FIRMA,
-                 ENC2.IDVENDEDOR, ENC2.ESTACION
+                 ENC2.IDVENDEDOR, ENC2.ESTACION, ENC2.NUMERO AS NUMERO_ENC
     FROM Foviedo.dbo.M_DOCUMENTOS_ENCABEZADO ENC2
     WHERE ENC2.IDDOCUMENTO = D.IDDOCUMENTO AND ENC2.IDNUMERO = D.IDNUMERO
       AND ENC2.IDSUCURSAL = D.IDSUCURSAL
