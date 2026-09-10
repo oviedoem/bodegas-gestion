@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>Bodegas Gestión — Ferretería Oviedo</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <style>
@@ -80,6 +81,7 @@
   .kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
   .kpi{background:#fef3c7;color:#92400e;border-radius:8px;padding:8px 14px;border:1px solid rgba(0,0,0,.08);min-width:110px}
   .kpi.red{background:#fee2e2;color:#991b1b}
+  .kpi.acc{background:#e0e7ff;color:#3730a3}
   .kpi .n{font-size:19px;font-weight:800}
   .kpi .l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
   table{border-collapse:collapse;font-size:12px;table-layout:fixed;width:1620px}
@@ -203,7 +205,7 @@
   🔄 Nueva versión disponible
   <button onclick="doUpdate()">Actualizar ahora</button>
 </div>
-<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.83</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">10-09-2026</span></div>
+<div class="version-badge"><span style="color:#a5b4fc;font-weight:700;letter-spacing:.6px">AG</span><span style="opacity:.35;font-size:9px">●</span><span id="versionText">V.84</span><span style="opacity:.35;font-size:9px">●</span><span style="opacity:.65;font-weight:500">10-09-2026</span></div>
 <div id="installBanner">
   <span class="ib-icon">📲</span>
   <div class="ib-text"><b>Instalar aplicación</b><span>Accede más rápido desde tu pantalla de inicio</span></div>
@@ -226,6 +228,7 @@
   <button class="tab-btn" id="tabBtn_elmanzano" onclick="cambiarTab('elmanzano')" style="display:none">🏭 El Manzano</button>
   <button class="tab-btn" id="tabBtn_sanvicente" onclick="cambiarTab('sanvicente')" style="display:none">🏬 San Vicente</button>
   <button class="tab-btn" id="tabBtn_dif_sv" onclick="cambiarTab('dif_sv')" style="display:none">🔍 Dif. Bodegas SV</button>
+  <button class="tab-btn" id="tabBtn_consumo_interno" onclick="cambiarTab('consumo_interno')" style="display:none">🧤 Consumo Interno</button>
   <button class="tab-btn" id="tabBtn_lascabras" onclick="cambiarTab('lascabras')" style="display:none">🏬 Las Cabras</button>
   <button class="tab-btn" id="tabBtn_solicitud_lc" onclick="cambiarTab('solicitud_lc')" style="display:none">📋 Solicitud Stock LC</button>
   <button class="tab-btn" id="tabBtn_litueche" onclick="cambiarTab('litueche')" style="display:none">🏬 Litueche</button>
@@ -590,6 +593,75 @@
   </div>
 </div>
 
+<!-- ── Tab Consumo Interno — Guia de Consumo (GEI/218), todas las sucursales ── -->
+<div class="card tab-panel" id="panel_consumo_interno">
+  <div class="card-title" style="margin-bottom:14px"><span>🧤</span> Consumo Interno — Insumos de uso propio de la tienda</div>
+  <div class="sub" id="consumo_meta" style="margin-bottom:10px"></div>
+
+  <!-- KPIs -->
+  <div id="consumo_kpis" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px"></div>
+
+  <!-- Filtros -->
+  <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 14px;margin-bottom:12px">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px">
+      <input id="consumo_buscar" type="text" placeholder="🔍 Código o descripción…"
+             style="padding:8px 12px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:14px;min-width:220px;flex:1"
+             oninput="consumoFiltrar()">
+      <select id="consumo_sucursal" onchange="consumoFiltrar()"
+              style="padding:8px 12px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:14px">
+        <option value="">🏬 Todas las sucursales</option>
+      </select>
+      <select id="consumo_marca" onchange="consumoFiltrar()"
+              style="padding:8px 12px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:14px">
+        <option value="">🏷 Todas las marcas</option>
+      </select>
+      <select id="consumo_familia" onchange="consumoFiltrar()"
+              style="padding:8px 12px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:14px">
+        <option value="">📂 Todas las familias</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+      <label style="font-size:13px;color:#cbd5e1;font-weight:700">Desde</label>
+      <input id="consumo_desde" type="date" onchange="consumoFiltrar()"
+             style="padding:7px 10px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:13px">
+      <label style="font-size:13px;color:#cbd5e1;font-weight:700">Hasta</label>
+      <input id="consumo_hasta" type="date" onchange="consumoFiltrar()"
+             style="padding:7px 10px;border-radius:8px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:13px">
+      <div id="consumo_count" style="font-size:12px;color:#94a3b8;flex:1;text-align:right"></div>
+      <button onclick="consumoExportExcel()"
+              style="padding:8px 16px;border-radius:6px;border:none;background:#16a34a;color:#fff;font-size:13px;cursor:pointer;font-weight:700;white-space:nowrap">
+        ⬇ Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Gráfico comparativo -->
+  <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:13px;font-weight:700;color:#e2e8f0">📊 Comparativa mensual (respeta los filtros activos, agrupa por año)</div>
+      <select id="consumo_metrica" onchange="consumoRenderChart()"
+              style="padding:6px 10px;border-radius:6px;border:1px solid #4f6a8a;background:#1e2d4a;color:#e2e8f0;font-size:12px">
+        <option value="cantidad">Unidades consumidas</option>
+        <option value="costo">Costo acumulado ($)</option>
+      </select>
+    </div>
+    <div style="height:280px"><canvas id="consumo_chart"></canvas></div>
+  </div>
+
+  <!-- Tabla ranking -->
+  <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th>Código</th><th>Descripción</th><th>Marca</th><th>Familia</th>
+        <th class="right">Cantidad consumida</th><th class="right">Costo unit. prom.</th>
+        <th class="right">Costo acumulado</th><th class="center">Última fecha</th>
+      </tr></thead>
+      <tbody id="consumo_tbody"></tbody>
+    </table>
+  </div>
+  <div class="footer-note">Ferretería Oviedo · Guía de Consumo (IDDOCUMENTO=218) · agrupado por bodega según su sucursal propia, no la del documento</div>
+</div>
+
 <!-- ── Tab Solicitud Stock Las Cabras — solo spavez@oviedo.cl (MODO_LC) ── -->
 <div class="card tab-panel" id="panel_solicitud_lc">
   <div class="card-title" style="margin-bottom:14px"><span>📋</span> Solicitud de Stock — Las Cabras</div>
@@ -931,6 +1003,8 @@ function cargarDatos(){
       });
       var btnDif=document.getElementById('tabBtn_dif_sv');
       if(btnDif) btnDif.style.display='';
+      var btnConsumo=document.getElementById('tabBtn_consumo_interno');
+      if(btnConsumo) btnConsumo.style.display='';
     }
   }).catch(function(e){
     document.getElementById('appRoot').innerHTML =
@@ -995,7 +1069,7 @@ function cambiarTab(v){
   document.querySelectorAll('.tab-panel').forEach(function(el){ el.classList.remove('active'); });
   document.querySelectorAll('.tab-btn').forEach(function(el){ el.classList.remove('active'); });
   // Paneles fuera de VISTAS (dif_sv)
-  var EXTRA_TABS = ['dif_sv'];
+  var EXTRA_TABS = ['dif_sv', 'consumo_interno'];
   EXTRA_TABS.forEach(function(k){
     var btn=document.getElementById('tabBtn_'+k);
     var panel=document.getElementById('panel_'+k);
@@ -1013,6 +1087,11 @@ function cambiarTab(v){
   // Inicializar Dif. Bodegas SV la primera vez
   if(v === 'dif_sv'){
     difSvInit();
+    return;
+  }
+  // Inicializar Consumo Interno la primera vez
+  if(v === 'consumo_interno'){
+    consumoInit();
     return;
   }
   // Lazy init: renderizar la vista la primera vez que se abre (admin)
@@ -2209,6 +2288,247 @@ function difSvExcelAll(){
   var hoy = new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb, 'dif-bodegas-sv-'+hoy+'.xlsx');
   if(window.toast) toast('📊 Excel: '+_difSvFiltro.length+' filas — filtros listos para usar','ok');
+}
+
+// ── TAB CONSUMO INTERNO ───────────────────────────────────────────────────
+// data/consumo-interno.json: eventos individuales de "Guia de Consumo"
+// (IDDOCUMENTO=218), ya agrupados por sucursal de la BODEGA (no la del
+// documento, que resulto no confiable — ver scripts/descargar_consumo_interno.py).
+var _consumoData = null;      // { generado, total, sucursales:[{idSucursal,nombre,registros:[...]}] }
+var _consumoEventos = null;   // todos los eventos aplanados, con idSucursal/nombreSucursal agregado
+var _consumoChart = null;     // instancia Chart.js activa
+
+function consumoInit(){
+  if(_consumoData){ consumoFiltrar(); return; }
+  fetch('data/consumo-interno.json',{cache:'no-store'}).then(function(r){ return r.json(); })
+    .then(function(d){
+      _consumoData = d;
+      var eventos = [];
+      (d.sucursales||[]).forEach(function(s){
+        (s.registros||[]).forEach(function(r){
+          r.idSucursal = s.idSucursal;
+          r.nombreSucursal = s.nombre;
+          eventos.push(r);
+        });
+      });
+      _consumoEventos = eventos;
+
+      document.getElementById('consumo_meta').textContent =
+        'Generado: '+(d.generado||'—')+' · '+(d.total||eventos.length)+' eventos de consumo · '+(d.sucursales||[]).length+' sucursales';
+
+      // Poblar selects de sucursal/marca/familia con los valores reales
+      var selSuc = document.getElementById('consumo_sucursal');
+      (d.sucursales||[]).slice().sort(function(a,b){ return a.nombre.localeCompare(b.nombre); }).forEach(function(s){
+        var o = document.createElement('option');
+        o.value = s.idSucursal; o.textContent = s.nombre+' ('+s.total+')';
+        selSuc.appendChild(o);
+      });
+      var marcas = {}, familias = {};
+      eventos.forEach(function(r){ if(r.marca) marcas[r.marca]=1; if(r.familia) familias[r.familia]=1; });
+      var selMarca = document.getElementById('consumo_marca');
+      Object.keys(marcas).sort().forEach(function(m){
+        var o=document.createElement('option'); o.value=m; o.textContent=m; selMarca.appendChild(o);
+      });
+      var selFam = document.getElementById('consumo_familia');
+      Object.keys(familias).sort().forEach(function(f){
+        var o=document.createElement('option'); o.value=f; o.textContent=f; selFam.appendChild(o);
+      });
+
+      // Rango de fechas por defecto: ultimos 12 meses (ajustable por el usuario)
+      var fechas = eventos.map(function(r){return r.fechaRegistroIso;}).filter(Boolean).sort();
+      if(fechas.length){
+        var maxF = fechas[fechas.length-1];
+        var d12 = new Date(maxF); d12.setMonth(d12.getMonth()-12);
+        document.getElementById('consumo_hasta').value = maxF;
+        document.getElementById('consumo_desde').value = d12.toISOString().slice(0,10);
+      }
+
+      consumoFiltrar();
+    })
+    .catch(function(e){
+      document.getElementById('panel_consumo_interno').innerHTML =
+        '<div style="padding:40px;text-align:center;color:#dc2626">Error cargando Consumo Interno: '+e.message+'</div>';
+    });
+}
+
+function consumoEventosFiltrados(){
+  if(!_consumoEventos) return [];
+  var buscar = (document.getElementById('consumo_buscar').value||'').toLowerCase();
+  var suc = document.getElementById('consumo_sucursal').value;
+  var marca = document.getElementById('consumo_marca').value;
+  var familia = document.getElementById('consumo_familia').value;
+  var desde = document.getElementById('consumo_desde').value;
+  var hasta = document.getElementById('consumo_hasta').value;
+
+  return _consumoEventos.filter(function(r){
+    if(suc && r.idSucursal!==suc) return false;
+    if(marca && r.marca!==marca) return false;
+    if(familia && r.familia!==familia) return false;
+    if(desde && (!r.fechaRegistroIso || r.fechaRegistroIso<desde)) return false;
+    if(hasta && (!r.fechaRegistroIso || r.fechaRegistroIso>hasta)) return false;
+    if(buscar && (r.codigoTecnico||'').toLowerCase().indexOf(buscar)<0 &&
+                 (r.descripcion||'').toLowerCase().indexOf(buscar)<0) return false;
+    return true;
+  });
+}
+
+// Agrupa eventos filtrados en un ranking por codigo — mayor a menor consumo.
+function consumoAgrupar(eventos){
+  var mapa = {};
+  eventos.forEach(function(r){
+    var k = r.codigoTecnico;
+    if(!mapa[k]){
+      mapa[k] = {
+        codigoTecnico: k, descripcion: r.descripcion, marca: r.marca, familia: r.familia,
+        cantidad: 0, costoAcumulado: 0, ultimaFecha: r.fechaRegistroIso||'', eventos: []
+      };
+    }
+    var g = mapa[k];
+    g.cantidad += r.cantidad||0;
+    g.costoAcumulado += r.costoAcumulado||0;
+    if((r.fechaRegistroIso||'') > g.ultimaFecha) g.ultimaFecha = r.fechaRegistroIso||'';
+    g.eventos.push(r);
+  });
+  var lista = Object.keys(mapa).map(function(k){ return mapa[k]; });
+  lista.forEach(function(g){
+    g.costoUnitProm = g.cantidad ? g.costoAcumulado/g.cantidad : 0;
+    g.eventos.sort(function(a,b){ return (b.fechaRegistroIso||'').localeCompare(a.fechaRegistroIso||''); });
+  });
+  lista.sort(function(a,b){ return b.cantidad - a.cantidad; }); // mayor a menor consumo
+  return lista;
+}
+
+var _consumoRanking = [];
+
+function consumoFiltrar(){
+  var eventos = consumoEventosFiltrados();
+  _consumoRanking = consumoAgrupar(eventos);
+
+  var totalCant = 0, totalCosto = 0;
+  eventos.forEach(function(r){ totalCant += r.cantidad||0; totalCosto += r.costoAcumulado||0; });
+
+  document.getElementById('consumo_kpis').innerHTML =
+    '<div class="kpi"><div class="l">Códigos distintos</div><div class="n">'+_consumoRanking.length+'</div></div>'+
+    '<div class="kpi"><div class="l">Eventos de consumo</div><div class="n">'+eventos.length+'</div></div>'+
+    '<div class="kpi"><div class="l">Unidades consumidas</div><div class="n">'+fmt(totalCant)+'</div></div>'+
+    '<div class="kpi acc"><div class="l">Costo acumulado</div><div class="n">'+clp(totalCosto)+'</div></div>'+
+    '<div class="kpi"><div class="l">Más consumido</div><div class="n" style="font-size:13px">'+
+      (_consumoRanking[0] ? esc(_consumoRanking[0].descripcion.substring(0,28)) : '—')+'</div></div>';
+
+  document.getElementById('consumo_count').textContent = _consumoRanking.length+' códigos en el ranking';
+
+  consumoRenderTabla();
+  consumoRenderChart();
+}
+
+function consumoRenderTabla(){
+  document.getElementById('consumo_tbody').innerHTML = _consumoRanking.map(function(g,i){
+    var hasMulti = g.eventos.length>1;
+    var subId = 'consumo_grt_'+i;
+    var arrow = hasMulti
+      ? '<span class="grt-toggle" id="'+subId+'_a" onclick="toggleGRT(\''+subId+'\')">▶</span>'
+      : '<span style="display:inline-block;width:12px"></span>';
+    var mainRow = '<tr>'+
+      '<td class="mono">'+arrow+' '+esc(g.codigoTecnico)+'</td>'+
+      '<td class="desc">'+esc(g.descripcion)+'</td>'+
+      '<td>'+esc(g.marca)+'</td>'+
+      '<td>'+esc(g.familia)+'</td>'+
+      '<td class="right"><b>'+fmt(g.cantidad)+'</b></td>'+
+      '<td class="right">'+clp(g.costoUnitProm)+'</td>'+
+      '<td class="right">'+clp(g.costoAcumulado)+'</td>'+
+      '<td class="center">'+esc(g.eventos[0] ? g.eventos[0].fechaRegistro : '')+
+        (hasMulti?' <span class="badge-na">('+g.eventos.length+' eventos)</span>':'')+'</td>'+
+      '</tr>';
+    if(!hasMulti) return mainRow;
+    var subRow = '<tr class="grt-sub" id="'+subId+'" style="display:none"><td colspan="8">'+
+      '<table class="grt-detail"><thead><tr><th>Bodega</th><th>Folio</th><th class="right">Cantidad</th>'+
+      '<th class="center">Fecha</th><th>Usuario</th><th>Observación</th></tr></thead><tbody>'+
+      g.eventos.map(function(e){
+        return '<tr><td>'+esc(e.bodega)+' — '+esc(e.nombreSucursal)+'</td>'+
+          '<td class="right mono">'+(e.folio?esc(e.folio):'<span class="badge-na">s/nº</span>')+'</td>'+
+          '<td class="right">'+fmt(e.cantidad)+'</td>'+
+          '<td class="center">'+esc(e.fechaRegistro)+'</td>'+
+          '<td>'+esc(e.usuario)+'</td>'+
+          '<td class="obs">'+esc(e.observacion)+'</td></tr>';
+      }).join('')+
+      '</tbody></table></td></tr>';
+    return mainRow+subRow;
+  }).join('');
+}
+
+function consumoRenderChart(){
+  var canvas = document.getElementById('consumo_chart');
+  if(!canvas || typeof Chart==='undefined') return;
+  var metrica = document.getElementById('consumo_metrica').value;
+
+  // Agrupar eventos filtrados (sin importar el codigo, total del mes) por Año -> Mes(0-11)
+  var eventos = consumoEventosFiltrados();
+  var porAnioMes = {}; // {anio: [12 valores]}
+  eventos.forEach(function(r){
+    if(!r.fechaRegistroIso) return;
+    var anio = r.fechaRegistroIso.slice(0,4);
+    var mes = parseInt(r.fechaRegistroIso.slice(5,7),10)-1;
+    if(!porAnioMes[anio]) porAnioMes[anio] = new Array(12).fill(0);
+    porAnioMes[anio][mes] += (metrica==='costo' ? (r.costoAcumulado||0) : (r.cantidad||0));
+  });
+  var anios = Object.keys(porAnioMes).sort();
+  var MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var colores = ['#6366f1','#16a34a','#d97706','#dc2626','#0891b2','#7c3aed'];
+
+  var datasets = anios.map(function(a,i){
+    return {
+      label: a,
+      data: porAnioMes[a],
+      backgroundColor: colores[i%colores.length],
+      borderRadius: 4
+    };
+  });
+
+  if(_consumoChart) _consumoChart.destroy();
+  _consumoChart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels: MESES, datasets: datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { ticks:{color:'#cbd5e1'}, grid:{color:'rgba(255,255,255,.06)'} },
+        y: { ticks:{color:'#cbd5e1'}, grid:{color:'rgba(255,255,255,.06)'},
+             beginAtZero:true }
+      },
+      plugins: {
+        legend: { labels:{color:'#e2e8f0'} },
+        tooltip: { callbacks: { label: function(ctx){
+          var v = ctx.parsed.y;
+          return ctx.dataset.label+': '+(metrica==='costo' ? clp(v) : fmt(v));
+        } } }
+      }
+    }
+  });
+}
+
+function consumoExportExcel(){
+  if(!_consumoRanking.length){ alert('No hay datos para exportar con el filtro actual.'); return; }
+  if(typeof XLSX === 'undefined'){ alert('XLSX no disponible'); return; }
+
+  var cols = ['Código','Descripción','Marca','Familia','Cantidad consumida',
+              'Costo unit. promedio','Costo acumulado','Última fecha','N° eventos'];
+  var rows = [cols];
+  _consumoRanking.forEach(function(g){
+    rows.push([g.codigoTecnico, g.descripcion, g.marca||'', g.familia||'',
+      g.cantidad, Math.round(g.costoUnitProm), Math.round(g.costoAcumulado),
+      g.eventos[0]?g.eventos[0].fechaRegistro:'', g.eventos.length]);
+  });
+
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:12},{wch:46},{wch:18},{wch:22},{wch:16},{wch:16},{wch:16},{wch:14},{wch:10}];
+  ws['!freeze'] = {xSplit:0, ySplit:1};
+  var lastCol = XLSX.utils.encode_col(cols.length-1);
+  ws['!autofilter'] = {ref:'A1:'+lastCol+rows.length};
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Consumo Interno');
+  var hoy = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, 'consumo-interno-'+hoy+'.xlsx');
 }
 </script>
 

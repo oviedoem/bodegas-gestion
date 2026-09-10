@@ -28,7 +28,7 @@ cd /d "%PROJ%"
 :: ============================================================
 :: PASO 1 - Merma Isabel Riquelme
 :: ============================================================
-echo [1/6] Merma IR (generar_merma_ir.py)...
+echo [1/7] Merma IR (generar_merma_ir.py)...
 "%PYTHON%" "%PROJ%\generar_merma_ir.py"
 if errorlevel 1 (
     echo.
@@ -41,7 +41,7 @@ echo.
 :: ============================================================
 :: PASO 2 - Bodegas todas las sucursales
 :: ============================================================
-echo [2/6] Bodegas SQL (scripts\descargar_bodegas_sql.py)...
+echo [2/7] Bodegas SQL (scripts\descargar_bodegas_sql.py)...
 echo NOTA: si alguna sucursal sale en 0, espera 5-10 min y repite.
 "%PYTHON%" "%PROJ%\scripts\descargar_bodegas_sql.py"
 if errorlevel 1 (
@@ -55,7 +55,7 @@ echo.
 :: ============================================================
 :: PASO 3 - Recortes por modo de usuario (SV/LC) desde bodegas_gestion.json
 :: ============================================================
-echo [3/6] Recorte SV/LC (scripts\generar_bodegas_modo.py)...
+echo [3/7] Recorte SV/LC (scripts\generar_bodegas_modo.py)...
 echo NOTA: no baja nada nuevo del ERP, solo recorta bodegas_gestion.json ya
 echo       descargado. Debe ir SIEMPRE despues del paso 2, nunca antes.
 "%PYTHON%" "%PROJ%\scripts\generar_bodegas_modo.py"
@@ -70,7 +70,7 @@ echo.
 :: ============================================================
 :: PASO 4 - Diferencias bodegas San Vicente
 :: ============================================================
-echo [4/6] Diferencias SV (scripts\descargar_dif_sv.py)...
+echo [4/7] Diferencias SV (scripts\descargar_dif_sv.py)...
 "%PYTHON%" "%PROJ%\scripts\descargar_dif_sv.py"
 if errorlevel 1 (
     echo.
@@ -83,7 +83,7 @@ echo.
 :: ============================================================
 :: PASO 5 - Stock critico Las Cabras
 :: ============================================================
-echo [5/6] Stock critico LC (scripts\descargar_stock_critico_lc.py)...
+echo [5/7] Stock critico LC (scripts\descargar_stock_critico_lc.py)...
 "%PYTHON%" "%PROJ%\scripts\descargar_stock_critico_lc.py"
 if errorlevel 1 (
     echo.
@@ -96,7 +96,7 @@ echo.
 :: ============================================================
 :: PASO 6 - OC pendientes Las Cabras
 :: ============================================================
-echo [6/6] OC pendientes LC (scripts\descargar_oc_pendientes_lc.py)...
+echo [6/7] OC pendientes LC (scripts\descargar_oc_pendientes_lc.py)...
 "%PYTHON%" "%PROJ%\scripts\descargar_oc_pendientes_lc.py"
 if errorlevel 1 (
     echo.
@@ -104,6 +104,19 @@ if errorlevel 1 (
     goto :FIN_ERROR
 )
 echo    OK - data\oc-pend-resumen-lc.json
+echo.
+
+:: ============================================================
+:: PASO 7 - Consumo Interno (Guia de Consumo, todas las sucursales)
+:: ============================================================
+echo [7/7] Consumo Interno (scripts\descargar_consumo_interno.py)...
+"%PYTHON%" "%PROJ%\scripts\descargar_consumo_interno.py"
+if errorlevel 1 (
+    echo.
+    echo ERROR en descargar_consumo_interno.py
+    goto :FIN_ERROR
+)
+echo    OK - data\consumo-interno.json
 echo.
 
 :: ============================================================
@@ -118,6 +131,7 @@ echo    data\bodegas-sv.json + data\bodegas-lc.json (recorte MODO_SV/MODO_LC)
 echo    data\dif-bodegas-sv.json
 echo    data\stock-critico-lc.json
 echo    data\oc-pend-resumen-lc.json
+echo    data\consumo-interno.json
 echo    merma_isabel_riquelme.json
 echo    MERMA_ISABEL_RIQUELME.html
 echo ============================================================
@@ -130,6 +144,7 @@ if /i not "%PUBLICAR%"=="S" (
     echo    git add bodegas_gestion.json bodegas_ir_otras.json
     echo    git add data\bodegas-sv.json data\bodegas-lc.json
     echo    git add data\dif-bodegas-sv.json data\stock-critico-lc.json data\oc-pend-resumen-lc.json
+    echo    git add data\consumo-interno.json
     echo    git add merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html
     echo    git commit -m "data: datos frescos"  ^&^& git push
     echo    E:\npm-global\firebase.cmd deploy --only hosting --project isabel-riquelme-merma
@@ -141,6 +156,7 @@ echo [PUBLICAR 1/3] git add + commit...
 git add bodegas_gestion.json bodegas_ir_otras.json
 git add data\bodegas-sv.json data\bodegas-lc.json
 git add data\dif-bodegas-sv.json data\stock-critico-lc.json data\oc-pend-resumen-lc.json
+git add data\consumo-interno.json
 git add merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html
 git commit -m "data: datos frescos %DATE%"
 if errorlevel 1 (

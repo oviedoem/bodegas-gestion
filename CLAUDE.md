@@ -54,6 +54,14 @@ IDs SQL verificados: ver `IDS_REFERENCIA_IR.md` (Isabel Riquelme) e
 - `scripts/descargar_dif_sv.py` → `data/dif-bodegas-sv.json` (tab Dif. Bodegas SV).
 - `scripts/descargar_stock_critico_lc.py` / `scripts/descargar_oc_pendientes_lc.py` →
   datos de Solicitud Stock LC.
+- `scripts/descargar_consumo_interno.py` (nuevo 11-09-2026) → `data/consumo-interno.json`,
+  tab **Consumo Interno**. Consulta `M_DOCUMENTOS_DETALLE WHERE IDDOCUMENTO=218` ("Guia
+  de Consumo", simbolo GEI) sin filtrar por bodega — el consumo puede salir de cualquiera.
+  **Agrupa por la sucursal PROPIA de la bodega (`P_BODEGAS.IDSUCURSAL`), nunca por el
+  `IDSUCURSAL` que trae el documento** — se verificó que ese campo no es confiable para
+  este tipo de documento (la misma bodega aparece grabada bajo hasta 4 sucursales
+  distintas, probablemente por registro centralizado). Ver comentario largo al inicio
+  del script para el detalle completo de esta decisión.
 - `verificar_bodegas_gestion.py` — consulta `P_BODEGAS` en vivo para re-verificar IDs
   si cambia el ERP (no descarga movimientos, solo lista bodegas por categoría).
 
