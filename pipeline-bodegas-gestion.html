@@ -223,7 +223,7 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
 <div class="header">
   <h1>📦 Pipeline de datos — <span>Bodegas Gestión</span></h1>
   <div class="subtitle">
-    SQL Server → Python → JSON → GitHub Pages · <b>V.82 / SW v88</b> · Actualizado 2026-09-10 · Ferretería Oviedo
+    SQL Server → Python → JSON → GitHub Pages · <b>V.86 / SW v92</b> · Actualizado 2026-09-10 · Ferretería Oviedo
   </div>
 </div>
 
@@ -246,7 +246,7 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
     <div class="kpi b"><div class="kl">Merma IR</div><div class="kn">427</div><div class="ks">códigos MERMA.xlsx</div></div>
     <div class="kpi"><div class="kl">Stock crítico LC</div><div class="kn">1.465</div><div class="ks">productos con parámetros</div></div>
     <div class="kpi"><div class="kl">OC pendientes LC</div><div class="kn">407</div><div class="ks">códigos con qty pendiente</div></div>
-    <div class="kpi"><div class="kl">Versión app</div><div class="kn">V.82</div><div class="ks">SW v88 · 2026-09-10</div></div>
+    <div class="kpi"><div class="kl">Versión app</div><div class="kn">V.86</div><div class="ks">SW v92 · 2026-09-10</div></div>
   </div>
 
   <p class="lead">Cada fila es un dato que viaja de su <b>fuente</b> → <b>script Python</b> que lo descarga y procesa → <b>JSON</b> que genera → <b>tab de la app</b> que lo consume. Los JSON se sirven directamente desde <b>GitHub Pages</b> (no hay backend). La merma IR genera además un HTML standalone autónomo.</p>
@@ -471,7 +471,7 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
     <div class="fr-json" style="border-left-color:var(--purple)">
       <div class="fw"><span class="mono">index.html</span> + <span class="mono">sw.js</span></div>
       <div class="sm">Versión bumpeada automáticamente</div>
-      <div class="sm" style="margin-top:4px">Último: <b>V.82 / SW v88</b> · 10-09-2026</div>
+      <div class="sm" style="margin-top:4px">Último: <b>V.86 / SW v92</b> · 10-09-2026</div>
     </div>
     <div class="arr">→</div>
     <div class="fr-tabs" style="border-left-color:var(--purple)">
@@ -537,6 +537,13 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
         <td class="r">8 KB</td>
         <td>OCs activas de Las Cabras (últimos 6 meses). Resumen por código para la columna OC Pend.</td>
         <td class="mono-cell">data/oc-pend-resumen-lc.json<br>data/oc-pendientes-lc.json*</td>
+        <td><span class="badge b-sql">VPN + SQL</span></td>
+      </tr>
+      <tr>
+        <td class="mono-cell">scripts/descargar_consumo_interno.py</td>
+        <td class="r">~7 KB</td>
+        <td>Guía de Consumo (IDDOCUMENTO=218/GEI), todas las bodegas sin filtrar. Agrupa por P_BODEGAS.IDSUCURSAL (no por la del documento, no confiable). Folio real: M_DOCUMENTOS_ENCABEZADO.NUMERO (fix 11-09-2026, antes leía D.NUMERO que siempre vale 0).</td>
+        <td class="mono-cell">data/consumo-interno.json<br>data/consumo-interno-sv.json<br>data/consumo-interno-lc.json</td>
         <td><span class="badge b-sql">VPN + SQL</span></td>
       </tr>
       <tr>
@@ -623,16 +630,23 @@ td.mono-cell{font-family:ui-monospace,monospace;font-size:11px;color:var(--accen
       </div>
     </div>
     <div class="step">
-      <div class="step-num">6</div>
+      <div class="step-num">7</div>
+      <div class="step-body">
+        <b>Consumo Interno</b> — Guía de Consumo (GEI/218), todas las sucursales + recortes SV/LC
+        <code class="cmd">E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_consumo_interno.py"</code>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">8</div>
       <div class="step-body">
         <b>Commit y push</b> — bump_version.py corre automáticamente como hook pre-commit
-        <code class="cmd">git add bodegas_gestion.json bodegas_ir_otras.json merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html data/dif-bodegas-sv.json data/stock-critico-lc.json data/oc-pend-resumen-lc.json</code>
+        <code class="cmd">git add bodegas_gestion.json bodegas_ir_otras.json merma_isabel_riquelme.json MERMA_ISABEL_RIQUELME.html data/dif-bodegas-sv.json data/stock-critico-lc.json data/oc-pend-resumen-lc.json data/consumo-interno.json data/consumo-interno-sv.json data/consumo-interno-lc.json</code>
         <code class="cmd">git commit -m "data: actualizacion completa YYYY-MM-DD"</code>
         <code class="cmd">cd /d "E:\BODEGAS GESTION" && git push origin main</code>
       </div>
     </div>
     <div class="step">
-      <div class="step-num">7</div>
+      <div class="step-num">9</div>
       <div class="step-body">
         <b>(Opcional) Firebase Hosting</b> — solo si hubo cambios en index.html / sw.js
         <code class="cmd">DEPLOY_APP.bat</code>

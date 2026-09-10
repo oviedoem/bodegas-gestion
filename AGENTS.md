@@ -13,7 +13,7 @@ reemplaza cualquier mención anterior a `generar_bodegas_ir.py`/`generar_bodegas
 1. Leer `IDS_REFERENCIA_IR.md` / `IDS_REFERENCIA_BODEGAS_GESTION.md` — ya contienen
    IDBODEGA/IDSUCURSAL/columnas verificadas. No volver a explorar
    `INFORMATION_SCHEMA.COLUMNS` si el dato ya está documentado ahí.
-2. Scripts vigentes (usar `ACTUALIZAR_DATOS.bat` para correr los 6 en orden, o a mano):
+2. Scripts vigentes (usar `ACTUALIZAR_DATOS.bat` para correr los 7 en orden, o a mano):
    - `generar_merma_ir.py` — Merma IR (bodega MIR=75) → `merma_isabel_riquelme.json` +
      **DOS** HTML (`index.html` es el panel real con login; `MERMA_ISABEL_RIQUELME.html`
      es un alias completo del mismo panel que se mantiene por compatibilidad con la URL
@@ -27,7 +27,10 @@ reemplaza cualquier mención anterior a `generar_bodegas_ir.py`/`generar_bodegas
      nuevo del ERP) → `data/bodegas-sv.json` + `data/bodegas-lc.json` (datasets livianos
      para MODO_SV/MODO_LC). **Siempre después** del script anterior.
    - `scripts/descargar_dif_sv.py`, `scripts/descargar_stock_critico_lc.py`,
-     `scripts/descargar_oc_pendientes_lc.py` — completan los 6 pasos.
+     `scripts/descargar_oc_pendientes_lc.py`,
+     `scripts/descargar_consumo_interno.py` (Paso 7/7, Guía de Consumo GEI/218,
+     agrupado por `P_BODEGAS.IDSUCURSAL` no por la del documento) — completan
+     los 7 pasos.
 3. Descargas SQL de varias bodegas: siempre en lotes pequeños, nunca todas en una sola
    pasada — evita timeouts/conflictos con la conexión compartida al ERP.
 4. Toda descarga debe tener regla anti-retroceso (abortar si trae <50% de lo anterior) y
@@ -42,6 +45,16 @@ reemplaza cualquier mención anterior a `generar_bodegas_ir.py`/`generar_bodegas
    `IDDOCUMENTO+IDNUMERO`: SIEMPRE filtrar también por `IDSUCURSAL` del lado de
    `M_DOCUMENTOS_DETALLE` (`N.IDSUCURSAL`), nunca contra la sucursal del stock destino —
    ese folio se repite entre sucursales (bug real corregido 10-09-2026, ver `CLAUDE.md`).
+8. El folio/número real de un documento vive en `M_DOCUMENTOS_ENCABEZADO.NUMERO`, NO en
+   `M_DOCUMENTOS_DETALLE.NUMERO` (este último vale 0 al menos para Guía de Consumo/GEI —
+   bug real corregido 11-09-2026 en `scripts/descargar_consumo_interno.py`, verificado
+   contra SQL en vivo). Si se agrega un script nuevo que necesite el folio, usar el
+   `NUMERO` que trae el `OUTER APPLY`/JOIN al ENCABEZADO, no el del DETALLE.
+9. El Excel de Consumo Interno usa **ExcelJS** (no SheetJS/XLSX) porque necesita color de
+   celda y bordes reales — verificado con una prueba directa que SheetJS Community los
+   ignora en silencio al escribir `.xlsx` (solo la versión Pro paga los soporta). Los
+   otros 3 Excel del proyecto (Merma, Solicitud LC, Dif. Bodegas SV) siguen con SheetJS,
+   sin necesidad de tocarlos — no migrar todo el proyecto a ExcelJS sin que haga falta.
 
 ## Reglas de seguridad
 - Jamás escribir el password SQL en un archivo de esta carpeta (ni en script, ni en HTML).

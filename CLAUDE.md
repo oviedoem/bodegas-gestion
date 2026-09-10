@@ -61,12 +61,14 @@ IDs SQL verificados: ver `IDS_REFERENCIA_IR.md` (Isabel Riquelme) e
   `IDSUCURSAL` que trae el documento** — se verificó que ese campo no es confiable para
   este tipo de documento (la misma bodega aparece grabada bajo hasta 4 sucursales
   distintas, probablemente por registro centralizado). Ver comentario largo al inicio
-  del script para el detalle completo de esta decisión.
+  del script para el detalle completo de esta decisión. **Folio real:**
+  `M_DOCUMENTOS_ENCABEZADO.NUMERO` (fix 11-09-2026 — `M_DOCUMENTOS_DETALLE.NUMERO`
+  siempre vale 0 para este documento, verificado con SQL en vivo).
 - `verificar_bodegas_gestion.py` — consulta `P_BODEGAS` en vivo para re-verificar IDs
   si cambia el ERP (no descarga movimientos, solo lista bodegas por categoría).
 
 Para regenerar todo tras actualizar `MERMA.xlsx` o los IDs de bodega, correr
-`ACTUALIZAR_DATOS.bat` (orquesta los 6 pasos en el orden correcto) o a mano:
+`ACTUALIZAR_DATOS.bat` (orquesta los 7 pasos en el orden correcto) o a mano:
 ```
 E:\python-portable\python.exe "E:\BODEGAS GESTION\generar_merma_ir.py"
 E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_bodegas_sql.py"
@@ -74,6 +76,7 @@ E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\generar_bodegas_modo.p
 E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_dif_sv.py"
 E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_stock_critico_lc.py"
 E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_oc_pendientes_lc.py"
+E:\python-portable\python.exe "E:\BODEGAS GESTION\scripts\descargar_consumo_interno.py"
 ```
 Después de correr `generar_merma_ir.py` ya queda el HTML final leyendo
 `merma_isabel_riquelme.json` — no hace falta un paso aparte para "armar" el HTML.
@@ -114,6 +117,29 @@ Después de correr `generar_merma_ir.py` ya queda el HTML final leyendo
 - VPN ya activa para acceso a SQL Server [SQL-SERVER-IP].
 
 ## Historial reciente
+
+### 2026-09-10 — Fix folio Consumo Interno + rediseño del tab (V.86/SW v92)
+- **Bug de datos corregido:** `descargar_consumo_interno.py` leía el folio de
+  `M_DOCUMENTOS_DETALLE.NUMERO` (siempre 0 para este documento) en vez de
+  `M_DOCUMENTOS_ENCABEZADO.NUMERO` (el real) — verificado con SQL en vivo
+  comparando contra la vista "Guía de Consumo" del ERP. Datos regenerados:
+  100% de 13.143 eventos con folio (antes 3.6%). Commit `c6a22c9`.
+- Tab Consumo Interno rediseñado: KPIs con período/fecha del más consumido,
+  tabla "Desglose por sucursal" (con primera/última fecha del rango filtrado
+  y detalle expandible), gráfico con selector Mensual/Por sucursal, colores
+  del gráfico corregidos (estaban pensados para tema oscuro).
+- Excel de Consumo Interno migrado de SheetJS a **ExcelJS** — es el único de
+  los 4 Excel del proyecto con color/bordes reales, porque SheetJS Community
+  no soporta estilos de celda al escribir (verificado con prueba directa).
+  3 hojas: ranking, resumen por sucursal, detalle agrupado colapsable.
+- Nuevo botón de descarga HTML interactivo (buscador + expandible, archivo
+  autocontenido).
+- Verificación consistencia de datos: 5 líneas idénticas de un mismo código
+  en un mismo documento (folio 1724, código 72744) confirmadas como reales
+  contra `M_DOCUMENTOS_DETALLE` — no es bug, es como quedó cargada la guía
+  en el ERP (5 líneas de 5 unidades en vez de 1 de 25).
+- Pendiente: `MERMA_ISABEL_RIQUELME.html` sigue sin la pestaña Consumo
+  Interno (solo está en `index.html`).
 
 ### 2026-09-05 — Datos frescos (V.78/SW v84)
 - Corridos los 5 pasos de `ACTUALIZAR_DATOS.bat`: Merma IR, Bodegas SQL (todas las

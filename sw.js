@@ -1,5 +1,5 @@
 /* Service Worker — Bodegas Gestión */
-const CACHE_VERSION = 'bodegas-gestion-v92';
+const CACHE_VERSION = 'bodegas-gestion-v93';
 
 self.addEventListener('install', e => {
   /* Activar inmediatamente — sin esperar clic del usuario */
