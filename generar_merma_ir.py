@@ -16,6 +16,7 @@ import json
 import datetime
 import configparser
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 import openpyxl
@@ -208,18 +209,72 @@ def main():
     conn.close()
     log(f"      {len(registros)} movimientos encontrados")
 
-    mas_reciente = {}
+    # Acumular documentos hasta cubrir el fisico total (mismo algoritmo que
+    # scripts/descargar_bodegas_sql.py::_deduplicar_y_acumular) — antes esta
+    # funcion solo tomaba el documento mas reciente sin verificar si el fisico
+    # venia de uno o varios documentos, mostrando una unica fecha/antiguedad
+    # aunque el stock fuera la suma de 2+ recepciones separadas.
+    def _dias_key(doc):
+        d = doc.get("diasAntiguedad")
+        return d if d is not None else 999999
+
+    def _documento_resumen(doc):
+        return {
+            "tipoDoc": doc.get("tipoDoc"), "tipoDocNombre": doc.get("tipoDocNombre"),
+            "folio": doc.get("folio"), "fechaRegistro": doc.get("fechaRegistro"),
+            "cantidad": doc.get("cantidad"), "diasAntiguedad": doc.get("diasAntiguedad"),
+            "observacion": doc.get("observacion"),
+        }
+
+    grupos = defaultdict(list)
     for r in registros:
-        cod = r["codigoTecnico"]
-        d = r["diasAntiguedad"] if r["diasAntiguedad"] is not None else 999999
-        prev = mas_reciente.get(cod)
-        if prev is None or d < (prev["diasAntiguedad"] if prev["diasAntiguedad"] is not None else 999999):
-            mas_reciente[cod] = r
+        grupos[r["codigoTecnico"]].append(r)
+
+    cabeceras = {}
+    for cod, docs in grupos.items():
+        total_fisico = docs[0].get("fisico", 0) if docs else 0
+
+        grt_fechas = {d["fechaRegistroIso"] for d in docs if d["tipoDoc"] == "GRT"}
+        dedup = []
+        for doc in docs:
+            tipo, fecha = doc["tipoDoc"], doc["fechaRegistroIso"]
+            if tipo == "GRT":
+                dedup.append(doc)
+            elif tipo in ("GME", "GIB"):
+                if fecha in grt_fechas:
+                    continue
+                # GIB con GRT del mismo dia -> excluir (mismo movimiento).
+                dedup.append(doc)
+            else:
+                dedup.append(doc)
+
+        if not dedup:
+            continue
+
+        if total_fisico > 0:
+            contribuyentes, acum = [], 0
+            for doc in dedup:
+                if acum >= total_fisico:
+                    break
+                acum += doc.get("cantidad", 0)
+                contribuyentes.append(doc)
+            if not contribuyentes:
+                contribuyentes = [min(dedup, key=_dias_key)]
+        else:
+            # Sin fisico actual (mermado/consumido por completo): mostrar solo
+            # el documento mas reciente, igual que el comportamiento anterior.
+            contribuyentes = [min(dedup, key=_dias_key)]
+
+        contribuyentes.sort(key=_dias_key)
+        cab = dict(contribuyentes[0])
+        if len(contribuyentes) > 1:
+            cab["documentosGRT"] = [_documento_resumen(d) for d in contribuyentes]
+        cabeceras[cod] = cab
 
     final = []
     for cod in codigos:
         m = meta_xls.get(cod, {})
-        r = mas_reciente.get(cod)
+        r = cabeceras.get(cod)
         if r:
             r = dict(r)
             r.update({k: v for k, v in m.items()})

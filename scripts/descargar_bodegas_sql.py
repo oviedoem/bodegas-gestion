@@ -247,25 +247,49 @@ def conectar():
 
 # ─── DEDUPLICAR Y ACUMULAR ────────────────────────────────────────────────────
 
+def _dias_key(doc):
+    d = doc.get('diasAntiguedad')
+    return d if d is not None else 999999
+
+
+def _documento_resumen(doc):
+    """Campos que se muestran en el desglose documentosGRT (una fila expandida)."""
+    return {
+        'tipoDoc':        doc.get('tipoDoc'),
+        'tipoDocNombre':  doc.get('tipoDocNombre'),
+        'folio':          doc.get('folio'),
+        'fechaRegistro':  doc.get('fechaRegistro'),
+        'cantidad':       doc.get('cantidad'),
+        'diasAntiguedad': doc.get('diasAntiguedad'),
+        'observacion':    doc.get('observacion'),
+    }
+
+
 def _deduplicar_y_acumular(registros):
     """
     Paso 1 — Dedup: GRT manda; GME/GIB mismo dia que GRT → excluir;
               GIB con GRT anterior → excluir.
     Paso 2 — Acumular de mas nuevo a mas antiguo hasta cubrir ST_FISICO.
-    Paso 3 — Conservar solo el mas reciente por codigoTecnico (min diasAntiguedad).
+    Paso 3 — La fila "cabecera" por codigoTecnico es la del documento mas
+              reciente (min diasAntiguedad) entre los que acumularon el fisico.
+              Si acumularon 2+ documentos, se guarda el desglose completo en
+              `documentosGRT` (mismo patron que "Analisis de Bodegas" de
+              El Manzano, descargar_bod.py) — antes esta funcion descartaba
+              los documentos que no eran la cabecera; ahora se conservan para
+              que el HTML pueda mostrar la antiguedad real de cada lote en
+              vez de una unica fecha para todo el fisico acumulado.
     """
     grupos = defaultdict(list)
     for r in registros:
         grupos[r['codigoTecnico']].append(r)
 
-    resultado = []
+    salida = []
     for cod, docs in grupos.items():
         total_fisico = docs[0].get('fisico', 0) if docs else 0
         if total_fisico == 0:
             continue
 
-        grt_fechas   = {d['_fechaRaw'] for d in docs if d['tipoDoc'] == 'GRT'}
-        earliest_grt = min(grt_fechas) if grt_fechas else None
+        grt_fechas = {d['_fechaRaw'] for d in docs if d['tipoDoc'] == 'GRT'}
 
         dedup = []
         for doc in docs:
@@ -283,29 +307,34 @@ def _deduplicar_y_acumular(registros):
             else:
                 dedup.append(doc)
 
+        if not dedup:
+            continue
+
         if total_fisico > 0:
+            contribuyentes = []
             acum = 0
             for doc in dedup:
                 if acum >= total_fisico:
                     break
                 acum += doc.get('cantidad', 0)
-                resultado.append(doc)
+                contribuyentes.append(doc)
+            if not contribuyentes:
+                contribuyentes = [min(dedup, key=_dias_key)]
         else:
-            if dedup:
-                resultado.append(dedup[0])
+            # total_fisico < 0 (dato atipico, ej. bodega con stock fisico
+            # negativo): no hay "hasta cubrir el total" que acumular, se
+            # muestra solo el documento mas reciente (comportamiento previo).
+            contribuyentes = [min(dedup, key=_dias_key)]
 
-    visto = {}
-    for doc in resultado:
-        cod  = doc['codigoTecnico']
-        dias = doc.get('diasAntiguedad') if doc.get('diasAntiguedad') is not None else 999999
-        prev = visto[cod].get('diasAntiguedad') if cod in visto and visto[cod].get('diasAntiguedad') is not None else 999999
-        if cod not in visto or dias < prev:
-            visto[cod] = doc
+        contribuyentes.sort(key=_dias_key)
+        cabecera = dict(contribuyentes[0])
+        cabecera.pop('_fechaRaw', None)
+        if len(contribuyentes) > 1:
+            cabecera['documentosGRT'] = [_documento_resumen(d) for d in contribuyentes]
 
-    for r in visto.values():
-        r.pop('_fechaRaw', None)
+        salida.append(cabecera)
 
-    return list(visto.values())
+    return salida
 
 
 # ─── ANTI-RETROCESO ───────────────────────────────────────────────────────────
