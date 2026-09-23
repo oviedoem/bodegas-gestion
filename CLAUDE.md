@@ -118,6 +118,19 @@ Después de correr `generar_merma_ir.py` ya queda el HTML final leyendo
 
 ## Historial reciente
 
+### 2026-09-23 — Datos frescos corridos vía terminal manual (sin panel)
+
+**Resumen:** Los 7 pasos de `ACTUALIZAR_DATOS.bat` corridos completos como parte de
+un lote de mantenimiento del ecosistema. El panel Centro de Control (localhost:4173)
+no pudo usarse para este proyecto porque lanza los `.bat` con `stdin` ignorado a
+propósito (evita cuelgues), y el paso de publicar de este proyecto necesita
+confirmación real por teclado — se corrió directo por terminal en su lugar.
+Commit + push (`bf0c870`) y deploy Firebase (`isabel-riquelme-merma.web.app`)
+confirmados manualmente vía `--account` explícito para no tocar la sesión activa
+de Firebase CLI de CabrasGO (logueada como cuenta distinta en este PC).
+
+**Pendiente:** ninguno de esta sesión.
+
 ### 2026-09-10 — Fix folio Consumo Interno + rediseño del tab (V.86/SW v92)
 - **Bug de datos corregido:** `descargar_consumo_interno.py` leía el folio de
   `M_DOCUMENTOS_DETALLE.NUMERO` (siempre 0 para este documento) en vez de
