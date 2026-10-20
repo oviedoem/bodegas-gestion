@@ -1,4 +1,11 @@
 @echo off
+if not defined OVIEDO_REG if exist "E:\CONOCIMIENTO DEL NEGOCIO\control-center\registrar-corrida.js" goto :con_registro
+goto :inicio_real
+:con_registro
+set OVIEDO_REG=1
+"E:\nodejs-portable\node.exe" "E:\CONOCIMIENTO DEL NEGOCIO\control-center\registrar-corrida.js" bodegas "%~f0" %*
+exit /b %errorlevel%
+:inicio_real
 setlocal
 
 set PYTHON=E:\python-portable\python.exe
@@ -21,7 +28,6 @@ if not exist "%PYTHON%" (
 echo Python OK: %PYTHON%
 echo Proyecto:  %PROJ%
 echo.
-pause
 
 cd /d "%PROJ%"
 
@@ -137,7 +143,14 @@ echo    MERMA_ISABEL_RIQUELME.html
 echo ============================================================
 echo.
 
+set PUBLICAR=N
+if /i "%OVIEDO_ORIGEN%"=="panel" goto :SIN_PREGUNTA
+if /i "%OVIEDO_ORIGEN%"=="tarea" goto :SIN_PREGUNTA
 set /p PUBLICAR="Publicar ahora (git commit+push y deploy Firebase)? [S/N]: "
+goto :RESP_PUBLICAR
+:SIN_PREGUNTA
+echo Ejecucion desde el panel o tarea (sin teclado): no se pregunta, NO se publica.
+:RESP_PUBLICAR
 if /i not "%PUBLICAR%"=="S" (
     echo.
     echo  Sin publicar. Los archivos quedan listos en disco; para publicar despues:

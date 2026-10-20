@@ -118,6 +118,28 @@ Después de correr `generar_merma_ir.py` ya queda el HTML final leyendo
 
 ## Historial reciente
 
+### 2026-10-16 — Pipeline completo autónomo (7/7 scripts OK, deploy OK)
+
+**Resumen:** Los 7 pasos de `ACTUALIZAR_DATOS.bat` corridos individualmente en Git CMD
+(modo autónomo — el `.bat` tiene `set /p` interactivo que bloquea ejecución desatendida).
+Datos frescos desde SQL Server vía VPN.
+
+**Resultados por paso:**
+- PASO 1 (Merma IR): 925 movimientos → `merma_isabel_riquelme.json` + HTML OK
+- PASO 2 (Bodegas SQL): 10145 códigos (EM 2460, SV 2896, LC 2386, LT 2156, IR 4725)
+- PASO 3 (Recorte SV/LC): `bodegas-sv.json` 2896, `bodegas-lc.json` 2386
+- PASO 4 (Dif SV): 4432 productos, 135 con diferencia, 0 anomalías JT (6740 kB)
+- PASO 5 (Stock crítico LC): 1465 productos, ventas 908
+- PASO 6 (OC pendientes LC): 405 códigos, 256 OCs activas
+- PASO 7 (Consumo Interno): 13440 eventos, 7 sucursales
+
+**Publicación:** git commit V.95 (13 files, +413524 −402715) → push `7ab559` OK →
+Firebase deploy `isabel-riquelme-merma.web.app` confirmado ("Deploy complete!").
+Credencial: `GOOGLE_APPLICATION_CREDENTIALS` con service account ferreteria-oviedo
+(tiene permisos cross-project para isabel-riquelme-merma).
+
+**Pendiente:** ninguno de esta sesión.
+
 ### 2026-09-23 — Datos frescos corridos vía terminal manual (sin panel)
 
 **Resumen:** Los 7 pasos de `ACTUALIZAR_DATOS.bat` corridos completos como parte de
@@ -185,3 +207,10 @@ de Firebase CLI de CabrasGO (logueada como cuenta distinta en este PC).
 Ver skill `safe-change` en `AGENTS.md` — antes de re-explorar SQL desde cero, revisar
 `IDS_REFERENCIA_IR.md` e `IDS_REFERENCIA_BODEGAS_GESTION.md` (IDs ya verificados) en
 esta misma carpeta.
+
+### 2026-10-16 - Registro de corridas
+- `ACTUALIZAR_DATOS.bat` enganchado al registro de corridas del Centro de Control (encabezado de 7 lineas, proyecto `bodegas`); queda en el calendario con su log. El .bat paso a fin de linea CRLF (obligatorio para los goto). Respaldo: `E:\_ARCHIVO_FERRETERIA\bodegas-bat-respaldo-20261016`.
+- Limitacion del .bat (no corregida): termina siempre en `pause` y su codigo de salida no es fiable (un paso fallido sale con 0; sin consola `set /p` lo deja en 1). El calendario usa las reglas de `control-center\reglas-proyectos.json`: "DESCARGA COMPLETA" = ok, "PROCESO ABORTADO" = error.
+
+## Sesion 2026-10-20 (ACTUALIZAR_DATOS.bat desde el panel)
+- La pregunta S/N de publicar se omite cuando `OVIEDO_ORIGEN` es `panel` o `tarea` (sin teclado): no pregunta y NO publica (antes quedaba el prompt sin respuesta en el log y caia igual a no publicar). Doble clic manual sigue preguntando. Respaldo: `E:\_ARCHIVO_FERRETERIA\bodegas-actualizar-datos-respaldo-20261020`.
