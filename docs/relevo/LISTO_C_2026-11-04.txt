@@ -1,0 +1,8 @@
+CLAUDE.md: historial 04-11 agregado con pipeline, SQL/VPN, publicacion y estado firestore.rules.
+AGENTS.md: historial 04-11 agregado con resultados verificados y pendientes.
+docs\CIERRE_2026-11-03.md: seccion Actualizacion 04-11 agregada con estados y reversion.
+G:\Mi unidad\PROYECTO_BODEGAS_GESTION\CLAUDE.md: copia saneada actualizada.
+G:\Mi unidad\PROYECTO_BODEGAS_GESTION\AGENTS.md: copia saneada actualizada.
+G:\Mi unidad\PROYECTO_BODEGAS_GESTION\docs\: copia saneada actualizada.
+Respaldo previo: E:\_ARCHIVO_FERRETERIA\bodegas-docs-antes_2026-11-04.
+No se hizo git, deploy ni pipeline; no se tocaron codigo, JSON, index.html, firestore.rules ni DEPLOY_APP.bat.

@@ -109,3 +109,9 @@ reemplaza cualquier mención anterior a `generar_bodegas_ir.py`/`generar_bodegas
 - SQL: DPAPI fallo y TCP/1433 fallo; se informo VPN caida y no se insistio.
 - Datos 19 y 20-10 sin commit; `firestore.rules` con cambio del 26-09 sin desplegar, decision del dueno.
 - Se crearon los scripts de orden y el manifiesto; los 7 scripts vigentes pasan `py_compile`. No se ejecuto `ACTUALIZAR_DATOS.bat` ni ningun pipeline.
+
+## Historial 2026-11-04 (pipeline y publicacion verificados)
+- Claude verifico pipeline 7/7 desde Centro de Control; log `2026-11-04_001746_ok.log`: Bodegas 10266/4794, Dif. SV 4457 productos (59 diferencias, 0 anomalias), Stock LC 1465, OC LC 234 OCs/376 codigos, Consumo Interno 13624 eventos y 7 sucursales.
+- La prueba SQL de Codex fallo en sandbox, pero el pipeline normal conecta; no hace falta VPN.
+- Publicacion verificada: commit `494aca2`, V.97/SW v103, push a `main`, hosting `isabel-riquelme-merma` y respuestas 200 en web.app/GitHub Pages.
+- `firestore.rules` y `DEPLOY_APP.bat` quedan sin commit por decision del dueno; `historico/` esta ignorada en hosting. Pendiente bloqueado: decidir si desplegar `firestore.rules`.
