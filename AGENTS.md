@@ -107,11 +107,16 @@ reemplaza cualquier mención anterior a `generar_bodegas_ir.py`/`generar_bodegas
 ## Historial 2026-11-03 (orden B)
 - Inventario y orden conservador ejecutados; `monitor_sv.log` y `__pycache__` quedaron bloqueados por referencias y no se movio ningun archivo.
 - SQL: DPAPI fallo y TCP/1433 fallo; se informo VPN caida y no se insistio.
-- Datos 19 y 20-10 sin commit; `firestore.rules` con cambio del 26-09 sin desplegar, decision del dueno.
+- Datos 19 y 20-10 sin commit; el cambio de seguridad del 26-09 en `firestore.rules` fue desplegado el 04-11-2026.
 - Se crearon los scripts de orden y el manifiesto; los 7 scripts vigentes pasan `py_compile`. No se ejecuto `ACTUALIZAR_DATOS.bat` ni ningun pipeline.
 
 ## Historial 2026-11-04 (pipeline y publicacion verificados)
 - Claude verifico pipeline 7/7 desde Centro de Control; log `2026-11-04_001746_ok.log`: Bodegas 10266/4794, Dif. SV 4457 productos (59 diferencias, 0 anomalias), Stock LC 1465, OC LC 234 OCs/376 codigos, Consumo Interno 13624 eventos y 7 sucursales.
 - La prueba SQL de Codex fallo en sandbox, pero el pipeline normal conecta; no hace falta VPN.
 - Publicacion verificada: commit `494aca2`, V.97/SW v103, push a `main`, hosting `isabel-riquelme-merma` y respuestas 200 en web.app/GitHub Pages.
-- `firestore.rules` y `DEPLOY_APP.bat` quedan sin commit por decision del dueno; `historico/` esta ignorada en hosting. Pendiente bloqueado: decidir si desplegar `firestore.rules`.
+- `firestore.rules` fue desplegada con allowlist de 3 correos y escritura cerrada; `index.html` no usa Firestore, sin impacto. El unico sin commit es `DEPLOY_APP.bat` (quita `pause`); `historico/` esta ignorada en hosting. Estado HECHO-VERIFICADO; siguiente proyecto: Analisis Stock Local.
+
+## Historial 2026-11-04 (reglas Firestore verificadas)
+- Commits `eac62af` (docs) y `f1eca05` (rules), push a `main` OK; hosting V.99/SW v105 y web.app 200 verificados.
+- `firestore.rules`: allowlist de 3 correos y escritura cerrada; `index.html` no usa Firestore, sin impacto.
+- Unico sin commit: `DEPLOY_APP.bat` por quitar `pause`. Estado HECHO-VERIFICADO; siguiente proyecto: Analisis Stock Local.

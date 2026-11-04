@@ -218,12 +218,17 @@ esta misma carpeta.
 ### 2026-11-03 - Inventario, orden y diagnostico B
 - Inventario y orden conservador ejecutados: `monitor_sv.log` y ambas carpetas `__pycache__` quedaron bloqueados por referencias; no se movio ningun archivo.
 - Diagnostico SQL: DPAPI fallo y TCP/1433 fallo; estado operativo: VPN caida. No se insistio con SQL.
-- Datos 19 y 20-10 quedaron sin commit. `firestore.rules` conserva el cambio del 26-09 sin desplegar, por decision del dueno.
+- Datos 19 y 20-10 quedaron sin commit. El cambio de seguridad del 26-09 en `firestore.rules` fue desplegado el 04-11-2026.
 - Se agregaron los scripts de orden y manifiesto sin movimientos. Los 7 scripts del pipeline pasan `py_compile`; no se ejecuto el pipeline.
 
 ### 2026-11-04 - Pipeline verificado y publicacion
 - Pipeline 7/7 corrido desde Centro de Control; log `2026-11-04_001746_ok.log`. Resultados: Bodegas 10266/4794 codigos; Dif. SV 4457 productos, 59 con diferencia y 0 anomalias; Stock critico LC 1465; OC LC 234 OCs/376 codigos; Consumo Interno 13624 eventos en 7 sucursales.
 - La prueba SQL de Codex fallo en sandbox (DPAPI/TCP), pero el pipeline normal conecta; no hace falta VPN.
 - Publicacion verificada: commit `494aca2` (V.97/SW v103), push a `main`, hosting `isabel-riquelme-merma`; web.app y GitHub Pages respondieron 200.
-- Por decision del dueno quedan sin commit `firestore.rules` (fix de seguridad 26-09, sin desplegar) y `DEPLOY_APP.bat`; `historico/` esta ignorada en hosting.
-- Ordenar archivos: 0 movidos por referencias vivas; manifiesto en `historico\\2026-11-03-orden\\`. Pendiente bloqueado: decision del dueno sobre desplegar `firestore.rules`.
+- `firestore.rules` fue desplegada con allowlist de 3 correos y escritura cerrada; `index.html` no usa Firestore y no hubo impacto. El unico archivo sin commit es `DEPLOY_APP.bat` (quita `pause`); `historico/` esta ignorada en hosting.
+- Ordenar archivos: 0 movidos por referencias vivas; manifiesto en `historico\\2026-11-03-orden\\`. Estado HECHO-VERIFICADO. Siguiente proyecto: Analisis Stock Local.
+
+### 2026-11-04 - Reglas Firestore verificadas
+- Commits `eac62af` (docs) y `f1eca05` (rules), push a `main` OK; deploy hosting V.99/SW v105 y web.app 200 verificados.
+- `firestore.rules`: allowlist de 3 correos, escritura cerrada; `index.html` no usa Firestore, sin impacto.
+- Unico sin commit: `DEPLOY_APP.bat` por quitar `pause`. Estado HECHO-VERIFICADO; siguiente proyecto: Analisis Stock Local.
