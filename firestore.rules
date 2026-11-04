@@ -1,12 +1,26 @@
 rules_version = '2';
 
 // Proyecto isabel-riquelme-merma — independiente del Firestore de ferreteria-oviedo.
-// Regla unica: solo usuarios autenticados (el unico usuario es 'riquelme') pueden
-// leer/escribir. Sin autenticacion, acceso totalmente denegado.
+// FIX SEGURIDAD 2026-09-26: la regla anterior ("el unico usuario es 'riquelme'") estaba
+// desactualizada y dejaba leer/escribir a CUALQUIER usuario autenticado del proyecto,
+// sin distinguir entre los 3 usuarios reales (ver CLAUDE.md: rrojas admin, saliaga
+// MODO_SV, spavez MODO_LC). No existe un campo de rol en Firestore — el modo SV/LC lo
+// resuelve el JS de index.html comparando el email a mano — así que la separacion por
+// sucursal se replica aca con un allowlist de email, en vez de inventar un esquema de
+// roles que el código no usa.
+// Escritura cerrada del todo: ningún archivo del proyecto escribe a Firestore desde el
+// navegador (merma/merma_meta se llenan con un script server-side vía Admin SDK, que
+// bypassa estas reglas de todas formas).
 service cloud.firestore {
   match /databases/{database}/documents {
+    function emailPermitido() {
+      return request.auth != null && request.auth.token.email in [
+        'rrojas@oviedo.cl', 'saliaga@oviedo.cl', 'spavez@oviedo.cl'
+      ];
+    }
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if emailPermitido();
+      allow write: if false;
     }
   }
 }
