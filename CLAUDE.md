@@ -214,3 +214,9 @@ esta misma carpeta.
 
 ## Sesion 2026-10-20 (ACTUALIZAR_DATOS.bat desde el panel)
 - La pregunta S/N de publicar se omite cuando `OVIEDO_ORIGEN` es `panel` o `tarea` (sin teclado): no pregunta y NO publica (antes quedaba el prompt sin respuesta en el log y caia igual a no publicar). Doble clic manual sigue preguntando. Respaldo: `E:\_ARCHIVO_FERRETERIA\bodegas-actualizar-datos-respaldo-20261020`.
+
+### 2026-11-03 - Inventario, orden y diagnostico B
+- Inventario y orden conservador ejecutados: `monitor_sv.log` y ambas carpetas `__pycache__` quedaron bloqueados por referencias; no se movio ningun archivo.
+- Diagnostico SQL: DPAPI fallo y TCP/1433 fallo; estado operativo: VPN caida. No se insistio con SQL.
+- Datos 19 y 20-10 quedaron sin commit. `firestore.rules` conserva el cambio del 26-09 sin desplegar, por decision del dueno.
+- Se agregaron los scripts de orden y manifiesto sin movimientos. Los 7 scripts del pipeline pasan `py_compile`; no se ejecuto el pipeline.

@@ -1,0 +1,5 @@
+B1 HECHO-VERIFICADO: DPAPI fallo; TCP/1433 fallo; VPN caida; no se insistio con SQL.
+B2 HECHO-VERIFICADO: informe y APLICAR ejecutados; 0 movimientos por referencias; manifiesto creado; 7 py_compile OK y rutas del pipeline existen.
+B3 HECHO-VERIFICADO: CLAUDE.md, AGENTS.md y CIERRE_2026-11-03.md actualizados; pipeline sin cambio de flujo.
+B4 HECHO-VERIFICADO: copia saneada creada y verificada en G:\Mi unidad\PROYECTO_BODEGAS_GESTION; sin credenciales, secretos, JSON de datos ni indices previos.
+No se hizo git add/commit/push, deploy, Firebase ni se ejecuto ACTUALIZAR_DATOS.bat o ningun pipeline.

@@ -103,3 +103,9 @@ reemplaza cualquier mención anterior a `generar_bodegas_ir.py`/`generar_bodegas
   var VISTAS_STD = Object.keys(VISTAS).filter(function(v){ return v !== 'solicitud_lc'; });
   ```
 - Cualquier vista nueva que NO use `initVista`/`render` debe añadirse a este filtro.
+
+## Historial 2026-11-03 (orden B)
+- Inventario y orden conservador ejecutados; `monitor_sv.log` y `__pycache__` quedaron bloqueados por referencias y no se movio ningun archivo.
+- SQL: DPAPI fallo y TCP/1433 fallo; se informo VPN caida y no se insistio.
+- Datos 19 y 20-10 sin commit; `firestore.rules` con cambio del 26-09 sin desplegar, decision del dueno.
+- Se crearon los scripts de orden y el manifiesto; los 7 scripts vigentes pasan `py_compile`. No se ejecuto `ACTUALIZAR_DATOS.bat` ni ningun pipeline.

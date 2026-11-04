@@ -1,0 +1,12 @@
+@echo off
+setlocal
+chcp 65001 >nul
+set "ROOT=%~dp0..\.."
+set "OUT=%ROOT%\historico\inventario_2026-11-03"
+if not exist "%OUT%" mkdir "%OUT%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$root=(Resolve-Path '%ROOT%').Path; $out=(Resolve-Path '%OUT%').Path; $all=Get-ChildItem -LiteralPath $root -Recurse -File -Force; $files=@(); foreach($x in $all){ $r=$x.FullName.Substring($root.Length).TrimStart('\'); if($r -ne 'historico' -and -not $r.StartsWith('historico\') -and $r -ne '.git' -and -not $r.StartsWith('.git\')){ $files += $x } }; $searchFiles=@(); foreach($x in $files){ if($x.FullName -notlike ($out + '\*') -and $x.Name -ne '_service_account.json'){ $searchFiles += $x } }; function Csv([string]$v){ if($null -eq $v){$v=''}; $q=[char]34; return $q + $v.Replace($q,($q+$q)) + $q }; $csv=Join-Path $out 'inventario.csv'; [IO.File]::WriteAllText($csv, 'ruta,tamano,fecha,extension,referenciado_por' + [Environment]::NewLine, [Text.Encoding]::UTF8); $rows=0; $candidates=@(); foreach($f in $files){ $rel=$f.FullName.Substring($root.Length).TrimStart('\'); if($f.Name -eq '_service_account.json'){ $refs='CONTENIDO_EXCLUIDO_SOLO_NOMBRE' } else { $refsList=@(); foreach($sf in $searchFiles){ try { if([IO.File]::ReadAllText($sf.FullName).IndexOf($f.Name,[StringComparison]::OrdinalIgnoreCase) -ge 0){ $refsList += $sf.FullName.Substring($root.Length).TrimStart('\') } } catch {} }; $refs=$refsList -join ';' }; $line=(Csv $rel)+','+(Csv ([string]$f.Length))+','+(Csv ($f.LastWriteTime.ToString('s')))+','+(Csv $f.Extension)+','+(Csv $refs)+[Environment]::NewLine; [IO.File]::AppendAllText($csv,$line,[Text.Encoding]::UTF8); $rows++; $low=$f.FullName.ToLowerInvariant(); if($low.Contains('\__pycache__\') -or $low.Contains('\logs\') -or $low.Contains('\log\') -or $low.EndsWith('monitor_sv.log') -or $low.Contains('\respaldo') -or $low.Contains('\backup')){ $candidates += $rel } }; $treeLines=@($root); foreach($f in $files){ $treeLines += ('  ' + $f.FullName.Substring($root.Length).TrimStart('\')) }; Set-Content -LiteralPath (Join-Path $out 'arbol.txt') -Value $treeLines -Encoding UTF8; $summary=@('Inventario: ' + (Get-Date -Format s),'Archivos inventariados: ' + $rows,'Candidatos a mover (NO movidos):'); if($candidates.Count -eq 0){ $summary += '(ninguno)' } else { $summary += $candidates }; $summary += 'Exclusion: _service_account.json se lista por nombre y no se lee su contenido.'; Set-Content -LiteralPath (Join-Path $out 'resumen.log') -Value $summary -Encoding UTF8"
+echo.
+echo Resultados en: %OUT%
+pause
+endlocal

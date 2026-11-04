@@ -1,0 +1,5 @@
+﻿SQL: NO concluyente; DPAPI no descifro y el fallback agoto el timeout sin evidencia de conexion.
+Archivos inventariados: 89.
+Candidatos a mover (no movidos): ver resumen.log; incluye monitor_sv.log y caches __pycache__.
+No se hizo commit, push, deploy, Firebase, Drive, pipeline, movimiento ni borrado. Solo se crearon archivos nuevos autorizados en historico\inventario_2026-11-03, scripts\bat\INVENTARIO_RUTAS.bat y este LISTO.
+Modelo consultado: E:\BOT  OVIEDO_ELMANZANO WHATSSSAP\scripts\INVENTARIO_BOT.bat.

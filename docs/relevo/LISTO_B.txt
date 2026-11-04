@@ -1,0 +1,3 @@
+B1 DPAPI=FALLO; TCP_1433=FALLO_VPN_CAIDA; no se ejecuto SQL.
+B2 informe y APLICAR ejecutados; 0 movimientos por referencias vivas; manifiesto creado.
+B3 documentacion actualizada; B4 copia saneada creada en G:\Mi unidad\PROYECTO_BODEGAS_GESTION.
